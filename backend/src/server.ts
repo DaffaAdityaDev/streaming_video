@@ -1,6 +1,7 @@
 import express, { Request, Response } from 'express';
 import fs from 'fs';
 import path from 'path';
+import ffmpeg from 'fluent-ffmpeg';
 
 const PORT = 8000;
 const APP = express();
@@ -15,8 +16,25 @@ APP.get('/', (req: Request, res: Response) => {
   res.send('Hello, Developer! start you CRAFT here');
 });
 
+APP.get('/video/:quality/:slug/:segment', (req: Request, res: Response) => {
+  const { quality, slug, segment } = req.params;
+  const videoPath = `video/${quality}/${slug}.mp4`;
+
+  const start = +segment * 10; // assuming each segment is 10 seconds long
+  const duration = 10;
+
+  ffmpeg(videoPath)
+    .seekInput(start)
+    .duration(duration)
+    .outputOptions('-f segment')
+    .outputOptions('-segment_time 10')
+    .output('pipe:1')
+    .pipe(res);
+});
+
+// direct video streaming
 APP.get('/video/*', (req: Request, res: Response) => {
-  const CHUNK_SIZE = 10 ** 6; // 1MB
+  const CHUNK_SIZE = 520 * 1024; // 1MB
 
   const slug = req.query.slug || req.params[0]
   const videoPath = `video/${slug}.mp4`
