@@ -42,6 +42,13 @@ export const PlayerVideo = ({ src, quality }: { src: string, quality: string }) 
     }
   };
 
+  const formatTime = (time: number) => {
+    const minutes = Math.floor(time / 60);
+    const seconds = Math.floor(time % 60);
+    return `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+  }
+    
+
   const skipVideo = (seconds: number) => {
     if (videoRef.current) {
       const newTime = videoRef.current.currentTime + seconds;
@@ -109,6 +116,7 @@ export const PlayerVideo = ({ src, quality }: { src: string, quality: string }) 
       <button onClick={playPauseVideo}>Play/Pause</button>
       <button onClick={() => skipVideo(-10)}>-10 sec</button>
       <button onClick={() => skipVideo(10)}>+10 sec</button>
+      <p>{formatTime(currentTime)} / {formatTime(duration)}</p>
       <input type="range" min="0" max={isNaN(duration) ? 0 : duration} value={currentTime} step={0.1} onChange={handleSliderChange} />
       <input type="range" min="0" max="1" value={volume} step={0.01} onChange={handleVolumeChange} />
     </div>
