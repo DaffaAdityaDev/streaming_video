@@ -1,11 +1,15 @@
 import express, { Request, Response } from 'express';
+import { promisify } from 'util';
 import fs from 'fs';
 import path from 'path';
 import ffmpeg from 'fluent-ffmpeg';
 
+const access = promisify(fs.access);
+
 const PORT = 8000;
 const APP = express();
 
+// segment video streaming
 APP.use((req: Request, res: Response, next) => {
   res.header('Access-Control-Allow-Origin', '*');
   res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept');
@@ -18,7 +22,20 @@ APP.get('/', (req: Request, res: Response) => {
 
 APP.get('/video/:quality/:slug/:segment', (req: Request, res: Response) => {
   const { quality, slug, segment } = req.params;
+
+  // Validate quality and segment
+  if (!['1080p', '720p', '480p', '360p', '240p'].includes(quality)) {
+    return res.status(400).send('Invalid quality parameter');
+  }
+  if (isNaN(Number(segment))) {
+    return res.status(400).send('Invalid segment parameter');
+  }
+
   const videoPath = `video/${quality}/${slug}.mp4`;
+
+  if (!fs.existsSync(videoPath)) {
+    return res.status(404).send('Video file not found');
+  }
 
   const start = +segment * 10; // assuming each segment is 10 seconds long
   const duration = 10;
@@ -30,14 +47,22 @@ APP.get('/video/:quality/:slug/:segment', (req: Request, res: Response) => {
     .outputOptions('-segment_time 10')
     .output('pipe:1')
     .pipe(res);
+
 });
 
 // direct video streaming
-APP.get('/video/*', (req: Request, res: Response) => {
+APP.get('/video/*', async(req: Request, res: Response) => {
   const CHUNK_SIZE = 520 * 1024; // 1MB
 
   const slug = req.query.slug || req.params[0]
   const videoPath = `video/${slug}.mp4`
+
+  try {
+    await access(videoPath);
+  } catch {
+    res.status(404).send('Video not found');
+    return;
+  }
   
   if (!videoPath) {
     res.status(404).send('Video not found');

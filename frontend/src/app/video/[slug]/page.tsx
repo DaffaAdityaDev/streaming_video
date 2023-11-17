@@ -1,7 +1,7 @@
-import { PlayerVideo } from "@/components/molecules/PlayerVideo/page"
+import { PlayerVideoMolecules } from "@/components/molecules/PlayerVideo"
 import Link from 'next/link'
 
-export default function Page({params, searchParams }: { params: { slug: string }, searchParams: { [key: string]: string | string[] | undefined }}) {
+export default function VideoPlayerPage({params, searchParams }: { params: { slug: string }, searchParams: { [key: string]: string | string[] | undefined }}) {
     return (
         <div>
             <Link href={`/`}>
@@ -10,7 +10,7 @@ export default function Page({params, searchParams }: { params: { slug: string }
             <h1>Video</h1>
             <p>{params.slug}</p>
             <p>{searchParams.quality}</p>
-            <PlayerVideo src={params.slug} quality={Array.isArray(searchParams.quality) ? searchParams.quality[0] : (searchParams.quality || 'defaultQuality')} />
+            <PlayerVideoMolecules src={params.slug} quality={Array.isArray(searchParams.quality) ? searchParams.quality[0] : (searchParams.quality || 'defaultQuality')} />
         </div>
     )
 }

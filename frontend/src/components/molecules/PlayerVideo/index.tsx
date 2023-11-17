@@ -2,22 +2,37 @@
 import React, { useRef, useState, useEffect } from 'react';
 import axios from 'axios';
 
-export const PlayerVideo = ({ src, quality }: { src: string, quality: string }) => {
-  if (!src || typeof src !== 'string') {
-    return <div>Error: Invalid video source</div>;
-  }
+export const PlayerVideoMolecules = ({ src, quality }: { src: string, quality: string }) => {
   const getUrl = ( src: string, quality: string ) => {
     const url = `http://localhost:8000/video/${quality ? `${quality}` : ''}/${src}`;
     return url;
   }
-
+ 
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const urlToVideo = getUrl(src, quality);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
   const [volume, setVolume] = useState(1);
+  const [isVideoReady, setIsVideoReady] = useState(false);
+
+  useEffect(() => {
+    if (videoRef.current) {
+      const currentVideoRef = videoRef.current;
   
+      currentVideoRef?.addEventListener('timeupdate', handleTimeUpdate);
+      currentVideoRef?.addEventListener('durationchange', handleDurationChange);
+      handleMetadataLoad();
   
+      return () => {
+        currentVideoRef?.removeEventListener('timeupdate', handleTimeUpdate);
+        currentVideoRef?.removeEventListener('durationchange', handleDurationChange);
+      };
+    }
+  }, []);
+
+  if (!src || typeof src !== 'string') {
+    return <div>Error: Invalid video source</div>;
+  }
 
   const playPauseVideo = () => {
     if (videoRef.current?.paused) {
@@ -28,7 +43,7 @@ export const PlayerVideo = ({ src, quality }: { src: string, quality: string }) 
   };
 
   const handleVolumeChange = (e: React.ChangeEvent<HTMLInputElement>) => { 
-    const newVolume = parseFloat(e.target.value);
+    const newVolume = parseFloat(e.target.value) || 0;
 
     // Validate the volume value
     if (isNaN(newVolume) || newVolume < 0 || newVolume > 1) {
@@ -42,12 +57,15 @@ export const PlayerVideo = ({ src, quality }: { src: string, quality: string }) 
     }
   };
 
-  const formatTime = (time: number) => {
+  const formatTime = (time: number): string => {
+    if (typeof time !== 'number' || time < 0 || !isFinite(time)) {
+      return "00:00";
+    }
+  
     const minutes = Math.floor(time / 60);
     const seconds = Math.floor(time % 60);
     return `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
   }
-    
 
   const skipVideo = (seconds: number) => {
     if (videoRef.current) {
@@ -95,23 +113,22 @@ export const PlayerVideo = ({ src, quality }: { src: string, quality: string }) 
     }
   };
 
-  useEffect(() => {
-    videoRef.current?.addEventListener('timeupdate', handleTimeUpdate);
-    videoRef.current?.addEventListener('durationchange', handleDurationChange);
-    handleMetadataLoad();
-    return () => {
-      videoRef.current?.removeEventListener('timeupdate', handleTimeUpdate);
-      videoRef.current?.removeEventListener('durationchange', handleDurationChange);
-    };
-  }, []);
+  
 
   return (
     <div>
       <div className='pt-56.25%'>
-      <video ref={videoRef} className='h-full h-fit' onError={() => console.error('Video loading error')} autoPlay>
-        <source src={urlToVideo} type="video/mp4" />
-        Your browser does not support the video tag.
-      </video>
+      {!isVideoReady && <div>Wait, fetching video...</div>}
+        <video 
+          ref={videoRef} 
+          className='' 
+          onError={() => console.error('Video loading error')} 
+          autoPlay
+          onCanPlay={() => setIsVideoReady(true)}
+        >
+          <source src={urlToVideo} type="video/mp4" />
+          Your browser does not support the video tag.
+        </video>
       </div>
       <button onClick={playPauseVideo}>Play/Pause</button>
       <button onClick={() => skipVideo(-10)}>-10 sec</button>

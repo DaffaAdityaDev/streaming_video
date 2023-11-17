@@ -3,49 +3,97 @@
 import Image from 'next/image'
 import Link from 'next/link'
 import { useState, useEffect } from 'react'
-import CardVideo from '../components/molecules/CardVideo/page'
-import HomeTemplate from '../components/template/Home/page'
+import MoleculesCardVideo from '@/components/molecules/CardVideo'
+import VideoGridOrganism from '@/components/organism/VideoGrid'
 
-type DataType = {
-  title: string;
-  description: string;
-  img: string;
-  slug: string;
-  quality: string;
-};
+import { VideoDataType } from '@/components/types'
+import NavbarOrganism from '@/components/organism/Navbar'
+import SideBarOrganism from '@/components/organism/SideBar'
+import HomeTemplate from '@/components/template/Home'
+
 
 export default function Home() {
-  const [data, setData] = useState<DataType[]>([
+  const [data, setData] = useState<VideoDataType[]>([
     {
       title: 'sukunavsjogo',
-      description: 'Description',
+      channel: 'Description',
       img: 'https://picsum.photos/seed/picsum/200/300',
       slug: 'sukunavsjogo',
       quality: '1080p',
+      duration: 100000,
+      view: 100000,
+      timeUpload: '1 day ago',
     },
     {
       title: 'flower',
-      description: 'Description',
+      channel: 'Description',
       img: 'https://picsum.photos/seed/picsum/200/300',
       slug: 'flower',
       quality: 'defaultQuality',
+      duration: 100000,
+      view: 100000,
+      timeUpload: '1 day ago',
     }, 
     {
       title: 'adaptivestreaming',
-      description: 'Description',
+      channel: 'Description',
       img: 'https://picsum.photos/seed/picsum/200/300',
       slug: 'adaptivestreaming',
       quality: 'defaultQuality',
+      duration: 100000,
+      view: 100000,
+      timeUpload: '1 day ago',
     }
   ]);
 
+  useEffect(() => {
+    let injectData = [];
+    for (let i = 0; i < 10; i++) {
+      injectData.push({
+        title: 'sukunavsjogo',
+        channel: 'Description',
+        img: 'https://media.tenor.com/ZnP0C4JkNEYAAAAC/gojo-sukuna.gif',
+        slug: 'sukunavsjogo',
+        quality: '1080p',
+        duration: 100000,
+        view: 100000,
+        timeUpload: '1 day ago',
+      },
+      {
+        title: 'flower',
+        channel: 'Description',
+        img: 'https://media.tenor.com/ZnP0C4JkNEYAAAAC/gojo-sukuna.gif',
+        slug: 'flower',
+        quality: 'defaultQuality',
+        duration: 100000,
+        view: 100000,
+        timeUpload: '1 day ago',
+      }, 
+      {
+        title: 'adaptivestreaming',
+        channel: 'Description',
+        img: 'https://media.tenor.com/ZnP0C4JkNEYAAAAC/gojo-sukuna.gif',
+        slug: 'adaptivestreaming',
+        quality: 'defaultQuality',
+        duration: 100000,
+        view: 100000,
+        timeUpload: '1 day ago',
+      })
+    }
+    setData(injectData);
+
+  }, []);
+
 
   return (
-    <div className='grid grid-cols-[repeat(auto-fill,minmax(200px,1fr))] gap-4'>
-      <HomeTemplate leftChild={<h1>Left child</h1>} rightChild={<h1>Right child</h1>} />
-      {data.map((item, index) => (
-        <CardVideo key={index} {...item} />
-      ))}
-    </div>
+    <HomeTemplate>
+      <NavbarOrganism />
+      <SideBarOrganism />
+      <VideoGridOrganism>
+        {data.map((item, index) => (
+          <MoleculesCardVideo key={index} {...item} />
+        ))}
+      </VideoGridOrganism>
+    </HomeTemplate>
   )
 }
