@@ -9,7 +9,6 @@ const access = promisify(fs.access);
 const PORT = 8000;
 const APP = express();
 
-// segment video streaming
 APP.use((req: Request, res: Response, next) => {
   res.header('Access-Control-Allow-Origin', '*');
   res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept');
@@ -20,6 +19,7 @@ APP.get('/', (req: Request, res: Response) => {
   res.send('Hello, Developer! start you CRAFT here');
 });
 
+// segment video streaming
 APP.get('/video/:quality/:slug/:segment', (req: Request, res: Response) => {
   const { quality, slug, segment } = req.params;
 
@@ -52,7 +52,7 @@ APP.get('/video/:quality/:slug/:segment', (req: Request, res: Response) => {
 
 // direct video streaming
 APP.get('/video/*', async(req: Request, res: Response) => {
-  const CHUNK_SIZE = 520 * 1024; // 1MB
+  const CHUNK_SIZE = 520 * 1024; // 520kb
 
   const slug = req.query.slug || req.params[0]
   const videoPath = `video/${slug}.mp4`
@@ -60,16 +60,6 @@ APP.get('/video/*', async(req: Request, res: Response) => {
   try {
     await access(videoPath);
   } catch {
-    res.status(404).send('Video not found');
-    return;
-  }
-  
-  if (!videoPath) {
-    res.status(404).send('Video not found');
-    return;
-  }
-
-  if (!fs.existsSync(videoPath)) {
     res.status(404).send('Video not found');
     return;
   }
@@ -116,6 +106,7 @@ APP.get('/video/*', async(req: Request, res: Response) => {
 
     res.writeHead(206, head);
     file.pipe(res);
+
   } else {
     const head = {
       'Content-Length': fileSize,
