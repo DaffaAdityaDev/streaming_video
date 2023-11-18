@@ -1,6 +1,5 @@
 "use client"
 import React, { useRef, useState, useEffect } from 'react';
-import axios from 'axios';
 
 export const PlayerVideoMolecules = ({ src, quality }: { src: string, quality: string }) => {
   const getUrl = ( src: string, quality: string ) => {
@@ -14,7 +13,9 @@ export const PlayerVideoMolecules = ({ src, quality }: { src: string, quality: s
   const [duration, setDuration] = useState(0);
   const [volume, setVolume] = useState(1);
   const [isVideoReady, setIsVideoReady] = useState(false);
-
+  const [currentWidthLength, setCurrentWidthLength] = useState(0);
+  const [currentStatusPlaying, setCurrentStatusPlaying] = useState("Pause");
+  const [clickedShowInfo, setClickedShowInfo] = useState(false);
   useEffect(() => {
     if (videoRef.current) {
       const currentVideoRef = videoRef.current;
@@ -30,11 +31,24 @@ export const PlayerVideoMolecules = ({ src, quality }: { src: string, quality: s
     }
   }, []);
 
+  useEffect(() => {
+    setCurrentWidthLength(Math.floor((currentTime / duration) * 100) + 0.5);
+    setCurrentStatusPlaying(videoRef.current?.paused ? 'Pause' : 'Play');
+  }, [currentTime, duration]);
+
   if (!src || typeof src !== 'string') {
     return <div>Error: Invalid video source</div>;
   }
 
+  const handleClickShowInfo = () => {
+    setClickedShowInfo(!clickedShowInfo);
+    setTimeout(() => {
+      setClickedShowInfo(false);
+    }, 1000);
+  };
+
   const playPauseVideo = () => {
+    handleClickShowInfo();
     if (videoRef.current?.paused) {
       videoRef.current.play();
     } else {
@@ -113,15 +127,30 @@ export const PlayerVideoMolecules = ({ src, quality }: { src: string, quality: s
     }
   };
 
-  
 
   return (
-    <div>
-      <div className='pt-56.25%'>
-      {!isVideoReady && <div>Wait, fetching video...</div>}
+    <div className='relative group/playpause w-full text-white '>
+      <div className='z-10 '>
+        <button className='absolute bg-red-500 opacity-0 top-0 right-0 left-0 bottom-0 z-10' onClick={playPauseVideo}></button>
+        {
+          isVideoReady && 
+          <div className={`absolute group-hover/playpause:opacity-100  bg-gradient-to-t from-black from-0%  to-transparent to-15% top-0 right-0 left-0 bottom-0 flex justify-center items-center opacity-0 transition-all duration-500 ease-in-out`}>
+            <p className='bg-red-500 rounded-full py-4 px-4'>{currentStatusPlaying}</p>
+          </div>
+        }
+      </div>
+      
+      <div className=''>
+        {
+          !isVideoReady && 
+          <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-fit alert alert-warning">
+            <svg xmlns="http://www.w3.org/2000/svg" className="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
+            <span>Wait Fething Video...</span>
+          </div>
+        }
         <video 
           ref={videoRef} 
-          className='' 
+          className='w-full h-full' 
           onError={() => console.error('Video loading error')} 
           autoPlay
           onCanPlay={() => setIsVideoReady(true)}
@@ -129,13 +158,34 @@ export const PlayerVideoMolecules = ({ src, quality }: { src: string, quality: s
           <source src={urlToVideo} type="video/mp4" />
           Your browser does not support the video tag.
         </video>
+        
       </div>
-      <button onClick={playPauseVideo}>Play/Pause</button>
-      <button onClick={() => skipVideo(-10)}>-10 sec</button>
-      <button onClick={() => skipVideo(10)}>+10 sec</button>
-      <p>{formatTime(currentTime)} / {formatTime(duration)}</p>
-      <input type="range" min="0" max={isNaN(duration) ? 0 : duration} value={currentTime} step={0.1} onChange={handleSliderChange} />
-      <input type="range" min="0" max="1" value={volume} step={0.01} onChange={handleVolumeChange} />
+      
+      <div className='absolute group-hover/playpause:opacity-100 opacity-0 bottom-0 right-0 left-0 p-4 z-20 transition-all duration-300 ease-in-out'>
+        <div>
+          <div className='relative flex justify-center items-center w-full h-4 cursor-pointer'>
+            <div className={`bg-gray-400 w-full h-[4px] absolute right-0 top-1/3 left-0`}></div>
+            <div className={`bg-red-500 h-[4px] absolute right-0 top-1/3 left-0`} style={{width: `${currentWidthLength}%`}}></div>
+            <input className='w-full absolute right-0 top-0 left-0 h-4 opacity-0 cursor-pointer' 
+              type="range" min="0" max={isNaN(duration) ? 0 : duration} 
+              value={currentTime} step={0.1} onChange={handleSliderChange} />
+          </div>
+          <div className='flex gap-4'>
+            <div className='flex gap-2'>
+              <button onClick={() => skipVideo(-10)}>-10 sec</button>
+              <button onClick={playPauseVideo}>{currentStatusPlaying}</button>
+              <button onClick={() => skipVideo(10)}>+10 sec</button>  
+            </div>
+            <div className='group/volume flex gap-2 justify-center items-center'>
+              <label htmlFor="volume">Volume</label>
+              <input className='w-0 opacity-0 group-hover/volume:opacity-100 group-hover/volume:w-20 transition-[width] duration-300 ease-in-out'
+                type="range" min="0" max="1" 
+                value={volume} step={0.01} onChange={handleVolumeChange} />
+            </div>
+            <p>{formatTime(currentTime)} / {formatTime(duration)}</p>
+          </div>
+        </div>
+      </div>
     </div>
   );
 };

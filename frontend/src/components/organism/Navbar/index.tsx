@@ -1,7 +1,21 @@
-import React from 'react'
+"use client"
+import React, { createContext, useContext } from 'react'
+import Link from 'next/link'
+
+export const SearchContext = createContext({
+  search: '',
+  setSearch: (value: string) => {},
+});
 
 export default function NavbarOrganism() {
+  const { search, setSearch } = useContext(SearchContext);
+
+  function setSearchValue(value: string) {
+    setSearch(value);
+  }
+  
   return (
+    
     <div className="navbar bg-base-100 col-span-12 row-span-1 ">
       <label className="btn btn-circle swap swap-rotate">
   
@@ -16,11 +30,13 @@ export default function NavbarOrganism() {
         
       </label>
       <div className="flex-1">
-          <a className="btn btn-ghost text-xl">daisyUI</a>
+        <Link href={`/`} className="btn btn-ghost text-xl">
+          daisyUI
+        </Link>
       </div>
       <div className="flex-none gap-2">
           <div className="form-control">
-          <input type="text" placeholder="Search" className="input input-bordered w-24 md:w-auto" />
+          <input type="text" placeholder="Search" className="input input-bordered w-24 md:w-auto" onChange={(e) => setSearchValue(e.target.value)} value={search} />
           </div>
           <div className="dropdown dropdown-end">
           <label tabIndex={0} className="btn btn-ghost btn-circle avatar">
@@ -41,5 +57,6 @@ export default function NavbarOrganism() {
           </div>
       </div>
     </div>
+  
   )
 }

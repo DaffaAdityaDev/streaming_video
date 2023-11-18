@@ -1,0 +1,35 @@
+import { VideoDataType } from '@/components/types'
+
+export default [{
+  id: 0,
+  title: 'sukunavsjogo',
+  channel: 'Description',
+  img: 'https://media.tenor.com/ZnP0C4JkNEYAAAAC/gojo-sukuna.gif',
+  slug: 'sukunavsjogo',
+  quality: '1080p',
+  duration: 100000,
+  view: 100000,
+  timeUpload: '1 day ago',
+},
+{
+  id: 1,
+  title: 'flower',
+  channel: 'Description',
+  img: 'https://scontent-sin6-2.xx.fbcdn.net/v/t39.30808-6/276123293_492677702315735_4695357269953592678_n.jpg?stp=dst-jpg_p75x225&_nc_cat=109&ccb=1-7&_nc_sid=5f2048&_nc_eui2=AeEDTYd4SmmACfpfD_EUJK-n0_SE4qH-cjTT9ITiof5yNL-V31T8FN7YuujkGRyaaN9xPKAwMvaDz6b2faV9Ij6d&_nc_ohc=avz-69ksv6oAX8c6ZkJ&_nc_ht=scontent-sin6-2.xx&oh=00_AfBDUXoCm5oGfEGR3J6Qc8NO__A__8VH2EuQv-H7dzS4lA&oe=655DF6AD',
+  slug: 'flower',
+  quality: 'defaultQuality',
+  duration: 100000,
+  view: 100000,
+  timeUpload: '1 day ago',
+}, 
+{
+  id: 2,
+  title: 'adaptivestreaming',
+  channel: 'Description',
+  img: 'https://preview.redd.it/frieren-enjoying-a-giga-burger-v0-a53mz7nmcf0c1.png?width=640&crop=smart&auto=webp&s=a6f5ec4cba7cb88edb59993fdadf2ce776f31dbf',
+  slug: 'adaptivestreaming',
+  quality: 'defaultQuality',
+  duration: 100000,
+  view: 100000,
+  timeUpload: '1 day ago',
+}] as VideoDataType[]
