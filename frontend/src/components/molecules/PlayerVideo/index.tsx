@@ -1,7 +1,7 @@
 "use client"
 import React, { useRef, useState, useEffect } from 'react';
 
-export const PlayerVideoMolecules = ({ src, quality }: { src: string, quality: string }) => {
+export const VideoPlayerMolecules = ({ src, quality }: { src: string, quality: string }) => {
   const getUrl = ( src: string, quality: string ) => {
     const url = `http://localhost:8000/video/${quality ? `${quality}` : ''}/${src}`;
     return url;

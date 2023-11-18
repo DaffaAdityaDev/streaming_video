@@ -1,11 +1,11 @@
-import { PlayerVideoMolecules } from "@/components/molecules/PlayerVideo"
+import { VideoPlayerMolecules } from "@/components/molecules/PlayerVideo"
 import { VideoDataType } from "@/components/types";
 import Link from 'next/link'
 
 export default function VideoPlayerPage({params, searchParams }: { params: { slug: string }, searchParams: { [key: string]: string | string[] | undefined }}) {
   return (
     <div className="col-span-9 flex flex-col gap-2">
-      <PlayerVideoMolecules src={params.slug} quality={Array.isArray(searchParams.quality) ? searchParams.quality[0] : (searchParams.quality || 'defaultQuality')} />
+      <VideoPlayerMolecules src={params.slug} quality={Array.isArray(searchParams.quality) ? searchParams.quality[0] : (searchParams.quality || 'defaultQuality')} />
       <h1 className="text-2xl">{params.slug}</h1>
       <div className="flex gap-4">
         <div className="avatar">
