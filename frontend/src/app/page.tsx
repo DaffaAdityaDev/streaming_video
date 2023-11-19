@@ -2,7 +2,7 @@
 
 import Image from 'next/image'
 import Link from 'next/link'
-import { SearchContext } from '@/components/organism/Navbar'
+import { AppContext } from '@/components/context'
 import { useState, useEffect, useContext } from 'react'
 import MoleculesCardVideo from '@/components/molecules/CardVideo'
 import VideoGridOrganism from '@/components/organism/VideoGrid'
@@ -14,7 +14,7 @@ import videoData from '@/data/videoData'
 export default function Home() {
   const [data, setData] = useState<VideoDataType[]>(videoData);
   const [dataSearch, setDataSearch] = useState<VideoDataType[]>(data);
-  const { search, setSearch } = useContext(SearchContext);
+  const { search, setSearch } = useContext(AppContext);
   
   useEffect(() => {
     let injectData: VideoDataType[] = [];

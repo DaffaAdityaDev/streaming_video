@@ -1,26 +1,22 @@
 "use client"
 import React, { createContext, useContext } from 'react'
 import Link from 'next/link'
-
-export const SearchContext = createContext({
-  search: '',
-  setSearch: (value: string) => {},
-});
+import { AppContext } from '@/components/context'
 
 export default function NavbarOrganism() {
-  const { search, setSearch } = useContext(SearchContext);
+  const {search, setSearch, sidebar, setSidebar } = useContext(AppContext);
 
-  function setSearchValue(value: string) {
-    setSearch(value);
+  function toggleSidebar() {
+    setSidebar(!sidebar);
   }
   
   return (
-    
-    <div className="navbar bg-base-100 col-span-12 row-span-1 ">
-      <label className="btn btn-circle swap swap-rotate">
+
+    <div className="navbar bg-base-100 col-span-12 row-span-1 sticky top-0 z-10">
+      <label className="btn btn-circle swap swap-rotate z-20">
   
         {/* this hidden checkbox controls the state */}
-        <input type="checkbox" />
+        <input type="checkbox" onClick={toggleSidebar} />
         
         {/* hamburger icon */}
         <svg className="swap-off fill-current" xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 512 512"><path d="M64,384H448V341.33H64Zm0-106.67H448V234.67H64ZM64,128v42.67H448V128Z"/></svg>

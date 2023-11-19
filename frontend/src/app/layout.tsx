@@ -4,7 +4,7 @@ import { Inter } from 'next/font/google'
 import './globals.css'
 import NavigationTemplate from '@/components/template/Home'
 import SideBarOrganism from '@/components/organism/SideBar'
-import { SearchContext } from '@/components/organism/Navbar'
+import { AppContext } from '@/components/context'
 import NavbarOrganism from '@/components/organism/Navbar'
 import { useState } from 'react'
 
@@ -21,18 +21,19 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   const [search, setSearch] = useState('');
+  const [sidebar, setSidebar] = useState(false);
 
   return (
     <html lang="en" className="dark overflow-x-hidden">
       <body className={inter.className}>
-        <SearchContext.Provider value={{ search, setSearch }} >
+        <AppContext.Provider value={{ search, setSearch, sidebar, setSidebar}}>
           <NavigationTemplate>
             <NavbarOrganism />
             <SideBarOrganism />
               {children}
 
           </NavigationTemplate>
-        </SearchContext.Provider>
+        </AppContext.Provider>
       </body>
     </html>
   )
