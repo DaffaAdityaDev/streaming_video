@@ -10,6 +10,7 @@ import VideoGridOrganism from '@/components/organism/VideoGrid'
 import { VideoDataType } from '@/components/types'
 
 import videoData from '@/data/videoData'
+import LoginBtn from '@/components/atoms/LoginBtn'
 
 export default function Home() {
   const [data, setData] = useState<VideoDataType[]>(videoData);
@@ -39,6 +40,7 @@ export default function Home() {
   return (
     <>
       <VideoGridOrganism>
+        <LoginBtn />
         {dataSearch.map((item, index) => (
           <MoleculesCardVideo key={index} {...item} />
         ))}

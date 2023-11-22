@@ -3,8 +3,9 @@ import React, { useRef, useState, useEffect } from 'react';
 
 export const VideoPlayerMolecules = ({ src, quality }: { src: string, quality: string }) => {
   const getUrl = ( src: string, quality: string ) => {
-    const url = `http://localhost:8000/video/${quality ? `${quality}` : ''}/${src}`;
-    return url;
+    const BACKENDURL = process.env.BACKEND_URL;
+    const URL = `${BACKENDURL}/video/${quality ? `${quality}` : ''}/${src}`;
+    return URL;
   }
  
   const videoRef = useRef<HTMLVideoElement | null>(null);
@@ -14,19 +15,39 @@ export const VideoPlayerMolecules = ({ src, quality }: { src: string, quality: s
   const [volume, setVolume] = useState(1);
   const [isVideoReady, setIsVideoReady] = useState(false);
   const [currentWidthLength, setCurrentWidthLength] = useState(0);
+  const [buffered, setBuffered] = useState(0);
+  const [isBuffered, setIsBuffered] = useState(false);
   const [currentStatusPlaying, setCurrentStatusPlaying] = useState("Pause");
   const [clickedShowInfo, setClickedShowInfo] = useState(false);
+  
   useEffect(() => {
     if (videoRef.current) {
       const currentVideoRef = videoRef.current;
+
+      const onWaiting = () => setIsBuffered(true);
+      const onPlaying = () => setIsBuffered(false);
+
+      const onCanPlay = () => {
+        currentVideoRef.play();
+      };
   
+      currentVideoRef.addEventListener('canplay', onCanPlay);
       currentVideoRef?.addEventListener('timeupdate', handleTimeUpdate);
       currentVideoRef?.addEventListener('durationchange', handleDurationChange);
+      currentVideoRef.addEventListener('progress', handleProgress);
+      currentVideoRef.addEventListener('waiting', onWaiting);
+      currentVideoRef.addEventListener('playing', onPlaying);
+
       handleMetadataLoad();
   
       return () => {
+        currentVideoRef.addEventListener('canplay', onCanPlay);
         currentVideoRef?.removeEventListener('timeupdate', handleTimeUpdate);
         currentVideoRef?.removeEventListener('durationchange', handleDurationChange);
+        currentVideoRef.removeEventListener('progress', handleProgress);
+        currentVideoRef.removeEventListener('waiting', onWaiting);
+        currentVideoRef.removeEventListener('playing', onPlaying);
+
       };
     }
   }, []);
@@ -39,7 +60,8 @@ export const VideoPlayerMolecules = ({ src, quality }: { src: string, quality: s
   if (!src || typeof src !== 'string') {
     return <div>Error: Invalid video source</div>;
   }
-
+  
+  
   const handleClickShowInfo = () => {
     setClickedShowInfo(!clickedShowInfo);
     setTimeout(() => {
@@ -71,6 +93,26 @@ export const VideoPlayerMolecules = ({ src, quality }: { src: string, quality: s
     }
   };
 
+  const handleProgress = () => {
+    if (videoRef.current) {
+      const bf = videoRef.current.buffered;
+      const time = videoRef.current.currentTime;
+  
+      let loadEndPercentage = 0;
+  
+      for (let i = 0; i < bf.length; i++) {
+        if (bf.start(i) <= time && time <= bf.end(i)) {
+          loadEndPercentage = bf.end(i) / videoRef.current.duration;
+          break;
+        }
+      }
+  
+      // Now you can use loadEndPercentage to update your progress bar
+      setBuffered(loadEndPercentage);
+      console.log(loadEndPercentage);
+    }
+  };
+
   const formatTime = (time: number): string => {
     if (typeof time !== 'number' || time < 0 || !isFinite(time)) {
       return "00:00";
@@ -80,6 +122,7 @@ export const VideoPlayerMolecules = ({ src, quality }: { src: string, quality: s
     const seconds = Math.floor(time % 60);
     return `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
   }
+  
 
   const skipVideo = (seconds: number) => {
     if (videoRef.current) {
@@ -131,6 +174,16 @@ export const VideoPlayerMolecules = ({ src, quality }: { src: string, quality: s
   return (
     <div className='relative group/playpause w-full text-white '>
       <div className='z-10 '>
+        {
+          isBuffered && 
+          <div className='absolute left-0 top-0 right-0 bottom-0 flex items-center justify-center'>
+            <svg className="animate-spin h-10 w-10 mr-3" viewBox="0 0 24 24">
+              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+            {/* <p className='text-xs'>{Math.floor(buffered * 100)}%</p> */}
+          </div>
+        }
         <button className='absolute bg-red-500 opacity-0 top-0 right-0 left-0 bottom-0 z-10' onClick={playPauseVideo}></button>
         {
           isVideoReady && 
@@ -164,11 +217,12 @@ export const VideoPlayerMolecules = ({ src, quality }: { src: string, quality: s
       <div className='absolute group-hover/playpause:opacity-100 opacity-0 bottom-0 right-0 left-0 p-4 z-20 transition-all duration-300 ease-in-out'>
         <div>
           <div className='relative flex justify-center items-center w-full h-4 cursor-pointer'>
-            <div className={`bg-gray-400 w-full h-[4px] absolute right-0 top-1/3 left-0`}></div>
-            <div className={`bg-red-500 h-[4px] absolute right-0 top-1/3 left-0`} style={{width: `${currentWidthLength}%`}}></div>
-            <input className='w-full absolute right-0 top-0 left-0 h-4 opacity-0 cursor-pointer' 
-              type="range" min="0" max={isNaN(duration) ? 0 : duration} 
-              value={currentTime} step={0.1} onChange={handleSliderChange} />
+          <div className={`bg-gray-600 h-[4px] absolute right-0 top-1/3 left-0`}></div>
+          <div className={`bg-gray-400 h-[4px] absolute right-0 top-1/3 left-0`} style={{width: `${buffered * 100}%`}}></div>
+          <div className={`bg-red-500 h-[4px] absolute right-0 top-1/3 left-0`} style={{width: `${currentWidthLength}%`}}></div>
+          <input className='w-full absolute right-0 top-0 left-0 h-4 opacity-0 cursor-pointer' 
+            type="range" min="0" max={isNaN(duration) ? 0 : duration} 
+            value={currentTime} step={0.1} onChange={handleSliderChange} />
           </div>
           <div className='flex gap-4'>
             <div className='flex gap-2'>

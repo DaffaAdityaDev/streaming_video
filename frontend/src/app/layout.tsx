@@ -7,6 +7,8 @@ import SideBarOrganism from '@/components/organism/SideBar'
 import { AppContext } from '@/components/context'
 import NavbarOrganism from '@/components/organism/Navbar'
 import { useState } from 'react'
+import { SessionProvider, useSession } from "next-auth/react"
+import { Session } from 'next-auth'
 
 const inter = Inter({ subsets: ['latin'] })
 
@@ -17,8 +19,10 @@ const inter = Inter({ subsets: ['latin'] })
 
 export default function RootLayout({
   children,
+  session,
 }: {
-  children: React.ReactNode
+  children: React.ReactNode,
+  session: Session | null
 }) {
   const [search, setSearch] = useState('');
   const [sidebar, setSidebar] = useState(false);
@@ -26,14 +30,16 @@ export default function RootLayout({
   return (
     <html lang="en" className="dark overflow-x-hidden">
       <body className={inter.className}>
-        <AppContext.Provider value={{ search, setSearch, sidebar, setSidebar}}>
-          <NavigationTemplate>
-            <NavbarOrganism />
-            <SideBarOrganism />
-              {children}
+        <SessionProvider session={session}>
+          <AppContext.Provider value={{ search, setSearch, sidebar, setSidebar}}>
+            <NavigationTemplate>
+              <NavbarOrganism />
+              <SideBarOrganism />
+                {children}
 
-          </NavigationTemplate>
-        </AppContext.Provider>
+            </NavigationTemplate>
+          </AppContext.Provider>
+        </SessionProvider>
       </body>
     </html>
   )

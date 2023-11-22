@@ -1,5 +1,6 @@
 import Link from "next/link"
 import { VideoDataType } from '../../types'
+import Image from "next/image"
 
 export default function MoleculesCardVideo({ id, img, title, channel: description, slug, quality, duration, view, timeUpload } : VideoDataType) {
   return (

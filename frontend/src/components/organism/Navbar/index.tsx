@@ -2,7 +2,7 @@
 import React, { createContext, useContext } from 'react'
 import Link from 'next/link'
 import { AppContext } from '@/components/context'
-
+import Image from 'next/image'
 export default function NavbarOrganism() {
   const {search, setSearch, sidebar, setSidebar } = useContext(AppContext);
 
@@ -12,7 +12,7 @@ export default function NavbarOrganism() {
   
   return (
 
-    <div className="navbar bg-base-100 col-span-12 row-span-1 sticky top-0 z-10">
+    <div className="navbar bg-base-100 col-span-12 row-span-1 sticky top-0 z-30">
       <label className="btn btn-circle swap swap-rotate z-20">
   
         {/* this hidden checkbox controls the state */}
@@ -36,15 +36,20 @@ export default function NavbarOrganism() {
           </div>
           <div className="dropdown dropdown-end">
           <label tabIndex={0} className="btn btn-ghost btn-circle avatar">
-              <div className="w-10 rounded-full">
-              <img alt="Tailwind CSS Navbar component" src="/images/stock/photo-1534528741775-53994a69daeb.jpg" />
-              </div>
+            <div className="w-10 rounded-full">
+            <Image 
+              alt="Tailwind CSS Navbar component" 
+              src="/images/stock/photo-1534528741775-53994a69daeb.jpg" 
+              layout="fill"
+              objectFit="cover"
+            />
+            </div>
           </label>
           <ul tabIndex={0} className="mt-3 z-[1] p-2 shadow menu menu-sm dropdown-content bg-base-100 rounded-box w-52">
               <li>
               <a className="justify-between">
-                  Profile
-                  <span className="badge">New</span>
+                Profile
+                <span className="badge">New</span>
               </a>
               </li>
               <li><a>Settings</a></li>
