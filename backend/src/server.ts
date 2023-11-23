@@ -151,6 +151,7 @@ APP.get('/video/*', async(req: Request, res: Response) => {
   }
 });
 
+// upload video
 APP.post('/upload', upload.single('video'), (req, res) => {
   // req.file is the `video` file
   // req.body will hold the text fields, if there were any
@@ -162,19 +163,23 @@ APP.post('/upload', upload.single('video'), (req, res) => {
   const { path: filePath, filename } = req.file;
 
   // Define the output directories for each resolution
-  const outputDirs = {
-    '480p': path.join(__dirname, '../video/480p/'),
-    '720p': path.join(__dirname, '../video/720p/'),
-    '1080p': path.join(__dirname, '../video/1080p/'),
-    '4k': path.join(__dirname, '../video/4k/'),
-    // Add other resolutions as needed
-  };
-
-  const resolutionMap = {
-    '480p': '854x480',
-    '720p': '1280x720',
-    '1080p': '1920x1080',
-    '4k': '3840x2160',
+  const resolutionConfig = {
+    '480p': {
+      width: '854',
+      outputDir: path.join(__dirname, '../video/480p/')
+    },
+    '720p': {
+      width: '1280',
+      outputDir: path.join(__dirname, '../video/720p/')
+    },
+    '1080p': {
+      width: '1920',
+      outputDir: path.join(__dirname, '../video/1080p/')
+    },
+    '4k': {
+      width: '3840',
+      outputDir: path.join(__dirname, '../video/4k/')
+    },
     // Add other resolutions as needed
   };
   
@@ -187,46 +192,47 @@ APP.post('/upload', upload.single('video'), (req, res) => {
   
     const videoStream = metadata.streams.find(stream => stream.codec_type === 'video');
   
-
     if (videoStream) {
       const videoWidth = videoStream.width;
 
       // Sort the resolutions from lowest to highest
-      const sortedResolutions = Object.entries(outputDirs).sort((a, b) => {
-        const widthA = parseInt(resolutionMap[a[0] as keyof typeof resolutionMap].split('x')[0]);
-        const widthB = parseInt(resolutionMap[b[0] as keyof typeof resolutionMap].split('x')[0]);
+      const sortedResolutions = Object.entries(resolutionConfig).sort((a, b) => {
+        const widthA = parseInt(a[1].width);
+        const widthB = parseInt(b[1].width);
         return widthA - widthB;
       });
 
       // Now you can use the resolution to select the correct output directory and frame size
-      let selectedResolution;
-      for (const [res, outputDir] of sortedResolutions) {
-        const frameWidth = parseInt(resolutionMap[res as keyof typeof resolutionMap].split('x')[0]);
+      let selectedResolution
+      for (const [res, config] of sortedResolutions) {
+        const frameWidth = parseInt(config.width);
         if (videoWidth && videoWidth <= frameWidth) {
-          selectedResolution = [res, outputDir];
+          selectedResolution = [res, config.outputDir];
           break; // Exit the loop after finding the first matching resolution
         }
       }
 
       if (!selectedResolution) {
-        selectedResolution = sortedResolutions[sortedResolutions.length - 1]; // Select the highest available resolution if none matched
+        selectedResolution = [sortedResolutions[sortedResolutions.length - 1][0], sortedResolutions[sortedResolutions.length - 1][1].outputDir]; // Select the highest available resolution if none matched
       }
-
+      
       const [res, outputDir] = selectedResolution;
       fs.mkdirSync(outputDir, { recursive: true }); // Create the directory if it does not exist
       const outputPath = path.join(outputDir, filename);
       ffmpeg(filePath)
-        .format('mp4')
-        .outputOptions('-s', resolutionMap[res as keyof typeof resolutionMap]) // Set the resolution
-        // Add other output options as needed, such as bitrate
-        .output(outputPath)
-        .on('progress', function(progress) {
-          console.log('Processing: ' + progress.percent + '% done');
-        })
-        .on('end', function() {
+      .inputOptions('-hwaccel auto') // Automatically select the hardware acceleration method
+      .outputOptions('-c:v h264_nvenc') // Use NVENC for encoding if available
+      .format('mp4')
+      .outputOptions('-vf', `scale=${resolutionConfig[res as keyof typeof resolutionConfig].width}:-1`) // Set the width and calculate the height
+      // Add other output options as needed, such as bitrate
+      .output(outputPath)
+      .on('progress', function(progress) {
+          console.log('Processing: ' + progress.percent.toFixed(2) + '% done');
+      })
+      .on('end', function() {
           console.log('Conversion Done');
-        })
-        .run();
+      })
+      .run();
     } else {
       console.error('No video stream found in file');
     }
