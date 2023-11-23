@@ -1,6 +1,5 @@
 import express, { Request, Response } from 'express';
-import { promisify } from 'util';
-import spdy from 'spdy';
+import { promisify, generateThumbnail } from './utils';
 import  fs from 'fs';
 import path from 'path';
 import multer from 'multer';
@@ -11,12 +10,13 @@ import { PrismaClient } from '@prisma/client';
 
 const prisma = new PrismaClient();
 
+
 ffmpeg.setFfmpegPath(ffmpegPath.path);
 ffmpeg.setFfprobePath(ffprobePath.path);
 
 const access = promisify(fs.access);
 
-const PORT = 8000;
+const PORT = process.env.PORT || 3001;
 const APP = express();
 
 APP.use((req: Request, res: Response, next) => {
@@ -169,19 +169,23 @@ APP.post('/upload', upload.single('video'), (req, res) => {
   const resolutionConfig = {
     '480p': {
       width: '854',
-      outputDir: path.join(__dirname, '../video/480p/')
+      outputDir: path.join(__dirname, '../video/480p/'),
+      bitrate: '400k'
     },
     '720p': {
       width: '1280',
-      outputDir: path.join(__dirname, '../video/720p/')
+      outputDir: path.join(__dirname, '../video/720p/'),
+      bitrate: '800k'
     },
     '1080p': {
       width: '1920',
-      outputDir: path.join(__dirname, '../video/1080p/')
+      outputDir: path.join(__dirname, '../video/1080p/'),
+      bitrate: '1600k'
     },
     '4k': {
       width: '3840',
-      outputDir: path.join(__dirname, '../video/4k/')
+      outputDir: path.join(__dirname, '../video/4k/'),
+      bitrate: '3200k'
     },
     // Add other resolutions as needed
   };
@@ -206,7 +210,7 @@ APP.post('/upload', upload.single('video'), (req, res) => {
       });
 
       // Now you can use the resolution to select the correct output directory and frame size
-      let selectedResolution
+      let selectedResolution: [string, any] = ['', {}];
       for (const [res, config] of sortedResolutions) {
         const frameWidth = parseInt(config.width);
         if (videoWidth && videoWidth <= frameWidth) {
@@ -218,35 +222,55 @@ APP.post('/upload', upload.single('video'), (req, res) => {
       if (!selectedResolution) {
         selectedResolution = [sortedResolutions[sortedResolutions.length - 1][0], sortedResolutions[sortedResolutions.length - 1][1].outputDir]; // Select the highest available resolution if none matched
       }
-      
+
       const [res, outputDir] = selectedResolution;
-      fs.mkdirSync(outputDir, { recursive: true }); // Create the directory if it does not exist
-      const outputPath = path.join(outputDir, filename);
-      ffmpeg(filePath)
-      .inputOptions('-hwaccel auto') // Automatically select the hardware acceleration method
-      .outputOptions('-c:v h264_nvenc') // Use NVENC for encoding if available
-      .format('mp4')
-      .outputOptions('-vf', `scale=${resolutionConfig[res as keyof typeof resolutionConfig].width}:-1`) // Set the width and calculate the height
-      // Add other output options as needed, such as bitrate
-      .output(outputPath)
-      .on('progress', function(progress) {
-          console.log('Processing: ' + progress.percent.toFixed(2) + '% done');
-      })
-      .on('end', function() {
-          console.log('Conversion Done');
-      })
-      .run();
+      const selectedResolutionIndex = sortedResolutions.findIndex(([res]) => res === selectedResolution[0]);
+
+      for (let i = selectedResolutionIndex; i >= 0; i--) {
+        const [res, config] = sortedResolutions[i];
+        const outputDir = config.outputDir;
+        fs.mkdirSync(outputDir, { recursive: true }); // Create the directory if it does not exist
+        const outputFilename = `${path.basename(filePath, path.extname(filePath))}-${res}.mp4`;
+        const outputPath = path.join(outputDir, outputFilename);
+        ffmpeg(filePath)
+          .inputOptions('-hwaccel auto') // Automatically select the hardware acceleration method
+          .outputOptions('-c:v h264_nvenc') // Use NVENC for encoding if available
+          .format('mp4')
+          .outputOptions('-vf', `scale=${resolutionConfig[res as keyof typeof resolutionConfig].width}:-1`) // Set the width and calculate the height
+          .outputOptions('-b:v', resolutionConfig[res as keyof typeof resolutionConfig].bitrate) // Set the video bitrate
+          .output(outputPath)
+          .on('start', function(commandLine) {
+            console.log(`[${res}] Spawned Ffmpeg with command: ${commandLine}`);
+          })
+          .on('error', function(err, stdout, stderr) {
+            console.log(`[${res}] Error: ${err.message}`);
+            console.log(`[${res}] ffmpeg stdout: ${stdout}`);
+            console.log(`[${res}] ffmpeg stderr: ${stderr}`);
+          })
+          .on('progress', function(progress) {
+            if (progress.percent) {
+              console.log(`[${res}] Processing: ${progress.percent.toFixed(2)}% done`);
+            }
+          })
+          .on('end', function() {
+            console.log(`[${res}] Conversion Done`);
+          })
+          .run();
+      }
     } else {
       console.error('No video stream found in file');
     }
   });
 
-  res.send('Video uploaded successfully.');
+  const videoPath = req.file.path;
+  generateThumbnail(videoPath);
+
+  res.send('original Video uploaded successfully.');
 });
 
 
 
 APP.listen(PORT, () => {
-  console.log(`http://localhost:8000`)
+  console.log(`http://localhost:${PORT}`)
 });
 

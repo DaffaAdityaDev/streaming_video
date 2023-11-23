@@ -40,7 +40,6 @@ export default function Home() {
   return (
     <>
       <VideoGridOrganism>
-        <LoginBtn />
         {dataSearch.map((item, index) => (
           <MoleculesCardVideo key={index} {...item} />
         ))}

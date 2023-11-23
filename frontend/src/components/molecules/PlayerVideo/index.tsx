@@ -3,7 +3,7 @@ import React, { useRef, useState, useEffect } from 'react';
 
 export const VideoPlayerMolecules = ({ src, quality }: { src: string, quality: string }) => {
   const getUrl = ( src: string, quality: string ) => {
-    const BACKENDURL = process.env.BACKEND_URL;
+    const BACKENDURL = process.env.NEXT_PUBLIC_BACKEND_URL;
     const URL = `${BACKENDURL}/video/${quality ? `${quality}` : ''}/${src}`;
     return URL;
   }
@@ -109,7 +109,6 @@ export const VideoPlayerMolecules = ({ src, quality }: { src: string, quality: s
   
       // Now you can use loadEndPercentage to update your progress bar
       setBuffered(loadEndPercentage);
-      console.log(loadEndPercentage);
     }
   };
 
