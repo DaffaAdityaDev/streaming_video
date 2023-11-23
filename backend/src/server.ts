@@ -6,6 +6,7 @@ import multer from 'multer';
 import ffmpeg from 'fluent-ffmpeg';
 import ffprobePath from '@ffprobe-installer/ffprobe';
 import ffmpegPath from '@ffmpeg-installer/ffmpeg';
+import bcrypt from 'bcrypt';
 import { PrismaClient } from '@prisma/client';
 
 const prisma = new PrismaClient();
@@ -19,6 +20,7 @@ const access = promisify(fs.access);
 const PORT = process.env.PORT || 3001;
 const APP = express();
 
+APP.use(express.json());
 APP.use((req: Request, res: Response, next) => {
   res.header('Access-Control-Allow-Origin', '*');
   res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept');
@@ -38,6 +40,87 @@ const upload = multer({ storage: storage });
 
 APP.get('/', (req: Request, res: Response) => {
   res.send('Hello, Developer! start you CRAFT here');
+});
+
+APP.post('/register', async (req: Request, res: Response) => {
+  const { username, email, password } = req.body;
+  const hashedPassword = await bcrypt.hash(password, 10);
+
+  try {
+    const checkUser = await prisma.users.findFirst({
+      where: {
+        OR: [
+          { username: username },
+          { email: email },
+        ],
+      },
+    });
+
+    if (checkUser) {
+      return res.status(400).json({
+        status: 'error',
+        message: 'User already exists',
+      });
+    }
+
+    const user = await prisma.users.create({
+      data: {
+        username,
+        email,
+        password: hashedPassword,
+      },
+    });
+
+    return res.json({
+      status: 'success',
+      message: 'User created successfully',
+      data: user,
+    });
+  } catch (error) {
+    res.status(400).json({
+      status: 'error',
+      message: error,
+    });
+  }
+});
+
+APP.post('/login', async (req: Request, res: Response) => {
+  const { email, password } = req.body;
+
+  try {
+    const user = await prisma.users.findUnique({
+      where: {
+        email,
+      },
+    });
+
+    if (!user) {
+      return res.status(404).json({
+        status: 'error',
+        message: 'User not found',
+      });
+    }
+
+    const passwordValid = await bcrypt.compare(password, user.password);
+
+    if (!passwordValid) {
+      return res.status(400).json({
+        status: 'error',
+        message: 'Invalid password',
+      });
+    }
+
+    return res.json({
+      status: 'success',
+      message: 'User logged in successfully',
+      data: user,
+    });
+  } catch (error) {
+    res.status(400).json({
+      status: 'error',
+      message: error,
+    });
+  }
 });
 
 // segment video streaming
