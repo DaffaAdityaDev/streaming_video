@@ -7,6 +7,9 @@ import multer from 'multer';
 import ffmpeg from 'fluent-ffmpeg';
 import ffprobePath from '@ffprobe-installer/ffprobe';
 import ffmpegPath from '@ffmpeg-installer/ffmpeg';
+import { PrismaClient } from '@prisma/client';
+
+const prisma = new PrismaClient();
 
 ffmpeg.setFfmpegPath(ffmpegPath.path);
 ffmpeg.setFfprobePath(ffprobePath.path);
