@@ -8,6 +8,17 @@ import ffprobePath from '@ffprobe-installer/ffprobe';
 import ffmpegPath from '@ffmpeg-installer/ffmpeg';
 import bcrypt from 'bcrypt';
 import { PrismaClient } from '@prisma/client';
+import async from 'async';
+
+interface Task {
+  filePath: string;
+  resolutionConfig: {
+    width: string;
+    bitrate: string;
+  };
+  outputPath: string;
+  res: string;
+}
 
 const prisma = new PrismaClient();
 
@@ -30,13 +41,20 @@ APP.use((req: Request, res: Response, next) => {
 const storage = multer.diskStorage({
   destination: function (req: any, file: any, cb: (arg0: null, arg1: string) => void) {
     const dir = path.join(__dirname, '../video/defaultQuality/');
+
+    // Create the directory if it doesn't exist
+    fs.mkdirSync(dir, { recursive: true });
+
     cb(null, dir)
   },
   filename: function (req: any, file: { fieldname: string; originalname: string; }, cb: (arg0: null, arg1: string) => void) {
     cb(null, file.fieldname + '-' + Date.now() + path.extname(file.originalname))
   }
 })
+
 const upload = multer({ storage: storage });
+APP.use('/video', express.static('video'));
+APP.use('/thumbnails', express.static('thumbnails'));
 
 APP.get('/', (req: Request, res: Response) => {
   res.send('Hello, Developer! start you CRAFT here');
@@ -68,6 +86,7 @@ APP.post('/register', async (req: Request, res: Response) => {
         username,
         email,
         password: hashedPassword,
+        image_url: 'https://res.cloudinary.com/dkkgmzpqd/image/upload/v1628074759/default-profile-picture-300x300_y3c5xw.png',
       },
     });
 
@@ -237,6 +256,38 @@ APP.get('/video/*', async(req: Request, res: Response) => {
   }
 });
 
+
+
+// Create a queue object with concurrency 4
+const q = async.queue((task: Task, callback) => {
+  ffmpeg(task.filePath)
+    .inputOptions('-hwaccel auto') // Automatically select the hardware acceleration method
+    .outputOptions('-c:v h264_nvenc') // Use NVENC for encoding if available
+    .format('mp4')
+    .outputOptions('-vf', `scale=${task.resolutionConfig.width}:-1`) // Set the width and calculate the height
+    .outputOptions('-b:v', task.resolutionConfig.bitrate) // Set the video bitrate
+    .output(task.outputPath)
+    .on('start', function(commandLine) {
+      console.log(`[${task.res}] Spawned Ffmpeg with command: ${commandLine}`);
+    })
+    .on('error', function(err, stdout, stderr) {
+      console.log(`[${task.res}] Error: ${err.message}`);
+      console.log(`[${task.res}] ffmpeg stdout: ${stdout}`);
+      console.log(`[${task.res}] ffmpeg stderr: ${stderr}`);
+      callback(); // Call the callback function once the task is done
+    })
+    .on('progress', function(progress) {
+      if (progress.percent) {
+        console.log(`[${task.res}] Processing: ${progress.percent.toFixed(2)}% done`);
+      }
+    })
+    .on('end', function() {
+      console.log(`[${task.res}] Conversion Done`);
+      callback(); // Call the callback function once the task is done
+    })
+    .run();
+}, 4);
+
 // upload video
 APP.post('/upload', upload.single('video'), (req, res) => {
   // req.file is the `video` file
@@ -248,27 +299,46 @@ APP.post('/upload', upload.single('video'), (req, res) => {
 
   const { path: filePath, filename } = req.file;
 
+  if (!fs.existsSync(filePath)) {
+    // If the file doesn't exist, handle the error
+    // For example, you can send a response to the client
+    res.status(404).send('Video file not found');
+    // Or you can create the file
+    // fs.writeFileSync(filePath, '');
+    return;
+  }
+
   // Define the output directories for each resolution
   const resolutionConfig = {
+    '144p': {
+      width: '256',
+      outputDir: path.join(__dirname, '../video/144p/'),
+      bitrate: '1000k'
+    },
+    '240p': {
+      width: '426',
+      outputDir: path.join(__dirname, '../video/240p/'),
+      bitrate: '1500k'
+    },
     '480p': {
       width: '854',
       outputDir: path.join(__dirname, '../video/480p/'),
-      bitrate: '400k'
+      bitrate: '2500k'
     },
     '720p': {
       width: '1280',
       outputDir: path.join(__dirname, '../video/720p/'),
-      bitrate: '800k'
+      bitrate: '5000k'
     },
     '1080p': {
       width: '1920',
       outputDir: path.join(__dirname, '../video/1080p/'),
-      bitrate: '1600k'
+      bitrate: '8000k'
     },
     '4k': {
       width: '3840',
       outputDir: path.join(__dirname, '../video/4k/'),
-      bitrate: '3200k'
+      bitrate: '35000k'
     },
     // Add other resolutions as needed
   };
@@ -309,36 +379,45 @@ APP.post('/upload', upload.single('video'), (req, res) => {
       const [res, outputDir] = selectedResolution;
       const selectedResolutionIndex = sortedResolutions.findIndex(([res]) => res === selectedResolution[0]);
 
+    
       for (let i = selectedResolutionIndex; i >= 0; i--) {
         const [res, config] = sortedResolutions[i];
         const outputDir = config.outputDir;
         fs.mkdirSync(outputDir, { recursive: true }); // Create the directory if it does not exist
         const outputFilename = `${path.basename(filePath, path.extname(filePath))}-${res}.mp4`;
         const outputPath = path.join(outputDir, outputFilename);
-        ffmpeg(filePath)
-          .inputOptions('-hwaccel auto') // Automatically select the hardware acceleration method
-          .outputOptions('-c:v h264_nvenc') // Use NVENC for encoding if available
-          .format('mp4')
-          .outputOptions('-vf', `scale=${resolutionConfig[res as keyof typeof resolutionConfig].width}:-1`) // Set the width and calculate the height
-          .outputOptions('-b:v', resolutionConfig[res as keyof typeof resolutionConfig].bitrate) // Set the video bitrate
-          .output(outputPath)
-          .on('start', function(commandLine) {
-            console.log(`[${res}] Spawned Ffmpeg with command: ${commandLine}`);
-          })
-          .on('error', function(err, stdout, stderr) {
-            console.log(`[${res}] Error: ${err.message}`);
-            console.log(`[${res}] ffmpeg stdout: ${stdout}`);
-            console.log(`[${res}] ffmpeg stderr: ${stderr}`);
-          })
-          .on('progress', function(progress) {
-            if (progress.percent) {
-              console.log(`[${res}] Processing: ${progress.percent.toFixed(2)}% done`);
-            }
-          })
-          .on('end', function() {
-            console.log(`[${res}] Conversion Done`);
-          })
-          .run();
+
+        // Add the task to the queue
+        q.push({
+          filePath,
+          resolutionConfig: config,
+          outputPath,
+          res
+        });
+        // ffmpeg(filePath)
+        //   .inputOptions('-hwaccel auto') // Automatically select the hardware acceleration method
+        //   .outputOptions('-c:v h264_nvenc') // Use NVENC for encoding if available
+        //   .format('mp4')
+        //   .outputOptions('-vf', `scale=${resolutionConfig[res as keyof typeof resolutionConfig].width}:-1`) // Set the width and calculate the height
+        //   .outputOptions('-b:v', resolutionConfig[res as keyof typeof resolutionConfig].bitrate) // Set the video bitrate
+        //   .output(outputPath)
+        //   .on('start', function(commandLine) {
+        //     console.log(`[${res}] Spawned Ffmpeg with command: ${commandLine}`);
+        //   })
+        //   .on('error', function(err, stdout, stderr) {
+        //     console.log(`[${res}] Error: ${err.message}`);
+        //     console.log(`[${res}] ffmpeg stdout: ${stdout}`);
+        //     console.log(`[${res}] ffmpeg stderr: ${stderr}`);
+        //   })
+        //   .on('progress', function(progress) {
+        //     if (progress.percent) {
+        //       console.log(`[${res}] Processing: ${progress.percent.toFixed(2)}% done`);
+        //     }
+        //   })
+        //   .on('end', function() {
+        //     console.log(`[${res}] Conversion Done`);
+        //   })
+        //   .run();
       }
     } else {
       console.error('No video stream found in file');
@@ -356,4 +435,3 @@ APP.post('/upload', upload.single('video'), (req, res) => {
 APP.listen(PORT, () => {
   console.log(`http://localhost:${PORT}`)
 });
-

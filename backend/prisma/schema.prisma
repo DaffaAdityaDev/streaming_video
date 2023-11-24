@@ -16,6 +16,7 @@ model Users {
   email       String     @unique
   password    String     
   created_at  DateTime   @default(now())
+  image_url   String
   video       Videos[]
   comment     Comments[]
 }

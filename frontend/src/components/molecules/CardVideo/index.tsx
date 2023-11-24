@@ -1,13 +1,27 @@
-import Link from "next/link"
+import Link from 'next/link'
 import { VideoDataType } from '../../types'
-import Image from "next/image"
+import Image from 'next/image'
 
-export default function MoleculesCardVideo({ id, img, title, channel: description, slug, quality, duration, view, timeUpload } : VideoDataType) {
+export default function MoleculesCardVideo({
+  id,
+  img,
+  title,
+  channel: description,
+  slug,
+  quality,
+  duration,
+  view,
+  timeUpload,
+}: VideoDataType) {
   return (
-    <div className="w-full h-full text-white rounded-md overflow-hidden shadow-md hover:shadow-lg transition duration-300 ease-in-out transform hover:-translate-y-1 hover:scale-105 cursor-pointer">
+    <div className="h-full w-full transform cursor-pointer overflow-hidden rounded-md text-white shadow-md transition duration-300 ease-in-out hover:-translate-y-1 hover:scale-105 hover:shadow-lg">
       <Link href={`/video/watch?video=${slug}&quality=${quality}`}>
         <div className="w-full">
-          <img className="w-full h-full bg-center aspect-video object-cover" src={img} alt={title} />
+          <img
+            className="aspect-video h-full w-full bg-center object-cover"
+            src={img}
+            alt={title}
+          />
         </div>
         <h2>{title}</h2>
         <p>{description}</p>
