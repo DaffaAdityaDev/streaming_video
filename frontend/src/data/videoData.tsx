@@ -39,7 +39,7 @@ export default [
     title: 'test4k',
     channel: 'Description',
     img: 'https://preview.redd.it/frieren-enjoying-a-giga-burger-v0-a53mz7nmcf0c1.png?width=640&crop=smart&auto=webp&s=a6f5ec4cba7cb88edb59993fdadf2ce776f31dbf',
-    slug: 'video-1700791488559-4k',
+    slug: 'video-1700839533512-4k',
     quality: '4k',
     duration: 100000,
     view: 100000,
