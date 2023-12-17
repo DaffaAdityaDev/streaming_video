@@ -3,6 +3,7 @@ import React, { useRef, useState, useEffect } from 'react'
 
 export const VideoPlayerMolecules = ({ src, quality }: { src: string; quality: string }) => {
   const [qualities, setQualities] = useState(quality)
+  const suportedQualities = ['144p', '240p', '480p', '720p', '1080p', '4k', 'defaultQuality']
   const getUrl = (src: string, quality: string) => {
     const BACKENDURL = process.env.NEXT_PUBLIC_BACKEND_URL
     let url
@@ -13,13 +14,12 @@ export const VideoPlayerMolecules = ({ src, quality }: { src: string; quality: s
         src.split('-').slice(0, -1).join('-') + '-' + quality
       }`
     }
-    console.log(url)
+    // console.log(url)
     // console.log(`${BACKENDURL}/video/${quality}` + src.split('-').slice(0, -1).join('-') + '-' + quality + '.mp4');
     return url
   }
 
   const checkIfVideoResoNotBigerThanCurr = (quality: string) => {
-    const suportedQualities = ['144p', '240p', '480p', '720p', '1080p', '4k']
     return suportedQualities.splice(0, suportedQualities.indexOf(quality) + 1)
   }
 
@@ -46,7 +46,7 @@ export const VideoPlayerMolecules = ({ src, quality }: { src: string; quality: s
     }
     if (videoRef.current) {
       const currentVideoRef = videoRef.current
-      console.log(currentTime)
+      // console.log(currentTime)
       const onWaiting = () => setIsBuffered(true)
       const onPlaying = () => setIsBuffered(false)
 
@@ -79,9 +79,13 @@ export const VideoPlayerMolecules = ({ src, quality }: { src: string; quality: s
         currentVideoRef.removeEventListener('waiting', onWaiting)
         currentVideoRef.removeEventListener('playing', onPlaying)
         currentVideoRef.removeEventListener('loadedmetadata', onLoadedMetadata)
+        if (videoRef.current) {
+          videoRef.current.pause();
+          videoRef.current.src = ""; // This line helps to release the memory
+        }
       }
     }
-  }, [currentTime, qualities, src, urlToVideo])
+  }, [qualities, src])
 
   useEffect(() => {
     setCurrentWidthLength(Math.floor((currentTime / duration) * 100) + 0.5)
@@ -104,14 +108,20 @@ export const VideoPlayerMolecules = ({ src, quality }: { src: string; quality: s
     }, 1000)
   }
 
-  const playPauseVideo = () => {
-    handleClickShowInfo()
-    if (videoRef.current?.paused) {
-      videoRef.current.play()
-    } else {
-      videoRef.current?.pause()
+  const playPauseVideo = async () => {
+    handleClickShowInfo();
+    if (videoRef.current) {
+      if (videoRef.current.paused) {
+        try {
+          await videoRef.current.play();
+        } catch (err) {
+          console.error(err);
+        }
+      } else {
+        videoRef.current.pause();
+      }
     }
-  }
+  };
 
   const handleVolumeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newVolume = parseFloat(e.target.value) || 0
@@ -203,6 +213,89 @@ export const VideoPlayerMolecules = ({ src, quality }: { src: string; quality: s
     }
   }
 
+  const handleVideoError = () => {
+    if (videoRef.current) {
+      console.error(`Error: ${videoRef.current.error}`);
+      console.log(`Network State: ${videoRef.current.networkState}`);
+      console.log(`Ready State: ${videoRef.current.readyState}`);
+
+      if (videoRef.current.error) {
+        switch (videoRef.current.error.code) {
+          case 1:
+            console.error('MEDIA_ERR_ABORTED');
+            break;
+          case 2:
+            console.error('MEDIA_ERR_NETWORK');
+            break;
+          case 3:
+            console.error('MEDIA_ERR_DECODE');
+            break;
+          case 4:
+            console.error('MEDIA_ERR_SRC_NOT_SUPPORTED');
+            break;
+          default:
+            console.error('MEDIA_ERR_UNKNOWN');
+            break;
+        }
+      }
+
+      if (videoRef.current.networkState) {
+        //handle if video error with other
+        playPauseVideo()
+        //random quality
+        const randomQuality = supportedQualities[Math.floor(Math.random() * supportedQualities.length)]
+        setQualities(randomQuality)
+        switch (videoRef.current.networkState) {
+          case 0:
+            console.error('NETWORK_EMPTY');
+            break;
+          case 1:
+            console.error('NETWORK_IDLE');
+            break;
+          case 2:
+            console.error('NETWORK_LOADING');
+            break;
+          case 3:
+            console.error('NETWORK_NO_SOURCE');
+            break;
+          default:
+            console.error('NETWORK_UNKNOWN');
+            break;
+        }
+      }
+
+      if (videoRef.current.readyState) {
+        //handle if video error with other
+        playPauseVideo()
+        //random quality
+        const randomQuality = supportedQualities[Math.floor(Math.random() * supportedQualities.length)]
+        setQualities(randomQuality)
+        switch (videoRef.current.readyState) {
+          case 0:
+            console.error('HAVE_NOTHING');
+            break;
+          case 1:
+            console.error('HAVE_METADATA');
+            break;
+          case 2:
+            console.error('HAVE_CURRENT_DATA');
+            break;
+          case 3:
+            console.error('HAVE_FUTURE_DATA');
+            break;
+          case 4:
+            console.error('HAVE_ENOUGH_DATA');
+            break;
+          default:
+            console.error('HAVE_UNKNOWN');
+            break;
+        }
+      }
+    }
+
+
+  };
+
   return (
     <div className="group/playpause relative w-full text-white ">
       <div className="z-10 ">
@@ -261,7 +354,7 @@ export const VideoPlayerMolecules = ({ src, quality }: { src: string; quality: s
         <video
           ref={videoRef}
           className="h-full w-full"
-          onError={(e) => console.error('Video loading error', e)}
+          onError={handleVideoError}
           autoPlay
           onCanPlay={() => setIsVideoReady(true)}
         >

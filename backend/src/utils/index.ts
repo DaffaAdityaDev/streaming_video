@@ -16,6 +16,8 @@ export function promisify(fn: Function) {
   };
 }
 
+
+
 export function generateThumbnail(videoPath: string) {
   console.log('Generating thumbnail for', videoPath);
   const thumbnailPath = path.join(__dirname, '../../thumbnails');
@@ -35,6 +37,8 @@ export function generateThumbnail(videoPath: string) {
       filename: thumbnailName,
       folder: thumbnailPath,
       size: '320x240'
+    }).on('progress', function(progress) {
+      console.log('Processing: ' + progress.percent + '% done');
     })
     .on('error', function(err) {
       console.error('Error generating thumbnail:', err);

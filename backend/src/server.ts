@@ -38,6 +38,16 @@ APP.use((req: Request, res: Response, next) => {
   next();
 });
 
+/**
+ * The storage configuration for multer.
+ * 
+ * This configuration specifies where and how uploaded files should be stored.
+ * 
+ * @type {multer.StorageEngine}
+ * 
+ * @property {Function} destination - A function to control where uploaded files should be stored.
+ * @property {Function} filename - A function to control what the uploaded file should be named.
+ */
 const storage = multer.diskStorage({
   destination: function (req: any, file: any, cb: (arg0: null, arg1: string) => void) {
     const dir = path.join(__dirname, '../video/defaultQuality/');
@@ -142,7 +152,8 @@ APP.post('/login', async (req: Request, res: Response) => {
   }
 });
 
-// segment video streaming
+
+
 APP.get('/video/:quality/:slug/:segment', (req: Request, res: Response) => {
   const { quality, slug, segment } = req.params;
 
@@ -288,7 +299,17 @@ const q = async.queue((task: Task, callback) => {
     .run();
 }, 4);
 
-// upload video
+/**
+ * Handles the POST request for the '/upload' route.
+ * 
+ * This function is responsible for handling file uploads. It uses multer to process the uploaded file.
+ * If no file is uploaded, it sends a 400 status code with a message 'No file uploaded'.
+ * It then checks if the uploaded file exists in the file system. If not, it sends a 404 status code with a message 'Video file not found'.
+ * 
+ * @param {express.Request} req - The request object.
+ * @param {express.Response} res - The response object.
+ * @returns {void}
+ */
 APP.post('/upload', upload.single('video'), (req, res) => {
   // req.file is the `video` file
   // req.body will hold the text fields, if there were any
@@ -345,6 +366,8 @@ APP.post('/upload', upload.single('video'), (req, res) => {
   
   
   ffmpeg.ffprobe(filePath, function(err, metadata) {
+    
+
     if (err || !metadata) {
       console.error('Error reading video file:', err);
       return;
@@ -426,6 +449,28 @@ APP.post('/upload', upload.single('video'), (req, res) => {
 
   const videoPath = req.file.path;
   generateThumbnail(videoPath);
+
+  if (!req.file) {
+    res.status(400).send('No file uploaded');
+    return;
+  }
+  const file = req.file;
+  const data = {
+    id: 0, // You'll need to generate or fetch this
+    title: file.originalname,
+    channel: 'Description', // You'll need to generate or fetch this
+    img: 'https://media.tenor.com/ZnP0C4JkNEYAAAAC/gojo-sukuna.gif', // You'll need to generate or fetch this
+    slug: file.filename,
+    quality: '1080p', // You'll need to generate or fetch this
+    duration: 100000, // You'll need to generate or fetch this
+    view: 100000, // You'll need to generate or fetch this
+    timeUpload: new Date().toISOString(),
+    filename: file.filename,
+    path: file.path,
+    size: file.size
+  };
+
+  fs.writeFileSync('data.txt', JSON.stringify(data));
 
   res.send('original Video uploaded successfully.');
 });

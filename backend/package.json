@@ -77,7 +77,9 @@
   },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "dev": "nodemon"
+    "dev": "nodemon",
+    "docs": "jsdoc2md --files build/server.js > readme.md",
+    "build": "tsc & jsdoc2md --files build/**/*.js > readme.md"
   },
   "author": "",
   "license": "ISC",
@@ -88,6 +90,7 @@
     "@types/multer": "^1.4.11",
     "@types/node": "^20.9.0",
     "@types/spdy": "^3.4.9",
+    "jsdoc-to-markdown": "^8.0.0",
     "nodemon": "^3.0.1",
     "prisma": "^5.6.0",
     "ts-node": "^10.9.1",
