@@ -1,7 +1,5 @@
-"use client"
-import { VideoPlayerMolecules } from '@/components/molecules/PlayerVideo'
-import { VideoDataType } from '@/components/types'
-import Link from 'next/link'
+/* eslint-disable @next/next/no-img-element */
+import { PlayerVideo } from "@/app/_components/video/PlayerVideo"
 
 export default function VideoPlayerPage({
   params,
@@ -12,7 +10,7 @@ export default function VideoPlayerPage({
 }) {
   return (
     <div className="col-span-12 flex flex-col gap-2">
-      <VideoPlayerMolecules
+      <PlayerVideo
         src={
           Array.isArray(searchParams.video)
             ? searchParams.video[0]
@@ -28,7 +26,7 @@ export default function VideoPlayerPage({
       <div className="flex gap-4">
         <div className="avatar">
           <div className="w-16 rounded-full">
-            <img src="https://media.tenor.com/ZnP0C4JkNEYAAAAC/gojo-sukuna.gif" />
+            <img src="https://media.tenor.com/ZnP0C4JkNEYAAAAC/gojo-sukuna.gif" alt="foto" />
           </div>
         </div>
         <div className="flex w-full justify-between">

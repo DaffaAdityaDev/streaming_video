@@ -21,14 +21,18 @@ const fluent_ffmpeg_1 = __importDefault(require("fluent-ffmpeg"));
 const ffprobe_1 = __importDefault(require("@ffprobe-installer/ffprobe"));
 const ffmpeg_1 = __importDefault(require("@ffmpeg-installer/ffmpeg"));
 const bcrypt_1 = __importDefault(require("bcrypt"));
+const bcrypt_1 = __importDefault(require("bcrypt"));
 const client_1 = require("@prisma/client");
+const async_1 = __importDefault(require("async"));
 const async_1 = __importDefault(require("async"));
 const prisma = new client_1.PrismaClient();
 fluent_ffmpeg_1.default.setFfmpegPath(ffmpeg_1.default.path);
 fluent_ffmpeg_1.default.setFfprobePath(ffprobe_1.default.path);
 const access = (0, utils_1.promisify)(fs_1.default.access);
 const PORT = process.env.PORT || 3001;
+const PORT = process.env.PORT || 3001;
 const APP = (0, express_1.default)();
+APP.use(express_1.default.json());
 APP.use(express_1.default.json());
 APP.use((req, res, next) => {
     res.header('Access-Control-Allow-Origin', '*');
@@ -50,6 +54,8 @@ const storage = multer_1.default.diskStorage({
         const dir = path_1.default.join(__dirname, '../video/defaultQuality/');
         // Create the directory if it doesn't exist
         fs_1.default.mkdirSync(dir, { recursive: true });
+        // Create the directory if it doesn't exist
+        fs_1.default.mkdirSync(dir, { recursive: true });
         cb(null, dir);
     },
     filename: function (req, file, cb) {
@@ -57,6 +63,8 @@ const storage = multer_1.default.diskStorage({
     }
 });
 const upload = (0, multer_1.default)({ storage: storage });
+APP.use('/video', express_1.default.static('video'));
+APP.use('/thumbnails', express_1.default.static('thumbnails'));
 APP.use('/video', express_1.default.static('video'));
 APP.use('/thumbnails', express_1.default.static('thumbnails'));
 APP.get('/', (req, res) => {
@@ -254,6 +262,36 @@ const q = async_1.default.queue((task, callback) => {
     })
         .run();
 }, 4);
+// upload video
+// Create a queue object with concurrency 4
+const q = async_1.default.queue((task, callback) => {
+    (0, fluent_ffmpeg_1.default)(task.filePath)
+        .inputOptions('-hwaccel auto') // Automatically select the hardware acceleration method
+        .outputOptions('-c:v h264_nvenc') // Use NVENC for encoding if available
+        .format('mp4')
+        .outputOptions('-vf', `scale=${task.resolutionConfig.width}:-1`) // Set the width and calculate the height
+        .outputOptions('-b:v', task.resolutionConfig.bitrate) // Set the video bitrate
+        .output(task.outputPath)
+        .on('start', function (commandLine) {
+        console.log(`[${task.res}] Spawned Ffmpeg with command: ${commandLine}`);
+    })
+        .on('error', function (err, stdout, stderr) {
+        console.log(`[${task.res}] Error: ${err.message}`);
+        console.log(`[${task.res}] ffmpeg stdout: ${stdout}`);
+        console.log(`[${task.res}] ffmpeg stderr: ${stderr}`);
+        callback(); // Call the callback function once the task is done
+    })
+        .on('progress', function (progress) {
+        if (progress.percent) {
+            console.log(`[${task.res}] Processing: ${progress.percent.toFixed(2)}% done`);
+        }
+    })
+        .on('end', function () {
+        console.log(`[${task.res}] Conversion Done`);
+        callback(); // Call the callback function once the task is done
+    })
+        .run();
+}, 4);
 /**
  * Handles the POST request for the '/upload' route.
  *
@@ -281,8 +319,26 @@ APP.post('/upload', upload.single('video'), (req, res) => {
         // fs.writeFileSync(filePath, '');
         return;
     }
+    if (!fs_1.default.existsSync(filePath)) {
+        // If the file doesn't exist, handle the error
+        // For example, you can send a response to the client
+        res.status(404).send('Video file not found');
+        // Or you can create the file
+        // fs.writeFileSync(filePath, '');
+        return;
+    }
     // Define the output directories for each resolution
     const resolutionConfig = {
+        '144p': {
+            width: '256',
+            outputDir: path_1.default.join(__dirname, '../video/144p/'),
+            bitrate: '1000k'
+        },
+        '240p': {
+            width: '426',
+            outputDir: path_1.default.join(__dirname, '../video/240p/'),
+            bitrate: '1500k'
+        },
         '144p': {
             width: '256',
             outputDir: path_1.default.join(__dirname, '../video/144p/'),
@@ -297,9 +353,13 @@ APP.post('/upload', upload.single('video'), (req, res) => {
             width: '854',
             outputDir: path_1.default.join(__dirname, '../video/480p/'),
             bitrate: '2500k'
+            outputDir: path_1.default.join(__dirname, '../video/480p/'),
+            bitrate: '2500k'
         },
         '720p': {
             width: '1280',
+            outputDir: path_1.default.join(__dirname, '../video/720p/'),
+            bitrate: '5000k'
             outputDir: path_1.default.join(__dirname, '../video/720p/'),
             bitrate: '5000k'
         },
@@ -307,9 +367,13 @@ APP.post('/upload', upload.single('video'), (req, res) => {
             width: '1920',
             outputDir: path_1.default.join(__dirname, '../video/1080p/'),
             bitrate: '8000k'
+            outputDir: path_1.default.join(__dirname, '../video/1080p/'),
+            bitrate: '8000k'
         },
         '4k': {
             width: '3840',
+            outputDir: path_1.default.join(__dirname, '../video/4k/'),
+            bitrate: '35000k'
             outputDir: path_1.default.join(__dirname, '../video/4k/'),
             bitrate: '35000k'
         },
@@ -331,6 +395,7 @@ APP.post('/upload', upload.single('video'), (req, res) => {
             });
             // Now you can use the resolution to select the correct output directory and frame size
             let selectedResolution = ['', {}];
+            let selectedResolution = ['', {}];
             for (const [res, config] of sortedResolutions) {
                 const frameWidth = parseInt(config.width);
                 if (videoWidth && videoWidth <= frameWidth) {
@@ -342,6 +407,45 @@ APP.post('/upload', upload.single('video'), (req, res) => {
                 selectedResolution = [sortedResolutions[sortedResolutions.length - 1][0], sortedResolutions[sortedResolutions.length - 1][1].outputDir]; // Select the highest available resolution if none matched
             }
             const [res, outputDir] = selectedResolution;
+            const selectedResolutionIndex = sortedResolutions.findIndex(([res]) => res === selectedResolution[0]);
+            for (let i = selectedResolutionIndex; i >= 0; i--) {
+                const [res, config] = sortedResolutions[i];
+                const outputDir = config.outputDir;
+                fs_1.default.mkdirSync(outputDir, { recursive: true }); // Create the directory if it does not exist
+                const outputFilename = `${path_1.default.basename(filePath, path_1.default.extname(filePath))}-${res}.mp4`;
+                const outputPath = path_1.default.join(outputDir, outputFilename);
+                // Add the task to the queue
+                q.push({
+                    filePath,
+                    resolutionConfig: config,
+                    outputPath,
+                    res
+                });
+                // ffmpeg(filePath)
+                //   .inputOptions('-hwaccel auto') // Automatically select the hardware acceleration method
+                //   .outputOptions('-c:v h264_nvenc') // Use NVENC for encoding if available
+                //   .format('mp4')
+                //   .outputOptions('-vf', `scale=${resolutionConfig[res as keyof typeof resolutionConfig].width}:-1`) // Set the width and calculate the height
+                //   .outputOptions('-b:v', resolutionConfig[res as keyof typeof resolutionConfig].bitrate) // Set the video bitrate
+                //   .output(outputPath)
+                //   .on('start', function(commandLine) {
+                //     console.log(`[${res}] Spawned Ffmpeg with command: ${commandLine}`);
+                //   })
+                //   .on('error', function(err, stdout, stderr) {
+                //     console.log(`[${res}] Error: ${err.message}`);
+                //     console.log(`[${res}] ffmpeg stdout: ${stdout}`);
+                //     console.log(`[${res}] ffmpeg stderr: ${stderr}`);
+                //   })
+                //   .on('progress', function(progress) {
+                //     if (progress.percent) {
+                //       console.log(`[${res}] Processing: ${progress.percent.toFixed(2)}% done`);
+                //     }
+                //   })
+                //   .on('end', function() {
+                //     console.log(`[${res}] Conversion Done`);
+                //   })
+                //   .run();
+            }
             const selectedResolutionIndex = sortedResolutions.findIndex(([res]) => res === selectedResolution[0]);
             for (let i = selectedResolutionIndex; i >= 0; i--) {
                 const [res, config] = sortedResolutions[i];

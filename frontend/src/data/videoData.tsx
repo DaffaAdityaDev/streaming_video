@@ -1,4 +1,4 @@
-import { VideoDataType } from '@/components/types'
+import { VideoDataType } from '@/app/types'
 
 export default [
   {
@@ -6,7 +6,7 @@ export default [
     title: 'sukunavsjogo',
     channel: 'Description',
     img: 'https://media.tenor.com/ZnP0C4JkNEYAAAAC/gojo-sukuna.gif',
-    slug: 'video-1707797661510-720p',
+    slug: 'video-1707799111308-720p',
     quality: '720p',
     duration: 100000,
     view: 100000,

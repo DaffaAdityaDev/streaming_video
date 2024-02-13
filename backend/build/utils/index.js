@@ -7,6 +7,7 @@ exports.generateThumbnail = exports.promisify = void 0;
 const fluent_ffmpeg_1 = __importDefault(require("fluent-ffmpeg"));
 const path_1 = __importDefault(require("path"));
 const fs_1 = __importDefault(require("fs"));
+const fs_1 = __importDefault(require("fs"));
 function promisify(fn) {
     return (...args) => {
         return new Promise((resolve, reject) => {
@@ -24,7 +25,15 @@ function promisify(fn) {
 exports.promisify = promisify;
 function generateThumbnail(videoPath) {
     console.log('Generating thumbnail for', videoPath);
+    console.log('Generating thumbnail for', videoPath);
     const thumbnailPath = path_1.default.join(__dirname, '../../thumbnails');
+    // Create the thumbnails directory if it does not exist
+    if (!fs_1.default.existsSync(thumbnailPath)) {
+        fs_1.default.mkdirSync(thumbnailPath, { recursive: true });
+    }
+    // Extract the video name and append '-thumbnail' to it
+    const videoName = path_1.default.basename(videoPath, path_1.default.extname(videoPath));
+    const thumbnailName = `${videoName}-thumbnail.png`;
     // Create the thumbnails directory if it does not exist
     if (!fs_1.default.existsSync(thumbnailPath)) {
         fs_1.default.mkdirSync(thumbnailPath, { recursive: true });
@@ -34,6 +43,8 @@ function generateThumbnail(videoPath) {
     const thumbnailName = `${videoName}-thumbnail.png`;
     (0, fluent_ffmpeg_1.default)(videoPath)
         .screenshots({
+        timestamps: [10],
+        filename: thumbnailName,
         timestamps: [10],
         filename: thumbnailName,
         folder: thumbnailPath,

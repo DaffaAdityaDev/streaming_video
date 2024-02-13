@@ -1,7 +1,7 @@
 import { ReactNode, useContext } from 'react'
-import { AppContext } from '@/components/context'
+import { AppContext } from '@/app/_components/context/AppContext'
 
-export default function SideBarOrganism() {
+export default function SideBar() {
   const { sidebar, setSidebar } = useContext(AppContext)
 
   // function toggleSidebar() {
