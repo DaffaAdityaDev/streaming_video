@@ -1,7 +1,7 @@
 'use client'
 import React, { useRef, useState, useEffect } from 'react'
 
-export const VideoPlayerMolecules = ({ src, quality }: { src: string; quality: string }) => {
+export const PlayerVideo = ({ src, quality }: { src: string; quality: string }) => {
   const [qualities, setQualities] = useState(quality)
   const getUrl = (src: string, quality: string) => {
     const BACKENDURL = process.env.NEXT_PUBLIC_BACKEND_URL
@@ -81,7 +81,8 @@ export const VideoPlayerMolecules = ({ src, quality }: { src: string; quality: s
         currentVideoRef.removeEventListener('loadedmetadata', onLoadedMetadata)
       }
     }
-  }, [currentTime, qualities, src, urlToVideo])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [qualities, src, urlToVideo])
 
   useEffect(() => {
     setCurrentWidthLength(Math.floor((currentTime / duration) * 100) + 0.5)

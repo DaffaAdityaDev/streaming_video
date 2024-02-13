@@ -1,14 +1,13 @@
 'use client'
 import type { Metadata } from 'next'
 import { Inter } from 'next/font/google'
-import './globals.css'
-import NavigationTemplate from '@/components/template/Home'
-import SideBarOrganism from '@/components/organism/SideBar'
-import { AppContext } from '@/components/context'
-import NavbarOrganism from '@/components/organism/Navbar'
 import { useState } from 'react'
-import { SessionProvider, useSession } from 'next-auth/react'
+import { AppContext } from '@/app/_components/context/AppContext'
 import { Session } from 'next-auth'
+import SideBar from '@/app/_components/navigation/SideBar'
+import Navbar from './_components/navigation/Navbar'
+
+import './globals.css'
 
 const inter = Inter({ subsets: ['latin'] })
 
@@ -19,10 +18,8 @@ const inter = Inter({ subsets: ['latin'] })
 
 export default function RootLayout({
   children,
-  session,
 }: {
   children: React.ReactNode
-  session: Session | null
 }) {
   const [search, setSearch] = useState('')
   const [sidebar, setSidebar] = useState(false)
@@ -32,11 +29,12 @@ export default function RootLayout({
       <body className={inter.className}>
         {/* <SessionProvider session={session}> */}
         <AppContext.Provider value={{ search, setSearch, sidebar, setSidebar }}>
-          <NavigationTemplate>
-            <NavbarOrganism />
-            <SideBarOrganism />
+          <div className="grid grid-flow-row auto-rows-max gap-4">
+            <Navbar />
+            <SideBar />
             {children}
-          </NavigationTemplate>
+
+          </div>
         </AppContext.Provider>
         {/* </SessionProvider> */}
       </body>

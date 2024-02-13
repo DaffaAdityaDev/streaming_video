@@ -1,8 +1,8 @@
+/* eslint-disable @next/next/no-img-element */
 import Link from 'next/link'
-import { VideoDataType } from '../../types'
-import Image from 'next/image'
+import { VideoDataType } from '@/app/types'
 
-export default function MoleculesCardVideo({
+export default function CardVideo({
   id,
   img,
   title,

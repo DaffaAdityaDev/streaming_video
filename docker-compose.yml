@@ -1,0 +1,22 @@
+version: '3.8'
+services:
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    image: younonton-frontend:latest
+    ports:
+      - "3000:3000" # Adjust the port mapping as needed
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    image: younonton-backend:latest
+    ports:
+      - "8000:8000" # Adjust the port mapping as needed
+    volumes:
+      - mydata:/usr
+volumes:
+  mydata:
+    driver: local

@@ -1,16 +1,11 @@
 'use client'
-
-import Image from 'next/image'
-import Link from 'next/link'
-import { AppContext } from '@/components/context'
+import { AppContext } from '@/app/_components/context/AppContext'
 import { useState, useEffect, useContext } from 'react'
-import MoleculesCardVideo from '@/components/molecules/CardVideo'
-import VideoGridOrganism from '@/components/organism/VideoGrid'
 
-import { VideoDataType } from '@/components/types'
+import { VideoDataType } from '@/app/types'
 
 import videoData from '@/data/videoData'
-import LoginBtn from '@/components/atoms/LoginBtn'
+import CardVideo from './_components/video/CardVideo'
 
 export default function Home() {
   const [data, setData] = useState<VideoDataType[]>(videoData)
@@ -35,11 +30,12 @@ export default function Home() {
 
   return (
     <>
-      <VideoGridOrganism>
-        {dataSearch.map((item, index) => (
-          <MoleculesCardVideo key={index} {...item} />
-        ))}
-      </VideoGridOrganism>
+    <div className="col-span-12 m-4 grid grid-cols-[repeat(auto-fill,minmax(calc(400px),1fr))] gap-4">
+      {dataSearch.map((item, index) => (
+        <CardVideo key={index} {...item} />
+      ))}
+    </div>
+
     </>
   )
 }

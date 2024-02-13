@@ -1,9 +1,10 @@
+/* eslint-disable @next/next/no-img-element */
 'use client'
 import React, { createContext, useContext } from 'react'
 import Link from 'next/link'
-import { AppContext } from '@/components/context'
+import { AppContext } from '../context/AppContext'
 import Image from 'next/image'
-export default function NavbarOrganism() {
+export default function Navbar() {
   const { search, setSearch, sidebar, setSidebar } = useContext(AppContext)
 
   function toggleSidebar() {

@@ -10,6 +10,7 @@ import bcrypt from 'bcrypt';
 import { PrismaClient } from '@prisma/client';
 import async from 'async';
 
+
 interface Task {
   filePath: string;
   resolutionConfig: {
@@ -62,7 +63,9 @@ APP.get('/', (req: Request, res: Response) => {
 
 APP.post('/register', async (req: Request, res: Response) => {
   const { username, email, password } = req.body;
+  console.log(username);
   const hashedPassword = await bcrypt.hash(password, 10);
+
 
   try {
     const checkUser = await prisma.users.findFirst({
