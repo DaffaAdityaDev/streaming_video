@@ -270,7 +270,7 @@ APP.get('/video/*', async(req: Request, res: Response) => {
 
 
 // Create a queue object with concurrency 4
-const q = async.queue((task: Task, callback) => {
+const VideoQueue = async.queue((task: Task, callback) => {
   ffmpeg(task.filePath)
     .inputOptions('-hwaccel auto') // Automatically select the hardware acceleration method
     .outputOptions('-c:v h264_nvenc') // Use NVENC for encoding if available
@@ -364,10 +364,8 @@ APP.post('/upload', upload.single('video'), (req, res) => {
     // Add other resolutions as needed
   };
   
-  
   ffmpeg.ffprobe(filePath, function(err, metadata) {
     
-
     if (err || !metadata) {
       console.error('Error reading video file:', err);
       return;
@@ -411,7 +409,7 @@ APP.post('/upload', upload.single('video'), (req, res) => {
         const outputPath = path.join(outputDir, outputFilename);
 
         // Add the task to the queue
-        q.push({
+        VideoQueue.push({
           filePath,
           resolutionConfig: config,
           outputPath,

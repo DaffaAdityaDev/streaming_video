@@ -1,3 +1,4 @@
+"use client"
 import { VideoPlayerMolecules } from '@/components/molecules/PlayerVideo'
 import { VideoDataType } from '@/components/types'
 import Link from 'next/link'

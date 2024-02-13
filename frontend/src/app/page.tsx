@@ -17,13 +17,13 @@ export default function Home() {
   const [dataSearch, setDataSearch] = useState<VideoDataType[]>(data)
   const { search, setSearch } = useContext(AppContext)
 
-  useEffect(() => {
-    let injectData: VideoDataType[] = []
-    for (let i = 0; i < 10; i++) {
-      injectData.push(...videoData)
-    }
-    setData(injectData)
-  }, [])
+  // useEffect(() => {
+  //   let injectData: VideoDataType[] = []
+  //   for (let i = 0; i < 10; i++) {
+  //     injectData.push(...videoData)
+  //   }
+  //   setData(injectData)
+  // }, [])
 
   useEffect(() => {
     if (search) {

@@ -56,11 +56,11 @@ export default function NavbarOrganism() {
         <div className="dropdown dropdown-end">
           <label tabIndex={0} className="avatar btn btn-circle btn-ghost">
             <div className="w-10 rounded-full">
-              <img
+              {/* <img
                 alt="Tailwind CSS Navbar component"
                 src="/images/stock/photo-1534528741775-53994a69daeb.jpg"
                 className="h-full w-full rounded-full object-cover"
-              />
+              /> */}
             </div>
           </label>
           <ul

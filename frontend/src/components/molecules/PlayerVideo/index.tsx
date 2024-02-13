@@ -40,8 +40,8 @@ export const VideoPlayerMolecules = ({ src, quality }: { src: string; quality: s
     if (videoRef.current) {
       videoRef.current.pause()
       setUrlToVideo(getUrl(src, qualities) + '.mp4')
-      // console.log(videoRef.current);
-      // console.log("important", urlToVideo)
+      console.log(videoRef.current);
+      console.log("important", urlToVideo)
       videoRef.current.load()
     }
     if (videoRef.current) {
@@ -354,7 +354,7 @@ export const VideoPlayerMolecules = ({ src, quality }: { src: string; quality: s
         <video
           ref={videoRef}
           className="h-full w-full"
-          onError={handleVideoError}
+          // onError={handleVideoError}
           autoPlay
           onCanPlay={() => setIsVideoReady(true)}
         >
