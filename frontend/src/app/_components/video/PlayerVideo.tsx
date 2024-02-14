@@ -13,7 +13,7 @@ export const PlayerVideo = ({ src, quality }: { src: string; quality: string }) 
         src.split('-').slice(0, -1).join('-') + '-' + quality
       }`
     }
-    console.log(url)
+    // console.log(url)
     // console.log(`${BACKENDURL}/video/${quality}` + src.split('-').slice(0, -1).join('-') + '-' + quality + '.mp4');
     return url
   }
@@ -25,6 +25,7 @@ export const PlayerVideo = ({ src, quality }: { src: string; quality: string }) 
 
   const supportedQualities = checkIfVideoResoNotBigerThanCurr(quality)
   const videoRef = useRef<HTMLVideoElement | null>(null)
+  const canvasRef = useRef<HTMLCanvasElement | null>(null)
   const [urlToVideo, setUrlToVideo] = useState(getUrl(src, qualities))
   const [currentTime, setCurrentTime] = useState(0)
   const [duration, setDuration] = useState(0)
@@ -71,6 +72,16 @@ export const PlayerVideo = ({ src, quality }: { src: string; quality: string }) 
 
       handleMetadataLoad()
 
+      if (videoRef.current && canvasRef.current) {
+        // Instantiate the VideoWithBackground class
+        const videoGlow = new VideoWithBackground(videoRef.current, canvasRef.current);
+        
+        // Clean up when the component unmounts
+        return () => {
+          videoGlow.cleanup();
+        };
+      }
+
       return () => {
         currentVideoRef.removeEventListener('canplay', onCanPlay)
         currentVideoRef?.removeEventListener('timeupdate', handleTimeUpdate)
@@ -88,6 +99,18 @@ export const PlayerVideo = ({ src, quality }: { src: string; quality: string }) 
     setCurrentWidthLength(Math.floor((currentTime / duration) * 100) + 0.5)
     setCurrentStatusPlaying(videoRef.current?.paused ? 'Pause' : 'Play')
   }, [currentTime, duration])
+
+  // useEffect(() => {
+  //   if (videoRef.current && canvasRef.current) {
+  //     // Instantiate the VideoWithBackground class
+  //     const videoGlow = new VideoWithBackground(videoRef.current, canvasRef.current);
+      
+  //     // Clean up when the component unmounts
+  //     return () => {
+  //       videoGlow.cleanup();
+  //     };
+  //   }
+  // }, []);
 
   if (!src || typeof src !== 'string') {
     return <div>Error: Invalid video source</div>
@@ -202,130 +225,231 @@ export const PlayerVideo = ({ src, quality }: { src: string; quality: string }) 
     if (videoRef.current) {
       videoRef.current.currentTime = newTime
     }
-  }
+  } 
 
   return (
-    <div className="group/playpause relative w-full text-white ">
-      <div className="z-10 ">
-        {isBuffered && (
-          <div className="absolute bottom-0 left-0 right-0 top-0 flex items-center justify-center">
-            <svg className="mr-3 h-10 w-10 animate-spin" viewBox="0 0 24 24">
-              <circle
-                className="opacity-25"
-                cx="12"
-                cy="12"
-                r="10"
-                stroke="currentColor"
-                strokeWidth="4"
-              ></circle>
-              <path
-                className="opacity-75"
-                fill="currentColor"
-                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-              ></path>
-            </svg>
-            {/* <p className='text-xs'>{Math.floor(buffered * 100)}%</p> */}
-          </div>
-        )}
-        <button
-          className="absolute bottom-0 left-0 right-0 top-0 z-10 bg-red-500 opacity-0"
-          onClick={playPauseVideo}
-        ></button>
-        {isVideoReady && (
-          <div
-            className={`absolute bottom-0  left-0 right-0 top-0  flex items-center justify-center bg-gradient-to-t from-black from-0% to-transparent to-15% opacity-0 transition-all duration-500 ease-in-out group-hover/playpause:opacity-100`}
-          >
-            <p className="rounded-full bg-red-500 px-4 py-4">{currentStatusPlaying}</p>
-          </div>
-        )}
-      </div>
-
-      <div className="">
-        {!isVideoReady && (
-          <div className="alert alert-warning absolute left-1/2 top-1/2 w-fit -translate-x-1/2 -translate-y-1/2 transform">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              className="h-6 w-6 shrink-0 stroke-current"
-              fill="none"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth="2"
-                d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
-              />
-            </svg>
-            <span>Wait Fething Video...</span>
-          </div>
-        )}
-        <video
-          ref={videoRef}
-          className="h-full w-full"
-          onError={(e) => console.error('Video loading error', e)}
-          autoPlay
-          onCanPlay={() => setIsVideoReady(true)}
-        >
-          <source src={urlToVideo} type="video/mp4" />
-          Your browser does not support the video tag.
-        </video>
-      </div>
-
-      <div className="absolute bottom-0 left-0 right-0 z-20 p-4 opacity-0 transition-all duration-300 ease-in-out group-hover/playpause:opacity-100">
-        <div>
-          <div className="relative flex h-4 w-full cursor-pointer items-center justify-center">
-            <div className={`absolute left-0 right-0 top-1/3 h-[4px] bg-gray-600`}></div>
-            <div
-              className={`absolute left-0 right-0 top-1/3 h-[4px] bg-gray-400`}
-              style={{ width: `${buffered * 100}%` }}
-            ></div>
-            <div
-              className={`absolute left-0 right-0 top-1/3 h-[4px] bg-red-500`}
-              style={{ width: `${currentWidthLength}%` }}
-            ></div>
-            <input
-              className="absolute left-0 right-0 top-0 h-4 w-full cursor-pointer opacity-0"
-              type="range"
-              min="0"
-              max={isNaN(duration) ? 0 : duration}
-              value={currentTime}
-              step={0.1}
-              onChange={handleSliderChange}
-            />
-          </div>
-          <div className="flex gap-4">
-            <div className="flex gap-2">
-              <button onClick={() => skipVideo(-10)}>-10 sec</button>
-              <button onClick={playPauseVideo}>{currentStatusPlaying}</button>
-              <button onClick={() => skipVideo(10)}>+10 sec</button>
+    <div className='p-20 relative shadow-[inset_10px_0px_4rem_4.5rem_oklch(var(--pc))]'>
+      <canvas ref={canvasRef} className='canvasClass absolute -z-10 top-0 left-0 h-full w-full opacity-80' id="canvasId"/>
+      <div className="group/playpause relative w-full text-white ">
+        <div className="z-10 ">
+          {isBuffered && (
+            <div className="absolute bottom-0 left-0 right-0 top-0 flex items-center justify-center">
+              <svg className="mr-3 h-10 w-10 animate-spin" viewBox="0 0 24 24">
+                <circle
+                  className="opacity-25"
+                  cx="12"
+                  cy="12"
+                  r="10"
+                  stroke="currentColor"
+                  strokeWidth="4"
+                ></circle>
+                <path
+                  className="opacity-75"
+                  fill="currentColor"
+                  d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                ></path>
+              </svg>
+              {/* <p className='text-xs'>{Math.floor(buffered * 100)}%</p> */}
             </div>
-            <div className="group/volume flex items-center justify-center gap-2">
-              <label htmlFor="volume">Volume</label>
+          )}
+          <button
+            className="absolute bottom-0 left-0 right-0 top-0 z-10 bg-red-500 opacity-0"
+            onClick={playPauseVideo}
+          ></button>
+          {isVideoReady && (
+            <div
+              className={`absolute bottom-0  left-0 right-0 top-0  flex items-center justify-center bg-gradient-to-t from-black from-0% to-transparent to-15% opacity-0 transition-all duration-500 ease-in-out group-hover/playpause:opacity-100`}
+            >
+              <p className="rounded-full bg-red-500 px-4 py-4">{currentStatusPlaying}</p>
+            </div>
+          )}
+        </div>
+
+        <div className="">
+          {!isVideoReady && (
+            <div className="alert alert-warning absolute left-1/2 top-1/2 w-fit -translate-x-1/2 -translate-y-1/2 transform">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className="h-6 w-6 shrink-0 stroke-current"
+                fill="none"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="2"
+                  d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+                />
+              </svg>
+              <span>Wait Fething Video...</span>
+            </div>
+          )}
+          <video
+            ref={videoRef}
+            className="h-full w-full"
+            onError={(e) => console.error('Video loading error', e)}
+            autoPlay
+            onCanPlay={() => setIsVideoReady(true)}
+            id="videoId"
+          >
+            <source src={urlToVideo} type="video/mp4" />
+            Your browser does not support the video tag.
+          </video>
+          
+        </div>
+
+        <div className="absolute bottom-0 left-0 right-0 z-20 p-4 opacity-0 transition-all duration-300 ease-in-out group-hover/playpause:opacity-100">
+          <div>
+            <div className="relative flex h-4 w-full cursor-pointer items-center justify-center">
+              <div className={`absolute left-0 right-0 top-1/3 h-[4px] bg-gray-600`}></div>
+              <div
+                className={`absolute left-0 right-0 top-1/3 h-[4px] bg-gray-400`}
+                style={{ width: `${buffered * 100}%` }}
+              ></div>
+              <div
+                className={`absolute left-0 right-0 top-1/3 h-[4px] bg-red-500`}
+                style={{ width: `${currentWidthLength}%` }}
+              ></div>
               <input
-                className="w-0 opacity-0 transition-[width] duration-300 ease-in-out group-hover/volume:w-20 group-hover/volume:opacity-100"
+                className="absolute left-0 right-0 top-0 h-4 w-full cursor-pointer opacity-0"
                 type="range"
                 min="0"
-                max="1"
-                value={volume}
-                step={0.01}
-                onChange={handleVolumeChange}
+                max={isNaN(duration) ? 0 : duration}
+                value={currentTime}
+                step={0.1}
+                onChange={handleSliderChange}
               />
             </div>
-            <p>
-              {formatTime(currentTime)} / {formatTime(duration)}
-            </p>
-            <div>
-              <select value={qualities} onChange={handleQualityChange}>
-                {supportedQualities.map((supportQuality) => (
-                  <option key={supportQuality} value={supportQuality}>
-                    {supportQuality}
-                  </option>
-                ))}
-              </select>
+            <div className="flex gap-4">
+              <div className="flex gap-2">
+                <button onClick={() => skipVideo(-10)}>-10 sec</button>
+                <button onClick={playPauseVideo}>{currentStatusPlaying}</button>
+                <button onClick={() => skipVideo(10)}>+10 sec</button>
+              </div>
+              <div className="group/volume flex items-center justify-center gap-2">
+                <label htmlFor="volume">Volume</label>
+                <input
+                  className="w-0 opacity-0 transition-[width] duration-300 ease-in-out group-hover/volume:w-20 group-hover/volume:opacity-100"
+                  type="range"
+                  min="0"
+                  max="1"
+                  value={volume}
+                  step={0.01}
+                  onChange={handleVolumeChange}
+                />
+              </div>
+              <p>
+                {formatTime(currentTime)} / {formatTime(duration)}
+              </p>
+              <div>
+                <select value={qualities} onChange={handleQualityChange}>
+                  {supportedQualities.map((supportQuality) => (
+                    <option key={supportQuality} value={supportQuality}>
+                      {supportQuality}
+                    </option>
+                  ))}
+                </select>
+              </div>
             </div>
           </div>
         </div>
       </div>
     </div>
   )
+}
+
+class VideoWithBackground {
+  video: HTMLVideoElement;
+  canvas: HTMLCanvasElement;
+  step: number =   0; // Initialize with a default value
+  ctx?: CanvasRenderingContext2D; // Keep the type as undefined
+
+  constructor(videoElement: HTMLVideoElement, canvasElement: HTMLCanvasElement) {
+    this.video = videoElement;
+    this.canvas = canvasElement;
+
+    this.init();
+  }
+
+   draw = () => {
+    if (this.ctx) {
+      // if (this.ctx) {
+      //   this.ctx.drawImage(this.video,  0,  0, this.canvas.width, this.canvas.height);
+      // }
+      // Save the current state of the context
+      this.ctx.save();
+
+      // Translate the context to the center of the canvas
+      this.ctx.translate(this.canvas.width /  2, this.canvas.height /  2);
+
+      // Scale the context by  1.5 (150%)
+      this.ctx.scale(1.5,  1.5);
+
+      // Create a radial gradient
+      const gradient = this.ctx.createRadialGradient(
+        this.canvas.width /  2, this.canvas.height /  2,  0,
+        this.canvas.width /  2, this.canvas.height /  2, this.canvas.width /  2
+      );
+      // Start with solid black at the center
+      gradient.addColorStop(0, 'rgba(0,  0,  0,  1)');
+      // Gradually fade to transparent towards the edges
+      gradient.addColorStop(0.5, 'rgba(0,  0,  0,  0.5)');
+      gradient.addColorStop(1, 'rgba(0,  0,  0,  0)');
+
+      // Apply the gradient as a mask
+      this.ctx.fillStyle = gradient;
+      this.ctx.fillRect(-this.canvas.width /  2, -this.canvas.height /  2, this.canvas.width, this.canvas.height);
+
+      // Draw the video frame at the center of the canvas
+      this.ctx.drawImage(this.video, -this.canvas.width /  2, -this.canvas.height /  2, this.canvas.width, this.canvas.height);
+
+      // Restore the context to its original state
+      this.ctx.restore();
+    }
+  };
+  drawLoop = () => {
+    this.draw();
+    this.step = window.requestAnimationFrame(this.drawLoop);
+  };
+
+  drawPause = () => {
+    window.cancelAnimationFrame(this.step);
+    this.step = 0; // Reset to the default value
+  };
+
+  init = () => {
+  if (this.canvas && this.video) {
+    const ctx = this.canvas.getContext("2d");
+    if (ctx) {
+      this.ctx = ctx;
+      this.ctx.filter = "blur(10px)";
+
+      // Check for prefers-reduced-motion setting
+      const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+      if (!prefersReducedMotion) {
+        // Add event listeners for the video element
+        this.video.addEventListener("loadeddata", this.draw, false);
+        this.video.addEventListener("seeked", this.draw, false);
+        this.video.addEventListener("play", this.drawLoop, false);
+        this.video.addEventListener("pause", this.drawPause, false);
+        this.video.addEventListener("ended", this.drawPause, false);
+      }
+    } else {
+      console.error('Failed to get canvas context');
+    }
+    } else {
+      console.error('Video or canvas element is not available');
+    }
+  };
+
+
+  cleanup = () => {
+    if (this.video && this.canvas) {
+      this.video.removeEventListener("loadeddata", this.draw);
+      this.video.removeEventListener("seeked", this.draw);
+      this.video.removeEventListener("play", this.drawLoop);
+      this.video.removeEventListener("pause", this.drawPause);
+      this.video.removeEventListener("ended", this.drawPause);
+    }
+  };
 }

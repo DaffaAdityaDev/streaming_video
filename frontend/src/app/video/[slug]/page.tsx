@@ -9,7 +9,7 @@ export default function VideoPlayerPage({
   searchParams: { [key: string]: string | string[] | undefined }
 }) {
   return (
-    <div className="col-span-12 flex flex-col gap-2">
+    <div className="col-span-12 flex flex-col gap-2 ">
       <PlayerVideo
         src={
           Array.isArray(searchParams.video)

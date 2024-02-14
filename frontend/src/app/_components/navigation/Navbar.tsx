@@ -12,7 +12,7 @@ export default function Navbar() {
   }
 
   return (
-    <div className="navbar sticky top-0 z-30 col-span-12 row-span-1 bg-base-100">
+    <div className="navbar sticky top-0 z-30 col-span-12 row-span-1 bg-primary-content">
       <label className="btn btn-circle swap swap-rotate z-20">
         {/* this hidden checkbox controls the state */}
         <input type="checkbox" onClick={toggleSidebar} />

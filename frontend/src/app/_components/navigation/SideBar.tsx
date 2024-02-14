@@ -10,7 +10,7 @@ export default function SideBar() {
 
   return (
     <ul
-      className={`menu fixed bottom-0   top-0 z-10 col-span-1 row-span-6 rounded-box bg-base-200 text-white ${
+      className={`menu fixed bottom-0   top-0 z-10 col-span-1 row-span-6 rounded-box bg-primary-content text-white ${
         sidebar ? 'w-1/6' : 'hidden'
       }`}
     >
