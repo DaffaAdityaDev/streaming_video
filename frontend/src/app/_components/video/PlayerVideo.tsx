@@ -228,7 +228,7 @@ export const PlayerVideo = ({ src, quality }: { src: string; quality: string }) 
   } 
 
   return (
-    <div className='p-20 relative shadow-[inset_10px_0px_4rem_4.5rem_oklch(var(--pc))]'>
+    <div className='px-20 py-10 relative shadow-[inset_10px_0px_4rem_4.5rem_oklch(var(--pc))]'>
       <canvas ref={canvasRef} className='canvasClass absolute -z-10 top-0 left-0 h-full w-full opacity-80' id="canvasId"/>
       <div className="group/playpause relative w-full text-white ">
         <div className="z-10 ">
@@ -286,7 +286,7 @@ export const PlayerVideo = ({ src, quality }: { src: string; quality: string }) 
           )}
           <video
             ref={videoRef}
-            className="h-full w-full"
+            className="h-full w-full rounded-md"
             onError={(e) => console.error('Video loading error', e)}
             autoPlay
             onCanPlay={() => setIsVideoReady(true)}
@@ -382,8 +382,8 @@ class VideoWithBackground {
       // Translate the context to the center of the canvas
       this.ctx.translate(this.canvas.width /  2, this.canvas.height /  2);
 
-      // Scale the context by  1.5 (150%)
-      this.ctx.scale(1.5,  1.5);
+      // Scale the context by  1.0 (100%)
+      this.ctx.scale(1.0,  1.0);
 
       // Create a radial gradient
       const gradient = this.ctx.createRadialGradient(
@@ -422,7 +422,7 @@ class VideoWithBackground {
     const ctx = this.canvas.getContext("2d");
     if (ctx) {
       this.ctx = ctx;
-      this.ctx.filter = "blur(10px)";
+      this.ctx.filter = "blur(25px)";
 
       // Check for prefers-reduced-motion setting
       const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;

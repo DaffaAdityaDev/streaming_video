@@ -1,18 +1,62 @@
 /* eslint-disable @next/next/no-img-element */
 'use client'
-import React, { createContext, useContext } from 'react'
+import React, { useState, useEffect, useCallback, useContext } from 'react'
 import Link from 'next/link'
 import { AppContext } from '../context/AppContext'
-import Image from 'next/image'
+import { useRouter } from 'next/navigation'
 export default function Navbar() {
+  const router = useRouter()
   const { search, setSearch, sidebar, setSidebar } = useContext(AppContext)
+  const [isVisible, setIsVisible] = useState(true);
+  const [prevScrollpos, setPrevScrollpos] = useState(0);
+  const [token, setToken] = useState('')
+
+  // Function to handle scroll events
+  const handleScroll = useCallback(() => {
+    const currentScrollPos = window.pageYOffset;
+
+    if (currentScrollPos > prevScrollpos) {
+      setIsVisible(false);
+    } else {
+      setIsVisible(true);
+    }
+
+    setPrevScrollpos(currentScrollPos);
+    if (sidebar) {
+      const labelElement = document.querySelector('.btn.btn-circle') as HTMLElement;
+      if (labelElement) {
+        labelElement.click();
+      }
+    }
+  }, [prevScrollpos,]); // Only re-create the function when prevScrollpos changes
+
+  useEffect(() => {
+    window.addEventListener('scroll', handleScroll);
+    setToken(localStorage.getItem('token') || '')
+
+    return () => {
+      window.removeEventListener('scroll', handleScroll);
+    };
+  }, [handleScroll]); // Now handleScroll is stable and won't cause the effect to re-run
+
+  // Class to apply based on the visibility state
+  const navbarClass = isVisible ? 'translate-y-0' : '-translate-y-full';
 
   function toggleSidebar() {
     setSidebar(!sidebar)
   }
 
+  function handleLogout() {
+    localStorage.removeItem('token')
+    router.push('/login')
+  }
+
+  function handleLogin() {
+    router.push('/login')
+  }
+
   return (
-    <div className="navbar sticky top-0 z-30 col-span-12 row-span-1 bg-primary-content">
+    <div className={`navbar sticky top-0 z-30 col-span-12 row-span-1 bg-primary-content transition-transform duration-200 ease-in-out ${navbarClass}`}>
       <label className="btn btn-circle swap swap-rotate z-20">
         {/* this hidden checkbox controls the state */}
         <input type="checkbox" onClick={toggleSidebar} />
@@ -68,18 +112,28 @@ export default function Navbar() {
             tabIndex={0}
             className="menu dropdown-content menu-sm z-[1] mt-3 w-52 rounded-box bg-base-100 p-2 shadow"
           >
-            <li>
-              <a className="justify-between">
-                Profile
-                <span className="badge">New</span>
-              </a>
-            </li>
+           
             <li>
               <a>Settings</a>
             </li>
-            <li>
-              <a>Logout</a>
-            </li>
+            {
+              token === '' ?
+              <li>
+                <a onClick={handleLogin}>Login</a>
+              </li> :
+              <div>
+                <li>
+                  <a className="justify-between">
+                    Profile
+                    <span className="badge">New</span>
+                  </a>
+                </li>
+                <li>
+                  <a onClick={handleLogout}>Logout</a>
+                </li>
+              </div> 
+            }
+            
           </ul>
         </div>
       </div>

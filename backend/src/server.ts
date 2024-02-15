@@ -10,6 +10,8 @@ import bcrypt from 'bcrypt';
 import { PrismaClient } from '@prisma/client';
 import swaggerUi from 'swagger-ui-express'
 import openApiJSON from './api/openapi.json'
+import dotenv from 'dotenv';
+import jwt from 'jsonwebtoken';
 
 const prisma = new PrismaClient();
 const videoQueue = MakeVideoQueue(4);
@@ -17,7 +19,10 @@ const videoQueue = MakeVideoQueue(4);
 ffmpeg.setFfmpegPath(ffmpegPath.path);
 ffmpeg.setFfprobePath(ffprobePath.path);
 
+dotenv.config();
+
 const PORT = process.env.PORT || 3001;
+console.log(process.env.PORT);
 const APP = express();
 
 APP.use(express.json());
@@ -106,6 +111,13 @@ APP.post('/register', async (req: Request, res: Response) => {
 
 APP.post('/login', async (req: Request, res: Response) => {
   const { email, password } = req.body;
+  if (!process.env.JWT_SECRET) {
+    return res.status(500).json({
+      status: 'error',
+      message: 'Internal server error no Token Generated',
+    });
+  }
+  const token = jwt.sign({ email }, process.env.JWT_SECRET, { expiresIn: '1h' });
 
   try {
     const user = await prisma.users.findUnique({
@@ -115,7 +127,7 @@ APP.post('/login', async (req: Request, res: Response) => {
     });
 
     if (!user) {
-      return res.status(404).json({
+      return res.status(203).json({
         status: 'error',
         message: 'User not found',
       });
@@ -124,16 +136,30 @@ APP.post('/login', async (req: Request, res: Response) => {
     const passwordValid = await bcrypt.compare(password, user.password);
 
     if (!passwordValid) {
-      return res.status(400).json({
+      
+      return res.status(203).json({
         status: 'error',
         message: 'Invalid password',
       });
     }
 
+    await prisma.users.update({
+      where: {
+        email,
+      },
+      data: {
+        token,
+      },
+    });
+
     return res.json({
       status: 'success',
       message: 'User logged in successfully',
-      data: user,
+      token,
+      username: user.username,
+      email: user.email,
+      image_url: user.image_url,
+      
     });
   } catch (error) {
     res.status(400).json({
