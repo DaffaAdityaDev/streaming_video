@@ -1,6 +1,6 @@
 // src/types/index.ts
 
-export type VideoDataType = {
+export interface VideoDataType {
   id: number
   title: string
   channel: string
@@ -10,4 +10,14 @@ export type VideoDataType = {
   duration: number
   view: number
   timeUpload: string
+}
+
+
+export interface FormInput {
+  type: string;
+  name: string;
+  placeholder: string;
+  value: string;
+  onChange: (event: React.ChangeEvent<HTMLInputElement>) => void;
+  icon: string;
 }

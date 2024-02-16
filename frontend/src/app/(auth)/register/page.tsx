@@ -4,13 +4,22 @@ import React, { useEffect } from 'react'
 import axios from 'axios'
 import Auth from '@/app/_components/auth'
 
-export default function Login() {
+export default function Register() {
   const router = useRouter()
+  const [username, setUsername] = React.useState('')
   const [email, setEmail] = React.useState('')
   const [password, setPassword] = React.useState('')
   const [error, setError] = React.useState('')
 
   const formMaker = [
+    {
+      type: "text",
+      name: "username",
+      placeholder: "Username",
+      value: username,
+      onChange: (event: React.ChangeEvent<HTMLInputElement>) => setUsername(event.target.value),
+      icon: "user",
+    },
     {
       type: 'email',
       name: 'email',
@@ -32,14 +41,17 @@ export default function Login() {
   async function handleLogin(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const target = event.target as HTMLFormElement;
+    const usernameInput = target.elements.namedItem('username') as HTMLInputElement;
     const emailInput = target.elements.namedItem('email') as HTMLInputElement;
     const passwordInput = target.elements.namedItem('password') as HTMLInputElement;
-    if (!emailInput || !passwordInput) {
+
+    if (!emailInput || !passwordInput || !usernameInput) {
       setError('Please fill in all fields');
       return;
     };
     
-    axios.post('http://localhost:8000/login', {
+    axios.post('http://localhost:8000/register', {
+      username: username,
       email: email,
       password: password
     }, {
@@ -50,24 +62,23 @@ export default function Login() {
       // console.log(response.data)
       if (response.data.status === 'success') {
         console.log('Login successful')
-        localStorage.setItem('token', response.data.token)
-        // console.log('Token saved', localStorage.getItem('token'))
-        router.push('/')
+        router.push('/login')
       } 
       if (response.data.status === 'error') {
-        console.log(response.data.message)
+        // console.log("error", response.data.message)
         setError(response.data.message)
       }
     }).catch((error) => {
-      console.log(error)
+      console.log("catch", error)
+      setError(error.toString())
     })
   }
 
   return (
     <>
       <Auth
-        path='Login'
-        message='Please enter your email and password to login'
+        path='Register'
+        message='Please enter your email and password to register'
         formMaker={formMaker}
         handleBtnSubmit={handleLogin}
         email={email}
@@ -76,7 +87,7 @@ export default function Login() {
         setPassword={setPassword}
         error={error}
         setError={setError}
-        gotoAltPath='register'
+        gotoAltPath='login'
       />
     </>
   )
