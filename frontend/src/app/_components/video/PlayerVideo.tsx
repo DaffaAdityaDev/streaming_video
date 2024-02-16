@@ -1,5 +1,6 @@
 'use client'
-import React, { useRef, useState, useEffect } from 'react'
+import React, { useRef, useState, useEffect, useContext } from 'react'
+import { AppContext } from '../context/AppContext';
 
 export const PlayerVideo = ({ src, quality }: { src: string; quality: string }) => {
   const [qualities, setQualities] = useState(quality)
@@ -7,13 +8,15 @@ export const PlayerVideo = ({ src, quality }: { src: string; quality: string }) 
     const BACKENDURL = process.env.NEXT_PUBLIC_BACKEND_URL
     let url
     if (quality === 'defaultQuality') {
-      url = `${BACKENDURL}/video/${quality ? `${quality}` : ''}/${src}`
+      url = `${BACKENDURL}/video/${quality ? `${quality}` : ''}/${src}.mp4`;
     } else {
       url = `${BACKENDURL}/video/${quality ? `${quality}` : ''}/${
-        src.split('-').slice(0, -1).join('-') + '-' + quality
-      }`
+        src
+      }`;
     }
     // console.log(url)
+    // console.log("quality", quality)
+    // console.log("src", src)
     // console.log(`${BACKENDURL}/video/${quality}` + src.split('-').slice(0, -1).join('-') + '-' + quality + '.mp4');
     return url
   }
@@ -36,8 +39,12 @@ export const PlayerVideo = ({ src, quality }: { src: string; quality: string }) 
   const [isBuffered, setIsBuffered] = useState(false)
   const [currentStatusPlaying, setCurrentStatusPlaying] = useState('Pause')
   const [clickedShowInfo, setClickedShowInfo] = useState(false)
+  const { isFullScreen, setIsFullScreen} = useContext(AppContext);
+  console.log(isFullScreen)
 
   useEffect(() => {
+    initVideoGlowBg()
+    
     if (videoRef.current) {
       videoRef.current.pause()
       setUrlToVideo(getUrl(src, qualities) + '.mp4')
@@ -72,16 +79,7 @@ export const PlayerVideo = ({ src, quality }: { src: string; quality: string }) 
 
       handleMetadataLoad()
 
-      if (videoRef.current && canvasRef.current) {
-        // Instantiate the VideoWithBackground class
-        const videoGlow = new VideoWithBackground(videoRef.current, canvasRef.current);
-        
-        // Clean up when the component unmounts
-        return () => {
-          videoGlow.cleanup();
-        };
-      }
-
+  
       return () => {
         currentVideoRef.removeEventListener('canplay', onCanPlay)
         currentVideoRef?.removeEventListener('timeupdate', handleTimeUpdate)
@@ -100,6 +98,24 @@ export const PlayerVideo = ({ src, quality }: { src: string; quality: string }) 
     setCurrentStatusPlaying(videoRef.current?.paused ? 'Pause' : 'Play')
   }, [currentTime, duration])
 
+  useEffect(() => {
+    handleScrollIfFullScreen()
+    const handleEscKey = (event: KeyboardEvent) => {
+      if (event.key === 'Escape' && isFullScreen && !document.fullscreenElement) {
+        setIsFullScreen(false)
+        
+      }
+    };
+  
+    // Add the event listener when the component mounts
+    document.addEventListener('keydown', handleEscKey);
+  
+    // Remove the event listener when the component unmounts
+    return () => {
+      document.removeEventListener('keydown', handleEscKey);
+    };
+  }, [isFullScreen])
+
   // useEffect(() => {
   //   if (videoRef.current && canvasRef.current) {
   //     // Instantiate the VideoWithBackground class
@@ -114,6 +130,18 @@ export const PlayerVideo = ({ src, quality }: { src: string; quality: string }) 
 
   if (!src || typeof src !== 'string') {
     return <div>Error: Invalid video source</div>
+  }
+
+  const initVideoGlowBg = () => {
+    if (videoRef.current && canvasRef.current) {
+      // Instantiate the VideoWithBackground class
+      const videoGlow = new VideoWithBackground(videoRef.current, canvasRef.current);
+      
+      // Clean up when the component unmounts
+      return () => {
+        videoGlow.cleanup();
+      };
+    }
   }
 
   const handleQualityChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
@@ -227,10 +255,53 @@ export const PlayerVideo = ({ src, quality }: { src: string; quality: string }) 
     }
   } 
 
+  const handleScreenMode = () => {
+  
+    if (isFullScreen) {
+      if (document.exitFullscreen) {
+        document.exitFullscreen()
+      } else if (document.webkitExitFullscreen) {
+        document.webkitExitFullscreen()
+      } else if (document.msExitFullscreen) {
+        document.msExitFullscreen()
+      }
+      setIsFullScreen(false)
+    } else {
+      if (document.documentElement.requestFullscreen) {
+        document.documentElement.requestFullscreen()
+      } else if (document.documentElement.webkitRequestFullscreen) {
+        document.documentElement.webkitRequestFullscreen()
+      } else if (document.documentElement.msRequestFullscreen) {
+        document.documentElement.msRequestFullscreen()
+      }
+      setIsFullScreen(true)
+    }
+  }
+
+  if (document.fullscreenElement) {
+    console.log('The browser is in fullscreen mode.');
+  } else {
+    console.log('The browser is not in fullscreen mode.');
+  }
+
+  const handleScrollIfFullScreen = () => {
+    if (isFullScreen) {
+      document.body.style.cssText = "overflow: hidden; position:fixed;";
+      console.log('hidden')
+      
+    } else {
+      document.body.style.cssText = "overflow: auto; position:static;";
+      console.log('auto')
+    }
+  }
+
+
   return (
-    <div className='px-20 py-10 relative shadow-[inset_10px_0px_4rem_4.5rem_oklch(var(--pc))]'>
-      <canvas ref={canvasRef} className='canvasClass absolute -z-10 top-0 left-0 h-full w-full opacity-80' id="canvasId"/>
-      <div className="group/playpause relative w-full text-white ">
+    <div className={`relative shadow-[inset_10px_0px_2rem_2rem_oklch(var(--pc))] ${isFullScreen ? "" : "px-10 py-4"}`}>
+      <div className={`absolute top-0 left-0 h-full w-full -z-10 ${isFullScreen ? "hidden" : ""}`}>
+        <canvas ref={canvasRef} className='canvasClass w-full h-full opacity-80' id="canvasId"/>
+      </div>
+      <div className={`group/playpause relative w-full text-white ${isFullScreen ? "h-screen w-screen flex justify-center items-center" : ""}`}>
         <div className="z-10 ">
           {isBuffered && (
             <div className="absolute bottom-0 left-0 right-0 top-0 flex items-center justify-center">
@@ -265,7 +336,7 @@ export const PlayerVideo = ({ src, quality }: { src: string; quality: string }) 
           )}
         </div>
 
-        <div className="">
+        <div className="w-full">
           {!isVideoReady && (
             <div className="alert alert-warning absolute left-1/2 top-1/2 w-fit -translate-x-1/2 -translate-y-1/2 transform">
               <svg
@@ -299,7 +370,7 @@ export const PlayerVideo = ({ src, quality }: { src: string; quality: string }) 
         </div>
 
         <div className="absolute bottom-0 left-0 right-0 z-20 p-4 opacity-0 transition-all duration-300 ease-in-out group-hover/playpause:opacity-100">
-          <div>
+          <div className='w-full'>
             <div className="relative flex h-4 w-full cursor-pointer items-center justify-center">
               <div className={`absolute left-0 right-0 top-1/3 h-[4px] bg-gray-600`}></div>
               <div
@@ -320,37 +391,45 @@ export const PlayerVideo = ({ src, quality }: { src: string; quality: string }) 
                 onChange={handleSliderChange}
               />
             </div>
-            <div className="flex gap-4">
-              <div className="flex gap-2">
-                <button onClick={() => skipVideo(-10)}>-10 sec</button>
-                <button onClick={playPauseVideo}>{currentStatusPlaying}</button>
-                <button onClick={() => skipVideo(10)}>+10 sec</button>
-              </div>
-              <div className="group/volume flex items-center justify-center gap-2">
-                <label htmlFor="volume">Volume</label>
-                <input
-                  className="w-0 opacity-0 transition-[width] duration-300 ease-in-out group-hover/volume:w-20 group-hover/volume:opacity-100"
-                  type="range"
-                  min="0"
-                  max="1"
-                  value={volume}
-                  step={0.01}
-                  onChange={handleVolumeChange}
-                />
-              </div>
-              <p>
-                {formatTime(currentTime)} / {formatTime(duration)}
-              </p>
-              <div>
-                <select value={qualities} onChange={handleQualityChange}>
-                  {supportedQualities.map((supportQuality) => (
-                    <option key={supportQuality} value={supportQuality}>
-                      {supportQuality}
-                    </option>
-                  ))}
-                </select>
+            
+          </div>
+          <div className='w-full flex justify-between'>
+            <div className='w-full'>
+              <div className="flex gap-4">
+                <div className="flex gap-2">
+                  <button onClick={() => skipVideo(-10)}>-10 sec</button>
+                  <button onClick={playPauseVideo}>{currentStatusPlaying}</button>
+                  <button onClick={() => skipVideo(10)}>+10 sec</button>
+                </div>
+                <div className="group/volume flex items-center justify-center gap-2">
+                  <label htmlFor="volume">Volume</label>
+                  <input
+                    className="w-0 opacity-0 transition-[width] duration-300 ease-in-out group-hover/volume:w-20 group-hover/volume:opacity-100"
+                    type="range"
+                    min="0"
+                    max="1"
+                    value={volume}
+                    step={0.01}
+                    onChange={handleVolumeChange}
+                  />
+                </div>
+                <p>
+                  {formatTime(currentTime)} / {formatTime(duration)}
+                </p>
+                <div>
+                  <select value={qualities} onChange={handleQualityChange}>
+                    {supportedQualities.map((supportQuality) => (
+                      <option key={supportQuality} value={supportQuality}>
+                        {supportQuality}
+                      </option>
+                    ))}
+                  </select>
+                </div>
               </div>
             </div>
+            <button onClick={handleScreenMode}>
+              {isFullScreen ? 'Full' : 'normal'}
+            </button>
           </div>
         </div>
       </div>

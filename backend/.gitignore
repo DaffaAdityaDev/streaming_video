@@ -119,3 +119,5 @@ video/**/*.mp4
 thumbnails/*.png
 
 .temp
+
+data.txt

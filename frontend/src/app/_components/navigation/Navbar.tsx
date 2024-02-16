@@ -6,19 +6,21 @@ import { AppContext } from '../context/AppContext'
 import { useRouter } from 'next/navigation'
 export default function Navbar() {
   const router = useRouter()
-  const { search, setSearch, sidebar, setSidebar } = useContext(AppContext)
+  const { search, setSearch, sidebar, setSidebar, isFullScreen: screenMode } = useContext(AppContext)
   const [isVisible, setIsVisible] = useState(true);
+  const [handleTransparent, setHandleTransparent] = useState(true)
   const [prevScrollpos, setPrevScrollpos] = useState(0);
   const [token, setToken] = useState('')
 
   // Function to handle scroll events
   const handleScroll = useCallback(() => {
     const currentScrollPos = window.pageYOffset;
-
     if (currentScrollPos > prevScrollpos) {
       setIsVisible(false);
+      setHandleTransparent(true)
     } else {
       setIsVisible(true);
+      setHandleTransparent(false)
     }
 
     setPrevScrollpos(currentScrollPos);
@@ -28,12 +30,16 @@ export default function Navbar() {
         labelElement.click();
       }
     }
-  }, [prevScrollpos,]); // Only re-create the function when prevScrollpos changes
+  }, [prevScrollpos]); // Only re-create the function when prevScrollpos changes
 
   useEffect(() => {
     window.addEventListener('scroll', handleScroll);
     setToken(localStorage.getItem('token') || '')
 
+    // console.log(handleTransparent)
+    if (prevScrollpos === 0) {
+      setHandleTransparent(true)
+    }
     return () => {
       window.removeEventListener('scroll', handleScroll);
     };
@@ -41,6 +47,7 @@ export default function Navbar() {
 
   // Class to apply based on the visibility state
   const navbarClass = isVisible ? 'translate-y-0' : '-translate-y-full';
+  const bgClass = handleTransparent ? '' : 'bg-primary-content';
 
   function toggleSidebar() {
     setSidebar(!sidebar)
@@ -56,7 +63,7 @@ export default function Navbar() {
   }
 
   return (
-    <div className={`navbar sticky top-0 z-30 col-span-12 row-span-1 bg-primary-content transition-transform duration-200 ease-in-out ${navbarClass}`}>
+    <div className={`navbar sticky top-0 z-30 col-span-12 row-span-1 transition-transform duration-200 ease-in-out ${navbarClass} ${bgClass} ${screenMode ? "hidden" : ""}`}>
       <label className="btn btn-circle swap swap-rotate z-20">
         {/* this hidden checkbox controls the state */}
         <input type="checkbox" onClick={toggleSidebar} />
@@ -112,7 +119,6 @@ export default function Navbar() {
             tabIndex={0}
             className="menu dropdown-content menu-sm z-[1] mt-3 w-52 rounded-box bg-base-100 p-2 shadow"
           >
-           
             <li>
               <a>Settings</a>
             </li>

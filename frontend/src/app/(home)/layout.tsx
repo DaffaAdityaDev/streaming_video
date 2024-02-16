@@ -13,10 +13,11 @@ export default function RootLayout({
 }) {
   const [search, setSearch] = useState('')
   const [sidebar, setSidebar] = useState(false)
+  const [isFullScreen, setIsFullScreen] = useState(false)
 
   return (
-    <AppContext.Provider value={{ search, setSearch, sidebar, setSidebar }}>
-      <div className="grid grid-flow-row auto-rows-max gap-4">
+    <AppContext.Provider value={{ search, setSearch, sidebar, setSidebar, isFullScreen, setIsFullScreen }}>
+      <div className="">
         <Navbar />
         <SideBar />
         {children}

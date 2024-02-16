@@ -6,7 +6,7 @@ export default [
     title: 'sukunavsjogo',
     channel: 'Description',
     img: 'https://media.tenor.com/ZnP0C4JkNEYAAAAC/gojo-sukuna.gif',
-    slug: 'video-1707966973082-720p',
+    slug: '766de680-bc6d-41ea-9e0c-1948025dbe24',
     quality: '720p',
     duration: 100000,
     view: 100000,

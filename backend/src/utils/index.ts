@@ -5,6 +5,7 @@ import { Request, Response } from 'express';
 import { ParsedQs } from 'qs';
 import { Task } from '../types';
 import async from 'async';
+import { v4 as uuidv4 } from 'uuid';
 
 export function promisify(fn: Function) {
   return (...args: any[]) => {
@@ -121,7 +122,7 @@ export async function streamVideoFile(req: Request, res: Response, slug: string 
   readStream.pipe(res);
 }
 
-// Create a queue object with concurrency 4
+// Create a queue object with concurrency
 export const MakeVideoQueue = (concurrency: number) => async.queue((task: Task, callback) => {
   ffmpeg(task.filePath)
     .inputOptions('-hwaccel auto') // Automatically select the hardware acceleration method
@@ -204,40 +205,6 @@ export async function handleFileUpload(req: Request, res: Response, VideoQueue: 
     ]
   );
   
-  // const resolutionConfig = {
-  //   '144p': {
-  //     width: '256',
-  //     outputDir: path.join(__dirname, '../video/144p/'),
-  //     bitrate: '1000k'
-  //   },
-  //   '240p': {
-  //     width: '426',
-  //     outputDir: path.join(__dirname, '../video/240p/'),
-  //     bitrate: '1500k'
-  //   },
-  //   '480p': {
-  //     width: '854',
-  //     outputDir: path.join(__dirname, '../video/480p/'),
-  //     bitrate: '2500k'
-  //   },
-  //   '720p': {
-  //     width: '1280',
-  //     outputDir: path.join(__dirname, '../video/720p/'),
-  //     bitrate: '5000k'
-  //   },
-  //   '1080p': {
-  //     width: '1920',
-  //     outputDir: path.join(__dirname, '../video/1080p/'),
-  //     bitrate: '8000k'
-  //   },
-  //   '4k': {
-  //     width: '3840',
-  //     outputDir: path.join(__dirname, '../video/4k/'),
-  //     bitrate: '35000k'
-  //   },
-  //   // Add other resolutions as needed
-  // };
-  
   ffmpeg.ffprobe(filePath, function(err, metadata) {
     
     if (err || !metadata) {
@@ -271,7 +238,7 @@ export async function handleFileUpload(req: Request, res: Response, VideoQueue: 
         selectedResolution = [sortedResolutions[sortedResolutions.length - 1][0], sortedResolutions[sortedResolutions.length - 1][1].outputDir]; // Select the highest available resolution if none matched
       }
 
-      const [res, outputDir] = selectedResolution;
+      // const [res, outputDir] = selectedResolution;
       const selectedResolutionIndex = sortedResolutions.findIndex(([res]) => res === selectedResolution[0]);
 
     
@@ -279,7 +246,8 @@ export async function handleFileUpload(req: Request, res: Response, VideoQueue: 
         const [res, config] = sortedResolutions[i];
         const outputDir = config.outputDir;
         fs.mkdirSync(outputDir, { recursive: true }); // Create the directory if it does not exist
-        const outputFilename = `${path.basename(filePath, path.extname(filePath))}-${res}.mp4`;
+        const uniqueId = uuidv4();
+        const outputFilename = `${uniqueId}.mp4`;
         const outputPath = path.join(outputDir, outputFilename);
 
         // Add the task to the queue
@@ -289,30 +257,6 @@ export async function handleFileUpload(req: Request, res: Response, VideoQueue: 
           outputPath,
           res
         });
-        // ffmpeg(filePath)
-        //   .inputOptions('-hwaccel auto') // Automatically select the hardware acceleration method
-        //   .outputOptions('-c:v h264_nvenc') // Use NVENC for encoding if available
-        //   .format('mp4')
-        //   .outputOptions('-vf', `scale=${resolutionConfig[res as keyof typeof resolutionConfig].width}:-1`) // Set the width and calculate the height
-        //   .outputOptions('-b:v', resolutionConfig[res as keyof typeof resolutionConfig].bitrate) // Set the video bitrate
-        //   .output(outputPath)
-        //   .on('start', function(commandLine) {
-        //     console.log(`[${res}] Spawned Ffmpeg with command: ${commandLine}`);
-        //   })
-        //   .on('error', function(err, stdout, stderr) {
-        //     console.log(`[${res}] Error: ${err.message}`);
-        //     console.log(`[${res}] ffmpeg stdout: ${stdout}`);
-        //     console.log(`[${res}] ffmpeg stderr: ${stderr}`);
-        //   })
-        //   .on('progress', function(progress) {
-        //     if (progress.percent) {
-        //       console.log(`[${res}] Processing: ${progress.percent.toFixed(2)}% done`);
-        //     }
-        //   })
-        //   .on('end', function() {
-        //     console.log(`[${res}] Conversion Done`);
-        //   })
-        //   .run();
       }
     } else {
       console.error('No video stream found in file');

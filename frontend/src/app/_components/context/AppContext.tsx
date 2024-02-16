@@ -5,4 +5,6 @@ export const AppContext = createContext({
   setSearch: (value: string) => {},
   sidebar: false,
   setSidebar: (value: boolean) => {},
+  isFullScreen: false,
+  setIsFullScreen: (value: boolean) => {},
 })

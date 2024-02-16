@@ -1,5 +1,11 @@
+"use client"
+import { AppContext } from "@/app/_components/context/AppContext"
 /* eslint-disable @next/next/no-img-element */
+import CardVideo from "@/app/_components/video/CardVideo"
 import { PlayerVideo } from "@/app/_components/video/PlayerVideo"
+import { VideoDataType } from '@/app/types'
+import videoData from '@/data/videoData'
+import { useState, useEffect, useContext } from 'react'
 
 export default function VideoPlayerPage({
   params,
@@ -8,51 +14,71 @@ export default function VideoPlayerPage({
   params: { slug: string }
   searchParams: { [key: string]: string | string[] | undefined }
 }) {
-  return (
-    <div className="col-span-12 flex flex-col gap-2 ">
-      <PlayerVideo
-        src={
-          Array.isArray(searchParams.video)
-            ? searchParams.video[0]
-            : searchParams.video || 'defaultQuality'
-        }
-        quality={
-          Array.isArray(searchParams.quality)
-            ? searchParams.quality[0]
-            : searchParams.quality || 'defaultQuality'
-        }
-      />
-      <h1 className="text-2xl">{params.slug}</h1>
-      <div className="flex gap-4">
-        <div className="avatar">
-          <div className="w-16 rounded-full">
-            <img src="https://media.tenor.com/ZnP0C4JkNEYAAAAC/gojo-sukuna.gif" alt="foto" />
-          </div>
-        </div>
-        <div className="flex w-full justify-between">
-          <div className="flex w-fit gap-4 text-white">
-            <div>
-              <p className="text-lg font-bold">{searchParams.quality}</p>
-              <p>{searchParams.quality}</p>
+  const [data, setData] = useState<VideoDataType[]>(videoData)
+  const { isFullScreen, setIsFullScreen } = useContext(AppContext);
+
+  useEffect(() => {
+    let injectData: VideoDataType[] = []
+    for (let i = 0; i < 10; i++) {
+      injectData.push(...videoData)
+    }
+    setData(injectData)
+  }, [])
+
+  return ( 
+    <div className="grid grid-cols-12">
+      <div className={`${isFullScreen ? 'col-span-12' : 'col-span-9'}`}>
+        <PlayerVideo
+          src={
+            Array.isArray(searchParams.video)
+              ? searchParams.video[0]
+              : searchParams.video || 'defaultQuality'
+          }
+          quality={
+            Array.isArray(searchParams.quality)
+              ? searchParams.quality[0]
+              : searchParams.quality || 'defaultQuality'
+          }
+        />
+        <div className=" px-10">
+          <h1 className="text-2xl">{params.slug}</h1>
+          <div className="flex gap-4">
+            <div className="avatar">
+              <div className="w-16 rounded-full">
+                <img src="https://media.tenor.com/ZnP0C4JkNEYAAAAC/gojo-sukuna.gif" alt="foto" />
+              </div>
             </div>
-            <button className="btn bg-white text-black hover:bg-rose-500 hover:text-white">
-              Subscribe Lah
-            </button>
+            <div className="flex w-full justify-between">
+              <div className="flex w-fit gap-4 text-white">
+                <div>
+                  <p className="text-lg font-bold">{searchParams.quality}</p>
+                  <p>{searchParams.quality}</p>
+                </div>
+                <button className="btn bg-white text-black hover:bg-rose-500 hover:text-white">
+                  Subscribe Lah
+                </button>
+              </div>
+              <button className="btn">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="16"
+                  height="16"
+                  fill="currentColor"
+                  className="bi bi-share-fill"
+                  viewBox="0 0 16 16"
+                >
+                  <path d="M11 2.5a2.5 2.5 0 1 1 .603 1.628l-6.718 3.12a2.499 2.499 0 0 1 0 1.504l6.718 3.12a2.5 2.5 0 1 1-.488.876l-6.718-3.12a2.5 2.5 0 1 1 0-3.256l6.718-3.12A2.5 2.5 0 0 1 11 2.5z" />
+                </svg>
+                Share
+              </button>
+            </div>
           </div>
-          <button className="btn">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              width="16"
-              height="16"
-              fill="currentColor"
-              className="bi bi-share-fill"
-              viewBox="0 0 16 16"
-            >
-              <path d="M11 2.5a2.5 2.5 0 1 1 .603 1.628l-6.718 3.12a2.499 2.499 0 0 1 0 1.504l6.718 3.12a2.5 2.5 0 1 1-.488.876l-6.718-3.12a2.5 2.5 0 1 1 0-3.256l6.718-3.12A2.5 2.5 0 0 1 11 2.5z" />
-            </svg>
-            Share
-          </button>
         </div>
+      </div>
+      <div className="grid col-span-3 m-4 ">
+        {data.map((item, index) => (
+          <CardVideo key={index} {...item} />
+        ))}
       </div>
     </div>
   )
