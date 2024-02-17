@@ -18,7 +18,7 @@ export default function Page({
   const [uploadProgress, setUploadProgress] = useState<UploadProgressItem[]>([]);
 
   useEffect(() => {
-    const socket = io('http://localhost:8001');
+    const socket = io(`${process.env.NEXT_PUBLIC_BACKEND_WS_URL}`);
 
     socket.on('uploadProgress', (data) => {
       // console.log("test", data.path);
@@ -34,7 +34,7 @@ export default function Page({
           return updatedProgress;
         } else {
           // If the progress object for this file and resolution does not exist, add a new one
-          return [...prevProgress, { file: data.file, progress: data.progress, reso: data.resolution, path: `http://localhost:8000/video/${data.resolution}/${data.file}.mp4`}];
+          return [...prevProgress, { file: data.file, progress: data.progress, reso: data.resolution, path: `${process.env.NEXT_PUBLIC_BACKEND_URL}/video/${data.resolution}/${data.file}.mp4`}];
         }
       });
       // Update your UI with the progress data
@@ -61,7 +61,7 @@ export default function Page({
     formData.append('video', selectedFile)
 
     try {
-      const response = await axios.post('http://localhost:8000/upload', formData, {
+      const response = await axios.post(`${process.env.NEXT_PUBLIC_BACKEND_URL}/upload`, formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
         },

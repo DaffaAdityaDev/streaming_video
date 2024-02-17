@@ -114,19 +114,7 @@ export const PlayerVideo = ({ src, quality }: { src: string; quality: string }) 
     return () => {
       document.removeEventListener('keydown', handleEscKey);
     };
-  }, [isFullScreen])
-
-  // useEffect(() => {
-  //   if (videoRef.current && canvasRef.current) {
-  //     // Instantiate the VideoWithBackground class
-  //     const videoGlow = new VideoWithBackground(videoRef.current, canvasRef.current);
-      
-  //     // Clean up when the component unmounts
-  //     return () => {
-  //       videoGlow.cleanup();
-  //     };
-  //   }
-  // }, []);
+  }, [isFullScreen]);
 
   if (!src || typeof src !== 'string') {
     return <div>Error: Invalid video source</div>
@@ -260,19 +248,19 @@ export const PlayerVideo = ({ src, quality }: { src: string; quality: string }) 
     if (isFullScreen) {
       if (document.exitFullscreen) {
         document.exitFullscreen()
-      } else if (document.webkitExitFullscreen) {
-        document.webkitExitFullscreen()
-      } else if (document.msExitFullscreen) {
-        document.msExitFullscreen()
+      } else if (document.exitFullscreen) {
+        document.exitFullscreen()
+      } else if (document.exitFullscreen) {
+        document.exitFullscreen()
       }
       setIsFullScreen(false)
     } else {
       if (document.documentElement.requestFullscreen) {
         document.documentElement.requestFullscreen()
-      } else if (document.documentElement.webkitRequestFullscreen) {
-        document.documentElement.webkitRequestFullscreen()
-      } else if (document.documentElement.msRequestFullscreen) {
-        document.documentElement.msRequestFullscreen()
+      } else if (document.documentElement.requestFullscreen) {
+        document.documentElement.requestFullscreen()
+      } else if (document.documentElement.requestFullscreen) {
+        document.documentElement.requestFullscreen()
       }
       setIsFullScreen(true)
     }

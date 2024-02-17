@@ -15,7 +15,7 @@ export default function Upload() {
     const formData = new FormData();
     formData.append('video', selectedFile);
 
-    axios.post('http://localhost:8000/upload', formData, {
+    axios.post(`${process.env.NEXT_PUBLIC_BACKEND_URL}/upload`, formData, {
       headers: {
         'Content-Type': 'multipart/form-data'
       }

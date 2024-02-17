@@ -50,7 +50,7 @@ export default function Register() {
       return;
     };
     
-    axios.post('http://localhost:8000/register', {
+    axios.post(`${process.env.NEXT_PUBLIC_BACKEND_URL}/register`, {
       username: username,
       email: email,
       password: password

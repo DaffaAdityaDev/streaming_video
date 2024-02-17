@@ -39,7 +39,7 @@ export default function Login() {
       return;
     };
     
-    axios.post('http://localhost:8000/login', {
+    axios.post(`${process.env.NEXT_PUBLIC_BACKEND_URL}/login`, {
       email: email,
       password: password
     }, {
