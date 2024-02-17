@@ -1,3 +1,5 @@
+import { Server } from "socket.io";
+
 interface filePath {
   filePath: string;
 }
@@ -11,4 +13,8 @@ export interface Task {
   };
   outputPath: string;
   res: string;
+  io: Server;
+  totalVideos: number;
+  processedVideos: number;
+  uniqueId: string;
 }

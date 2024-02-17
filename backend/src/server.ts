@@ -12,9 +12,10 @@ import swaggerUi from 'swagger-ui-express'
 import openApiJSON from './api/openapi.json'
 import dotenv from 'dotenv';
 import jwt from 'jsonwebtoken';
+import { Server } from 'socket.io';
+import http from 'http';
 
 const prisma = new PrismaClient();
-const videoQueue = MakeVideoQueue(4);
 
 ffmpeg.setFfmpegPath(ffmpegPath.path);
 ffmpeg.setFfprobePath(ffprobePath.path);
@@ -22,8 +23,25 @@ ffmpeg.setFfprobePath(ffprobePath.path);
 dotenv.config();
 
 const PORT = process.env.PORT || 3001;
-console.log(process.env.PORT);
+// console.log(process.env.PORT);
 const APP = express();
+const server = http.createServer(APP);
+
+const io = new Server(server, {
+  cors: {
+    origin: '*',
+  }
+})
+
+const videoQueue = MakeVideoQueue(4);
+
+io.on('connection', (socket) => {
+  console.log('a user connected');
+  socket.on('disconnect', () => {
+    console.log('user disconnected');
+  });
+});
+
 
 APP.use(express.json());
 APP.use((req: Request, res: Response, next) => {
@@ -33,16 +51,6 @@ APP.use((req: Request, res: Response, next) => {
 });
 APP.use('/api-docs', swaggerUi.serve, swaggerUi.setup(openApiJSON));
 
-/**
- * The storage configuration for multer.
- * 
- * This configuration specifies where and how uploaded files should be stored.
- * 
- * @type {multer.StorageEngine}
- * 
- * @property {Function} destination - A function to control where uploaded files should be stored.
- * @property {Function} filename - A function to control what the uploaded file should be named.
- */
 const storage = multer.diskStorage({
   destination: function (req: any, file: any, cb: (arg0: null, arg1: string) => void) {
     const dir = path.join(__dirname, '../video/defaultQuality/');
@@ -205,7 +213,6 @@ APP.get('/video/:quality/:slug/:segment', (req: Request, res: Response) => {
     .outputOptions('-segment_time 10')
     .output('pipe:1')
     .pipe(res);
-
 });
 
 // direct video streaming
@@ -216,9 +223,13 @@ APP.get('/video/*', async(req: Request, res: Response) => {
 
 // upload video
 APP.post('/upload', upload.single('video'), async(req: Request, res: Response) => {
-  await handleFileUpload(req, res, videoQueue);
+  await handleFileUpload(req, res, videoQueue, io);
 });
 
 APP.listen(PORT, () => {
   console.log(`http://localhost:${PORT}`)
+});
+
+server.listen(8001, () => {
+  console.log('listening on *:8001');
 });

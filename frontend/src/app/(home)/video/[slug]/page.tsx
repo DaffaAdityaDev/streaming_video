@@ -17,8 +17,8 @@ export default function VideoPlayer({
   const [data, setData] = useState<VideoDataType[]>(videoData)
   const { isFullScreen, setIsFullScreen } = useContext(AppContext);
 
-  console.log(searchParams)
-  console.log(params)
+  // console.log(searchParams)
+  // console.log(params)
 
   useEffect(() => {
     let injectData: VideoDataType[] = []

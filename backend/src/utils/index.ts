@@ -6,6 +6,7 @@ import { ParsedQs } from 'qs';
 import { Task } from '../types';
 import async from 'async';
 import { v4 as uuidv4 } from 'uuid';
+import { Server } from 'socket.io';
 
 export function promisify(fn: Function) {
   return (...args: any[]) => {
@@ -142,18 +143,30 @@ export const MakeVideoQueue = (concurrency: number) => async.queue((task: Task, 
     })
     .on('progress', function(progress) {
       if (progress.percent) {
-        console.log(`[${task.res}] Processing: ${progress.percent.toFixed(2)}% done`);
+        // Calculate the overall progress
+        const overallProgress = (task.processedVideos / task.totalVideos) *   100 + (progress.percent / task.totalVideos);
+        // Emit progress update to the client
+        task.io.emit('uploadProgress', {
+          file: task.uniqueId,
+          resolution: task.res,
+          progress: overallProgress.toFixed(2),
+        });
       }
     })
     .on('end', function() {
       console.log(`[${task.res}] Conversion Done`);
+      task.io.emit('uploadProgress', {
+        file: task.uniqueId,
+        resolution: task.res,
+        progress: 100,
+      });
       callback(); // Call the callback function once the task is done
     })
     .run();
 }, concurrency);
 
 
-export async function handleFileUpload(req: Request, res: Response, VideoQueue: async.AsyncQueue<Task>) {
+export async function handleFileUpload(req: Request, res: Response, VideoQueue: async.AsyncQueue<Task>, io: Server) {
   // req.file is the `video` file
   // req.body will hold the text fields, if there were any
   if (!req.file) {
@@ -240,8 +253,10 @@ export async function handleFileUpload(req: Request, res: Response, VideoQueue: 
 
       // const [res, outputDir] = selectedResolution;
       const selectedResolutionIndex = sortedResolutions.findIndex(([res]) => res === selectedResolution[0]);
-
       const uniqueId = uuidv4();
+      const totalVideos = selectedResolutionIndex +   1; // Total number of videos to be processed
+      let processedVideos =   0; // Counter for processed videos
+
       for (let i = selectedResolutionIndex; i >= 0; i--) {
         const [res, config] = sortedResolutions[i];
         const outputDir = config.outputDir;
@@ -254,7 +269,11 @@ export async function handleFileUpload(req: Request, res: Response, VideoQueue: 
           filePath,
           resolutionConfig: config,
           outputPath,
-          res
+          res,
+          io,
+          totalVideos,
+          processedVideos,
+          uniqueId,
         });
       }
     } else {

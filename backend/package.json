@@ -69,6 +69,7 @@
     "set-function-length": "^1.1.1",
     "setprototypeof": "^1.2.0",
     "side-channel": "^1.0.4",
+    "socket.io": "^4.7.4",
     "spdy": "^4.0.2",
     "statuses": "^2.0.1",
     "swagger-ui-express": "^5.0.0",
