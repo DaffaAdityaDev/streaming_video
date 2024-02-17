@@ -1,4 +1,5 @@
 "use client"
+import { UploadProgressItem } from "@/app/types";
 import axios from "axios"
 import { useEffect, useState } from "react"
 import io from 'socket.io-client';
@@ -14,7 +15,7 @@ export default function Page({
     { name: 'My Video', isActive: false },
     { name: 'Tab 3', isActive: false }
   ])
-  const [uploadProgress, setUploadProgress] = useState([]);
+  const [uploadProgress, setUploadProgress] = useState<UploadProgressItem[]>([]);
 
   useEffect(() => {
     const socket = io('http://localhost:8001');
@@ -25,7 +26,7 @@ export default function Page({
       setUploadProgress((prevProgress) => {
         // Find the index of the existing progress object for this file and resolution
         const index = prevProgress.findIndex(item => item.file === data.file && item.reso === data.resolution);
-        console.log(data);
+        // console.log(data);
         if (index !== -1) {
           // If the progress object for this file and resolution already exists, update it
           const updatedProgress = [...prevProgress];
@@ -66,10 +67,10 @@ export default function Page({
         },
       });
       alert('Video uploaded successfully!');
-      console.log(response.data);
+      // console.log(response.data);
     } catch (error) {
       alert('Error uploading video.');
-      console.error(error);
+      // console.error(error);
     }
   }
   return (
@@ -111,15 +112,41 @@ export default function Page({
           </div>
         )
       }
-
-      {uploadProgress?.map((progressItem, index) => (
-        <div key={index}>
-          <p>File: {progressItem.file}</p>
-          <p>Progress: {progressItem.progress}%</p>
-          <p>Resolution: {progressItem.reso}</p>
-          <p>Path: {progressItem.path}</p>
-        </div>
-      ))}
+      {
+        uploadProgress.length > 0 && (
+          <div className="overflow-x-auto">
+            <table className="table">
+              {/* head */}
+              <thead>
+                <tr>
+                  <th>no</th>
+                  <th>Name</th>
+                  <th>File</th>
+                  <th>Progress</th>
+                  <th>Path</th>
+                </tr>
+              </thead>
+              <tbody>
+                {
+                  uploadProgress.map((progressItem, index) => (
+                    <tr key={index}>
+                      <th>{index + 1}</th>
+                      <td>{progressItem.file}</td>
+                      <td>{progressItem.reso}</td>
+                      <td>
+                        <progress className="progress progress-primary w-56" value={progressItem.progress} max="100"></progress>
+                      </td>
+                      <td>
+                        <a href={progressItem.path} target="_blank" rel="noreferrer">View</a>
+                      </td>
+                    </tr>
+                  ))
+                }
+              </tbody>
+            </table>
+          </div>
+        )
+      }
       
     </div>
   )

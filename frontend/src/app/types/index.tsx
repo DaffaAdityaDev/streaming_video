@@ -21,3 +21,10 @@ export interface FormInput {
   onChange: (event: React.ChangeEvent<HTMLInputElement>) => void;
   icon: string;
 }
+
+export interface UploadProgressItem {
+  file: string;
+  progress: number;
+  reso: string;
+  path: string;
+};
