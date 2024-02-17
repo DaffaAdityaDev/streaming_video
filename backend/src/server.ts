@@ -70,6 +70,13 @@ APP.post('/register', async (req: Request, res: Response) => {
   console.log(username);
   const hashedPassword = await bcrypt.hash(password, 10);
 
+  if (!username || !email || !password) {
+    return res.status(200).json({
+      status: 'error',
+      message: 'Please fill in all fields',
+    });
+  }
+
   try {
     const checkUser = await prisma.users.findFirst({
       where: {
@@ -81,7 +88,7 @@ APP.post('/register', async (req: Request, res: Response) => {
     });
 
     if (checkUser) {
-      return res.status(400).json({
+      return res.status(200).json({
         status: 'error',
         message: 'User already exists',
       });
@@ -102,7 +109,7 @@ APP.post('/register', async (req: Request, res: Response) => {
       data: user,
     });
   } catch (error) {
-    res.status(400).json({
+    res.status(200).json({
       status: 'error',
       message: error,
     });

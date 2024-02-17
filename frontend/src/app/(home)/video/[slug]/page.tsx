@@ -7,7 +7,7 @@ import { VideoDataType } from '@/app/types'
 import videoData from '@/data/videoData'
 import { useState, useEffect, useContext } from 'react'
 
-export default function VideoPlayerPage({
+export default function VideoPlayer({
   params,
   searchParams,
 }: {
@@ -16,6 +16,9 @@ export default function VideoPlayerPage({
 }) {
   const [data, setData] = useState<VideoDataType[]>(videoData)
   const { isFullScreen, setIsFullScreen } = useContext(AppContext);
+
+  console.log(searchParams)
+  console.log(params)
 
   useEffect(() => {
     let injectData: VideoDataType[] = []

@@ -96,6 +96,14 @@ export default function Navbar() {
         </Link>
       </div>
       <div className="flex-none gap-2">
+        {
+          token === '' ? null :
+          <button className="btn btn-outline btn-accent">
+            <Link href={`/channel/dashboard/${token}`}>
+              Upload
+            </Link>
+          </button>
+        }
         <div className="form-control">
           <input
             type="text"

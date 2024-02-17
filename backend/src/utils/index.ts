@@ -241,12 +241,11 @@ export async function handleFileUpload(req: Request, res: Response, VideoQueue: 
       // const [res, outputDir] = selectedResolution;
       const selectedResolutionIndex = sortedResolutions.findIndex(([res]) => res === selectedResolution[0]);
 
-    
+      const uniqueId = uuidv4();
       for (let i = selectedResolutionIndex; i >= 0; i--) {
         const [res, config] = sortedResolutions[i];
         const outputDir = config.outputDir;
         fs.mkdirSync(outputDir, { recursive: true }); // Create the directory if it does not exist
-        const uniqueId = uuidv4();
         const outputFilename = `${uniqueId}.mp4`;
         const outputPath = path.join(outputDir, outputFilename);
 
@@ -288,5 +287,8 @@ export async function handleFileUpload(req: Request, res: Response, VideoQueue: 
 
   fs.writeFileSync('data.txt', JSON.stringify(data));
 
-  res.send('original Video uploaded successfully.');
+  res.json({
+    message: 'File uploaded successfully',
+    result: data
+  })
 }

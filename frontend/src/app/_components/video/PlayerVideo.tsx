@@ -40,7 +40,7 @@ export const PlayerVideo = ({ src, quality }: { src: string; quality: string }) 
   const [currentStatusPlaying, setCurrentStatusPlaying] = useState('Pause')
   const [clickedShowInfo, setClickedShowInfo] = useState(false)
   const { isFullScreen, setIsFullScreen} = useContext(AppContext);
-  console.log(isFullScreen)
+  // console.log(isFullScreen)
 
   useEffect(() => {
     initVideoGlowBg()
@@ -54,7 +54,7 @@ export const PlayerVideo = ({ src, quality }: { src: string; quality: string }) 
     }
     if (videoRef.current) {
       const currentVideoRef = videoRef.current
-      console.log(currentTime)
+      // console.log(currentTime)
       const onWaiting = () => setIsBuffered(true)
       const onPlaying = () => setIsBuffered(false)
 
@@ -63,7 +63,7 @@ export const PlayerVideo = ({ src, quality }: { src: string; quality: string }) 
       }
 
       const onLoadedMetadata = () => {
-        console.log('onLoadedMetadata', currentTime)
+        // console.log('onLoadedMetadata', currentTime)
         if (currentTime !== undefined) {
           currentVideoRef.currentTime = currentTime
         }
@@ -278,20 +278,20 @@ export const PlayerVideo = ({ src, quality }: { src: string; quality: string }) 
     }
   }
 
-  if (document.fullscreenElement) {
-    console.log('The browser is in fullscreen mode.');
-  } else {
-    console.log('The browser is not in fullscreen mode.');
-  }
+  // if (document.fullscreenElement) {
+  //   console.log('The browser is in fullscreen mode.');
+  // } else {
+  //   console.log('The browser is not in fullscreen mode.');
+  // }
 
   const handleScrollIfFullScreen = () => {
     if (isFullScreen) {
       document.body.style.cssText = "overflow: hidden; position:fixed;";
-      console.log('hidden')
+      // console.log('hidden')
       
     } else {
       document.body.style.cssText = "overflow: auto; position:static;";
-      console.log('auto')
+      // console.log('auto')
     }
   }
 
@@ -357,7 +357,7 @@ export const PlayerVideo = ({ src, quality }: { src: string; quality: string }) 
           )}
           <video
             ref={videoRef}
-            className="h-full w-full rounded-md"
+            className="h-full w-full aspect-video rounded-md"
             onError={(e) => console.error('Video loading error', e)}
             autoPlay
             onCanPlay={() => setIsVideoReady(true)}
