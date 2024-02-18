@@ -319,7 +319,18 @@ export const PlayerVideo = ({ src, quality }: { src: string; quality: string }) 
             <div
               className={`absolute bottom-0  left-0 right-0 top-0  flex items-center justify-center bg-gradient-to-t from-black from-0% to-transparent to-15% opacity-0 transition-all duration-500 ease-in-out group-hover/playpause:opacity-100`}
             >
-              <p className="rounded-full bg-red-500 px-4 py-4">{currentStatusPlaying}</p>
+              <p className="rounded-full bg-red-500 px-4 py-4 flex justify-center items-center">
+                {
+                  currentStatusPlaying === 'Play' ? (
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" className="w-10 h-10 bi bi-pause-fill" viewBox="0 0 16 16">
+                      <path d="M5.5 3.5A1.5 1.5 0 0 1 7 5v6a1.5 1.5 0 0 1-3 0V5a1.5 1.5 0 0 1 1.5-1.5m5 0A1.5 1.5 0 0 1 12 5v6a1.5 1.5 0 0 1-3 0V5a1.5 1.5 0 0 1 1.5-1.5"/>
+                    </svg>) : (
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" className="w-10 h-10 bi bi-play-fill" viewBox="0 0 16 16">
+                      <path d="m11.596 8.697-6.363 3.692c-.54.313-1.233-.066-1.233-.697V4.308c0-.63.692-1.01 1.233-.696l6.363 3.692a.802.802 0 0 1 0 1.393"/>
+                    </svg>
+                    ) 
+                }
+              </p>
             </div>
           )}
         </div>
@@ -385,12 +396,39 @@ export const PlayerVideo = ({ src, quality }: { src: string; quality: string }) 
             <div className='w-full'>
               <div className="flex gap-4">
                 <div className="flex gap-2">
-                  <button onClick={() => skipVideo(-10)}>-10 sec</button>
-                  <button onClick={playPauseVideo}>{currentStatusPlaying}</button>
-                  <button onClick={() => skipVideo(10)}>+10 sec</button>
+                  <button onClick={() => skipVideo(-10)}>
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" className="w-6 h-6 bi bi-rewind-fill" viewBox="0 0 16 16">
+                      <path d="M8.404 7.304a.802.802 0 0 0 0 1.392l6.363 3.692c.52.302 1.233-.043 1.233-.696V4.308c0-.653-.713-.998-1.233-.696z"/>
+                      <path d="M.404 7.304a.802.802 0 0 0 0 1.392l6.363 3.692c.52.302 1.233-.043 1.233-.696V4.308c0-.653-.713-.998-1.233-.696z"/>
+                    </svg>
+                  </button>
+                  <button onClick={playPauseVideo}>
+                    {currentStatusPlaying === 'Play' ? (
+                      <svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" className="w-8 h-8 bi bi-pause-fill" viewBox="0 0 16 16">
+                        <path d="M5.5 3.5A1.5 1.5 0 0 1 7 5v6a1.5 1.5 0 0 1-3 0V5a1.5 1.5 0 0 1 1.5-1.5m5 0A1.5 1.5 0 0 1 12 5v6a1.5 1.5 0 0 1-3 0V5a1.5 1.5 0 0 1 1.5-1.5"/>
+                      </svg>) : (
+                      <svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" className="h-8 w-8 bi bi-play-fill" viewBox="0 0 16 16">
+                        <path d="m11.596 8.697-6.363 3.692c-.54.313-1.233-.066-1.233-.697V4.308c0-.63.692-1.01 1.233-.696l6.363 3.692a.802.802 0 0 1 0 1.393"/>
+                      </svg>)
+                    }
+                  </button>
+                  <button onClick={() => skipVideo(10)}>
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" className="w-6 h-6 bi bi-fast-forward-fill" viewBox="0 0 16 16">
+                      <path d="M7.596 7.304a.802.802 0 0 1 0 1.392l-6.363 3.692C.713 12.69 0 12.345 0 11.692V4.308c0-.653.713-.998 1.233-.696z"/>
+                      <path d="M15.596 7.304a.802.802 0 0 1 0 1.392l-6.363 3.692C8.713 12.69 8 12.345 8 11.692V4.308c0-.653.713-.998 1.233-.696z"/>
+                    </svg>
+                  </button>
                 </div>
                 <div className="group/volume flex items-center justify-center gap-2">
-                  <label htmlFor="volume">Volume</label>
+                  {/* <label htmlFor="volume">Volume</label> */}
+                  <div className='flex justify-center items-center w-6 h-6'>
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" className="bi bi-volume-up-fill w-full h-full" viewBox="0 0 16 16">
+                      {volume >= 0.5 && (<path d="M11.536 14.01A8.47 8.47 0 0 0 14.026 8a8.47 8.47 0 0 0-2.49-6.01l-.708.707A7.48 7.48 0 0 1 13.025 8c0 2.071-.84 3.946-2.197 5.303z"/>) }
+                      {volume >= 0.2 && (<path d="M10.121 12.596A6.48 6.48 0 0 0 12.025 8a6.48 6.48 0 0 0-1.904-4.596l-.707.707A5.48 5.48 0 0 1 11.025 8a5.48 5.48 0 0 1-1.61 3.89z"/>) }
+                      {volume > 0.1 && (<path d="M8.707 11.182A4.5 4.5 0 0 0 10.025 8a4.5 4.5 0 0 0-1.318-3.182L8 5.525A3.5 3.5 0 0 1 9.025 8 3.5 3.5 0 0 1 8 10.475zM6.717 3.55A.5.5 0 0 1 7 4v8a.5.5 0 0 1-.812.39L3.825 10.5H1.5A.5.5 0 0 1 1 10V6a.5.5 0 0 1 .5-.5h2.325l2.363-1.89a.5.5 0 0 1 .529-.06"/>)}
+                      {volume <= 0.1 && (<path d="M6.717 3.55A.5.5 0 0 1 7 4v8a.5.5 0 0 1-.812.39L3.825 10.5H1.5A.5.5 0 0 1 1 10V6a.5.5 0 0 1 .5-.5h2.325l2.363-1.89a.5.5 0 0 1 .529-.06m7.137 2.096a.5.5 0 0 1 0 .708L12.207 8l1.647 1.646a.5.5 0 0 1-.708.708L11.5 8.707l-1.646 1.647a.5.5 0 0 1-.708-.708L10.793 8 9.146 6.354a.5.5 0 1 1 .708-.708L11.5 7.293l1.646-1.647a.5.5 0 0 1 .708 0"/>)}
+                    </svg>
+                  </div>
                   <input
                     className="w-0 opacity-0 transition-[width] duration-300 ease-in-out group-hover/volume:w-20 group-hover/volume:opacity-100"
                     type="range"
@@ -401,11 +439,11 @@ export const PlayerVideo = ({ src, quality }: { src: string; quality: string }) 
                     onChange={handleVolumeChange}
                   />
                 </div>
-                <p>
+                <p className='flex justify-center items-center'>
                   {formatTime(currentTime)} / {formatTime(duration)}
                 </p>
                 <div>
-                  <select value={qualities} onChange={handleQualityChange}>
+                  <select className="select select-accent select-sm w-full max-w-xs" value={qualities} onChange={handleQualityChange}>
                     {supportedQualities.map((supportQuality) => (
                       <option key={supportQuality} value={supportQuality}>
                         {supportQuality}
@@ -416,7 +454,14 @@ export const PlayerVideo = ({ src, quality }: { src: string; quality: string }) 
               </div>
             </div>
             <button onClick={handleScreenMode}>
-              {isFullScreen ? 'Full' : 'normal'}
+              {isFullScreen ? (
+                <svg xmlns="http://www.w3.org/2000/svg"  fill="currentColor" className="w-6 h-6 bi bi-fullscreen-exit" viewBox="0 0 16 16">
+                  <path d="M5.5 0a.5.5 0 0 1 .5.5v4A1.5 1.5 0 0 1 4.5 6h-4a.5.5 0 0 1 0-1h4a.5.5 0 0 0 .5-.5v-4a.5.5 0 0 1 .5-.5m5 0a.5.5 0 0 1 .5.5v4a.5.5 0 0 0 .5.5h4a.5.5 0 0 1 0 1h-4A1.5 1.5 0 0 1 10 4.5v-4a.5.5 0 0 1 .5-.5M0 10.5a.5.5 0 0 1 .5-.5h4A1.5 1.5 0 0 1 6 11.5v4a.5.5 0 0 1-1 0v-4a.5.5 0 0 0-.5-.5h-4a.5.5 0 0 1-.5-.5m10 1a1.5 1.5 0 0 1 1.5-1.5h4a.5.5 0 0 1 0 1h-4a.5.5 0 0 0-.5.5v4a.5.5 0 0 1-1 0z"/>
+                </svg>) : (
+                <svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" className="w-6 h-6 bi bi-fullscreen" viewBox="0 0 16 16">
+                  <path d="M1.5 1a.5.5 0 0 0-.5.5v4a.5.5 0 0 1-1 0v-4A1.5 1.5 0 0 1 1.5 0h4a.5.5 0 0 1 0 1zM10 .5a.5.5 0 0 1 .5-.5h4A1.5 1.5 0 0 1 16 1.5v4a.5.5 0 0 1-1 0v-4a.5.5 0 0 0-.5-.5h-4a.5.5 0 0 1-.5-.5M.5 10a.5.5 0 0 1 .5.5v4a.5.5 0 0 0 .5.5h4a.5.5 0 0 1 0 1h-4A1.5 1.5 0 0 1 0 14.5v-4a.5.5 0 0 1 .5-.5m15 0a.5.5 0 0 1 .5.5v4a1.5 1.5 0 0 1-1.5 1.5h-4a.5.5 0 0 1 0-1h4a.5.5 0 0 0 .5-.5v-4a.5.5 0 0 1 .5-.5"/>
+                </svg>)
+              }
             </button>
           </div>
         </div>

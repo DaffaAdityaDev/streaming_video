@@ -88,6 +88,7 @@ export default function Register() {
         error={error}
         setError={setError}
         gotoAltPath='login'
+        haveAccount={true}
       />
     </>
   )

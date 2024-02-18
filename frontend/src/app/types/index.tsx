@@ -12,6 +12,21 @@ export interface VideoDataType {
   timeUpload: string
 }
 
+export interface AuthProps {
+  path: string;
+  message: string;
+  formMaker: FormInput[];
+  handleBtnSubmit: (event: React.FormEvent<HTMLFormElement>) => void;
+  email: string;
+  setEmail: (email: string) => void;
+  password: string;
+  setPassword: (password: string) => void;
+  error: string;
+  setError: (error: string) => void;
+  gotoAltPath?: string;
+  haveAccount?: boolean;
+}
+
 
 export interface FormInput {
   type: string;

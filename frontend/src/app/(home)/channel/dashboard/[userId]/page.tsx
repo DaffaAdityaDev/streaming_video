@@ -92,10 +92,47 @@ export default function Page({
       </div>
       {
         currTab[0].isActive && (
-          <form onSubmit={handleSubmit} className="flex flex-col items-center">
-            <input className="file-input file-input-bordered file-input-info w-full max-w-xs" accept=".mp4" type="file" name="video" onChange={handleFileChange} />
-            <button type="submit" className="mt-4 btn btn-success">Upload</button>
-          </form>
+          <div>
+            <form onSubmit={handleSubmit} className="flex flex-col items-center">
+              <input className="file-input file-input-bordered file-input-info w-full max-w-xs" accept=".mp4" type="file" name="video" onChange={handleFileChange} />
+              <button type="submit" className="mt-4 btn btn-success">Upload</button>
+            </form>
+            {
+              uploadProgress.length > 0 && (
+                <div className="overflow-x-auto">
+                  <table className="table">
+                    {/* head */}
+                    <thead>
+                      <tr>
+                        <th>no</th>
+                        <th>slug</th>
+                        <th>File</th>
+                        <th>Progress</th>
+                        <th>Path</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {
+                        uploadProgress.map((progressItem, index) => (
+                          <tr key={index}>
+                            <th>{index + 1}</th>
+                            <td>{progressItem.file}</td>
+                            <td>{progressItem.reso}</td>
+                            <td>
+                              <progress className="progress progress-primary w-56" value={progressItem.progress} max="100"></progress>
+                            </td>
+                            <td>
+                              <a href={progressItem.path} target="_blank" rel="noreferrer">View</a>
+                            </td>
+                          </tr>
+                        ))
+                      }
+                    </tbody>
+                  </table>
+                </div>
+              )
+            }
+          </div>
         )
       }
       {
@@ -112,41 +149,7 @@ export default function Page({
           </div>
         )
       }
-      {
-        uploadProgress.length > 0 && (
-          <div className="overflow-x-auto">
-            <table className="table">
-              {/* head */}
-              <thead>
-                <tr>
-                  <th>no</th>
-                  <th>Name</th>
-                  <th>File</th>
-                  <th>Progress</th>
-                  <th>Path</th>
-                </tr>
-              </thead>
-              <tbody>
-                {
-                  uploadProgress.map((progressItem, index) => (
-                    <tr key={index}>
-                      <th>{index + 1}</th>
-                      <td>{progressItem.file}</td>
-                      <td>{progressItem.reso}</td>
-                      <td>
-                        <progress className="progress progress-primary w-56" value={progressItem.progress} max="100"></progress>
-                      </td>
-                      <td>
-                        <a href={progressItem.path} target="_blank" rel="noreferrer">View</a>
-                      </td>
-                    </tr>
-                  ))
-                }
-              </tbody>
-            </table>
-          </div>
-        )
-      }
+      
       
     </div>
   )

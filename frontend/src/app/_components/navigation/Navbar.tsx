@@ -92,16 +92,14 @@ export default function Navbar() {
       </label>
       <div className="flex-1">
         <Link href={`/`} className="btn btn-ghost text-xl">
-          daisyUI
+          YukNonton
         </Link>
       </div>
       <div className="flex-none gap-2">
         {
           token === '' ? null :
-          <button className="btn btn-outline btn-accent">
-            <Link href={`/channel/dashboard/${token}`}>
-              Upload
-            </Link>
+          <button className="btn btn-outline btn-accent" onClick={() => router.push(`/channel/dashboard/${token}`)}>
+            Upload
           </button>
         }
         <div className="form-control">

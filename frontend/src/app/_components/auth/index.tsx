@@ -2,22 +2,10 @@
 import { useRouter } from 'next/navigation'
 import React, { useEffect } from 'react'
 import axios from 'axios'
-import { FormInput } from '@/app/types';
+import { AuthProps, FormInput } from '@/app/types';
 
 
-interface AuthProps {
-  path: string;
-  message: string;
-  formMaker: FormInput[];
-  handleBtnSubmit: (event: React.FormEvent<HTMLFormElement>) => void;
-  email: string;
-  setEmail: (email: string) => void;
-  password: string;
-  setPassword: (password: string) => void;
-  error: string;
-  setError: (error: string) => void;
-  gotoAltPath?: string;
-}
+
 
 export default function Auth({ 
   path, 
@@ -30,7 +18,8 @@ export default function Auth({
   setPassword,
   error, 
   setError,
-  gotoAltPath
+  gotoAltPath,
+  haveAccount
 }: AuthProps) {
   const router = useRouter()
  
@@ -127,7 +116,8 @@ export default function Auth({
           gotoAltPath && 
           <div className="flex justify-center w-full mt-2">
             <p>
-              Don&apos;t have an account? <a className="link" onClick={() => router.push(`/${gotoAltPath}`)}>Register</a>
+              {haveAccount ? "Already have an account? " : "don't have an account? "}
+              <a className="link" onClick={() => router.push(`/${gotoAltPath}`)}>{ haveAccount ? "Login" : "Register"}</a>
             </p>
           </div>
         }
