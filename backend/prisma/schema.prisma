@@ -12,7 +12,7 @@ model Users {
   username   String     @unique
   email      String     @unique
   password   String
-  token      String?
+  token      String?    @unique
   created_at DateTime   @default(now())
   image_url  String
   comment    Comments[]
@@ -22,9 +22,12 @@ model Users {
 model Videos {
   id_video    Int        @id @default(autoincrement())
   title_video String
-  desc_video  String
+  channel     String
   slug        String
+  thumbnail   String
   quality     String
+  views       Int
+  likes       Int
   created_at  DateTime   @default(now())
   id_user     Int
   comments    Comments[]

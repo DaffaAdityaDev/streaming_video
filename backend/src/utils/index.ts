@@ -7,7 +7,9 @@ import { Task } from '../types';
 import async from 'async';
 import { v4 as uuidv4 } from 'uuid';
 import { Server } from 'socket.io';
+import { PrismaClient } from '@prisma/client';
 
+const prisma = new PrismaClient();
 export function promisify(fn: Function) {
   return (...args: any[]) => {
     return new Promise((resolve, reject) => {
@@ -290,14 +292,15 @@ export async function handleFileUpload(req: Request, res: Response, VideoQueue: 
   }
   const file = req.file;
   const data = {
-    id: 0, // You'll need to generate or fetch this
+    // id: 0, // You'll need to generate or fetch this
     title: file.originalname,
     channel: 'Description', // You'll need to generate or fetch this
     img: 'https://media.tenor.com/ZnP0C4JkNEYAAAAC/gojo-sukuna.gif', // You'll need to generate or fetch this
     slug: file.filename,
     quality: '1080p', // You'll need to generate or fetch this
     duration: 100000, // You'll need to generate or fetch this
-    view: 100000, // You'll need to generate or fetch this
+    view: 0, // You'll need to generate or fetch this
+    likes: 0, // You'll need to generate or fetch this
     timeUpload: new Date().toISOString(),
     filename: file.filename,
     path: file.path,
@@ -306,8 +309,29 @@ export async function handleFileUpload(req: Request, res: Response, VideoQueue: 
 
   fs.writeFileSync('data.txt', JSON.stringify(data));
 
-  res.json({
-    message: 'File uploaded successfully',
-    result: data
-  })
+  try {
+    const pushVideo = await prisma.videos.create({
+      data: {
+        title_video: data.title,
+        channel: data.channel,
+        thumbnail: data.img,
+        slug: data.slug,
+        quality: data.quality,
+        views: data.view,
+        likes: data.likes,
+        created_at: data.timeUpload,
+        id_user: 1,
+      },
+    });
+
+    res.json({
+      message: 'File uploaded successfully',
+      result: pushVideo,
+    });
+  } catch (error) {
+    console.error('Error saving video data to database:', error);
+    res.status(500).json({
+      message: 'Internal server error',
+    });
+  }
 }
