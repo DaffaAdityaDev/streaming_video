@@ -1,5 +1,6 @@
 import express, { Request, Response } from 'express';
 import { streamVideoFile, handleFileUpload, MakeVideoQueue } from './utils';
+// import checkToken from './utils/checkToken';
 import fs from 'fs';
 import path from 'path';
 import multer from 'multer';
@@ -7,7 +8,7 @@ import ffmpeg from 'fluent-ffmpeg';
 import ffprobePath from '@ffprobe-installer/ffprobe';
 import ffmpegPath from '@ffmpeg-installer/ffmpeg';
 import bcrypt from 'bcrypt';
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient, Users } from '@prisma/client';
 import swaggerUi from 'swagger-ui-express'
 import openApiJSON from './api/openapi.json'
 import dotenv from 'dotenv';
@@ -132,7 +133,7 @@ APP.post('/login', async (req: Request, res: Response) => {
       message: 'Internal server error no Token Generated',
     });
   }
-  const token = jwt.sign({ email }, process.env.JWT_SECRET, { expiresIn: '1h' });
+  const token = jwt.sign({ email }, process.env.JWT_SECRET, { expiresIn: '7d' });
 
   try {
     const user = await prisma.users.findUnique({
