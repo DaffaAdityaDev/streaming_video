@@ -1,29 +1,31 @@
-"use client"
-import React, { useState } from 'react';
-import axios from 'axios';
+'use client'
+import React, { useState } from 'react'
+import axios from 'axios'
 
 export default function Upload() {
-  const [selectedFile, setSelectedFile] = useState(null);
+  const [selectedFile, setSelectedFile] = useState(null)
 
   const handleFileChange = (event) => {
-    setSelectedFile(event.target.files[0]);
-  };
+    setSelectedFile(event.target.files[0])
+  }
 
   const handleFormSubmit = (event) => {
-    event.preventDefault();
+    event.preventDefault()
 
-    const formData = new FormData();
-    formData.append('video', selectedFile);
+    const formData = new FormData()
+    formData.append('video', selectedFile)
 
-    axios.post(`${process.env.NEXT_PUBLIC_BACKEND_URL}/upload`, formData, {
-      headers: {
-        'Content-Type': 'multipart/form-data'
-      }
-    }).then(response => {
-      console.log(response);
-    });
-  };
-  
+    axios
+      .post(`${process.env.NEXT_PUBLIC_BACKEND_URL}/upload`, formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      })
+      .then((response) => {
+        console.log(response)
+      })
+  }
+
   return (
     <div className="col-span-11 row-span-5 w-full">
       <form onSubmit={handleFormSubmit}>
@@ -56,7 +58,6 @@ export default function Upload() {
         </div>
         <button type="submit">Upload</button>
       </form>
-      
     </div>
   )
 }

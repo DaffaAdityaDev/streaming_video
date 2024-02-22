@@ -6,34 +6,40 @@ import { AppContext } from '../context/AppContext'
 import { useRouter } from 'next/navigation'
 export default function Navbar() {
   const router = useRouter()
-  const { search, setSearch, sidebar, setSidebar, isFullScreen: screenMode } = useContext(AppContext)
-  const [isVisible, setIsVisible] = useState(true);
+  const {
+    search,
+    setSearch,
+    sidebar,
+    setSidebar,
+    isFullScreen: screenMode,
+  } = useContext(AppContext)
+  const [isVisible, setIsVisible] = useState(true)
   const [handleTransparent, setHandleTransparent] = useState(true)
-  const [prevScrollpos, setPrevScrollpos] = useState(0);
+  const [prevScrollpos, setPrevScrollpos] = useState(0)
   const [token, setToken] = useState('')
 
   // Function to handle scroll events
   const handleScroll = useCallback(() => {
-    const currentScrollPos = window.pageYOffset;
+    const currentScrollPos = window.pageYOffset
     if (currentScrollPos > prevScrollpos) {
-      setIsVisible(false);
+      setIsVisible(false)
       setHandleTransparent(true)
     } else {
-      setIsVisible(true);
+      setIsVisible(true)
       setHandleTransparent(false)
     }
 
-    setPrevScrollpos(currentScrollPos);
+    setPrevScrollpos(currentScrollPos)
     if (sidebar) {
-      const labelElement = document.querySelector('.btn.btn-circle') as HTMLElement;
+      const labelElement = document.querySelector('.btn.btn-circle') as HTMLElement
       if (labelElement) {
-        labelElement.click();
+        labelElement.click()
       }
     }
-  }, [prevScrollpos]); // Only re-create the function when prevScrollpos changes
+  }, [prevScrollpos]) // Only re-create the function when prevScrollpos changes
 
   useEffect(() => {
-    window.addEventListener('scroll', handleScroll);
+    window.addEventListener('scroll', handleScroll)
     setToken(localStorage.getItem('token') || '')
 
     // console.log(handleTransparent)
@@ -41,13 +47,13 @@ export default function Navbar() {
       setHandleTransparent(true)
     }
     return () => {
-      window.removeEventListener('scroll', handleScroll);
-    };
-  }, [handleScroll]); // Now handleScroll is stable and won't cause the effect to re-run
+      window.removeEventListener('scroll', handleScroll)
+    }
+  }, [handleScroll]) // Now handleScroll is stable and won't cause the effect to re-run
 
   // Class to apply based on the visibility state
-  const navbarClass = isVisible ? 'translate-y-0' : '-translate-y-full';
-  const bgClass = handleTransparent ? '' : 'bg-primary-content';
+  const navbarClass = isVisible ? 'translate-y-0' : '-translate-y-full'
+  const bgClass = handleTransparent ? '' : 'bg-primary-content'
 
   function toggleSidebar() {
     setSidebar(!sidebar)
@@ -63,7 +69,11 @@ export default function Navbar() {
   }
 
   return (
-    <div className={`navbar sticky top-0 z-30 col-span-12 row-span-1 transition-transform duration-200 ease-in-out ${navbarClass} ${bgClass} ${screenMode ? "hidden" : ""}`}>
+    <div
+      className={`navbar sticky top-0 z-30 col-span-12 row-span-1 transition-transform duration-200 ease-in-out ${navbarClass} ${bgClass} ${
+        screenMode ? 'hidden' : ''
+      }`}
+    >
       <label className="btn btn-circle swap swap-rotate z-20">
         {/* this hidden checkbox controls the state */}
         <input type="checkbox" onClick={toggleSidebar} />
@@ -96,12 +106,14 @@ export default function Navbar() {
         </Link>
       </div>
       <div className="flex-none gap-2">
-        {
-          token === '' ? null :
-          <button className="btn btn-outline btn-accent" onClick={() => router.push(`/channel/dashboard/${token}`)}>
+        {token === '' ? null : (
+          <button
+            className="btn btn-outline btn-accent"
+            onClick={() => router.push(`/channel/dashboard/${token}`)}
+          >
             Upload
           </button>
-        }
+        )}
         <div className="form-control">
           <input
             type="text"
@@ -128,11 +140,11 @@ export default function Navbar() {
             <li>
               <a>Settings</a>
             </li>
-            {
-              token === '' ?
+            {token === '' ? (
               <li>
                 <a onClick={handleLogin}>Login</a>
-              </li> :
+              </li>
+            ) : (
               <div>
                 <li>
                   <a className="justify-between">
@@ -143,9 +155,8 @@ export default function Navbar() {
                 <li>
                   <a onClick={handleLogout}>Logout</a>
                 </li>
-              </div> 
-            }
-            
+              </div>
+            )}
           </ul>
         </div>
       </div>

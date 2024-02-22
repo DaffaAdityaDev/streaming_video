@@ -24,7 +24,7 @@ export function promisify(fn: Function) {
   };
 }
 
-export function generateThumbnail(videoPath: string) {
+export function generateThumbnail(videoPath: string, uniqueId: string) {
   console.log('Generating thumbnail for', videoPath);
   const thumbnailPath = path.join(__dirname, '../../thumbnails');
 
@@ -34,12 +34,12 @@ export function generateThumbnail(videoPath: string) {
   }
 
   // Extract the video name and append '-thumbnail' to it
-  const videoName = path.basename(videoPath, path.extname(videoPath));
-  const thumbnailName = `${videoName}-thumbnail.png`;
+  // const videoName = path.basename(videoPath, path.extname(videoPath));
+  const thumbnailName = `${uniqueId}.png`;
 
   ffmpeg(videoPath)
     .screenshots({
-      timestamps: [10], // take screenshot at 10 seconds
+      timestamps: [1], // take screenshot at 10 seconds
       filename: thumbnailName,
       folder: thumbnailPath,
       size: '320x240'
@@ -146,7 +146,7 @@ export const MakeVideoQueue = (concurrency: number) => async.queue((task: Task, 
     .on('progress', function(progress) {
       if (progress.percent) {
         // Calculate the overall progress
-        const overallProgress = (task.processedVideos / task.totalVideos) *   100 + (progress.percent / task.totalVideos);
+        const overallProgress = (task.processedVideos / task.totalVideos) * 100 + (progress.percent / task.totalVideos);
         // Emit progress update to the client
         task.io.emit('uploadProgress', {
           file: task.uniqueId,
@@ -219,6 +219,8 @@ export async function handleFileUpload(req: Request, res: Response, VideoQueue: 
       path.join(videoDir, '4k/')
     ]
   );
+
+  const uniqueId = uuidv4();
   
   ffmpeg.ffprobe(filePath, function(err, metadata) {
     
@@ -255,7 +257,7 @@ export async function handleFileUpload(req: Request, res: Response, VideoQueue: 
 
       // const [res, outputDir] = selectedResolution;
       const selectedResolutionIndex = sortedResolutions.findIndex(([res]) => res === selectedResolution[0]);
-      const uniqueId = uuidv4();
+      
       const totalVideos = selectedResolutionIndex +   1; // Total number of videos to be processed
       let processedVideos =   0; // Counter for processed videos
 
@@ -283,8 +285,9 @@ export async function handleFileUpload(req: Request, res: Response, VideoQueue: 
     }
   });
 
+  
   const videoPath = req.file.path;
-  generateThumbnail(videoPath);
+  generateThumbnail(videoPath, uniqueId);
 
   if (!req.file) {
     res.status(400).send('No file uploaded');
@@ -296,7 +299,7 @@ export async function handleFileUpload(req: Request, res: Response, VideoQueue: 
     title: file.originalname,
     channel: 'Description', // You'll need to generate or fetch this
     img: 'https://media.tenor.com/ZnP0C4JkNEYAAAAC/gojo-sukuna.gif', // You'll need to generate or fetch this
-    slug: file.filename,
+    slug: uniqueId,
     quality: '1080p', // You'll need to generate or fetch this
     duration: 100000, // You'll need to generate or fetch this
     view: 0, // You'll need to generate or fetch this
