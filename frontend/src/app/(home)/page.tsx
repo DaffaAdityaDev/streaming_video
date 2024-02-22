@@ -30,12 +30,11 @@ export default function Home() {
 
   return (
     <>
-    <div className="col-span-12 m-4 grid grid-cols-[repeat(auto-fill,minmax(calc(400px),1fr))] gap-4 ">
-      {dataSearch.map((item, index) => (
-        <CardVideo key={index} {...item} />
-      ))}
-    </div>
-
+      <div className="col-span-12 m-4 grid grid-cols-[repeat(auto-fill,minmax(calc(400px),1fr))] gap-4 ">
+        {dataSearch.map((item, index) => (
+          <CardVideo key={index} {...item} />
+        ))}
+      </div>
     </>
   )
 }

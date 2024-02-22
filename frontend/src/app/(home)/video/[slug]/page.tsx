@@ -1,8 +1,8 @@
-"use client"
-import { AppContext } from "@/app/_components/context/AppContext"
+'use client'
+import { AppContext } from '@/app/_components/context/AppContext'
 /* eslint-disable @next/next/no-img-element */
-import CardVideo from "@/app/_components/video/CardVideo"
-import { PlayerVideo } from "@/app/_components/video/PlayerVideo"
+import CardVideo from '@/app/_components/video/CardVideo'
+import { PlayerVideo } from '@/app/_components/video/PlayerVideo'
 import { VideoDataType } from '@/app/types'
 import videoData from '@/data/videoData'
 import { useState, useEffect, useContext } from 'react'
@@ -15,7 +15,7 @@ export default function VideoPlayer({
   searchParams: { [key: string]: string | string[] | undefined }
 }) {
   const [data, setData] = useState<VideoDataType[]>(videoData)
-  const { isFullScreen, setIsFullScreen } = useContext(AppContext);
+  const { isFullScreen, setIsFullScreen } = useContext(AppContext)
 
   // console.log(searchParams)
   // console.log(params)
@@ -28,7 +28,7 @@ export default function VideoPlayer({
     setData(injectData)
   }, [])
 
-  return ( 
+  return (
     <div className="grid grid-cols-12">
       <div className={`${isFullScreen ? 'col-span-12' : 'col-span-9'}`}>
         <PlayerVideo
@@ -78,7 +78,7 @@ export default function VideoPlayer({
           </div>
         </div>
       </div>
-      <div className="grid col-span-3 m-4 ">
+      <div className="col-span-3 m-4 grid ">
         {data.map((item, index) => (
           <CardVideo key={index} {...item} />
         ))}

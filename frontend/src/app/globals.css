@@ -7,7 +7,6 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
- 
   .canvasClass {
     display: none !important;
   }
