@@ -22,6 +22,7 @@ model Users {
 model Videos {
   id_video    Int        @id @default(autoincrement())
   title_video String
+  description String
   channel     String
   slug        String
   thumbnail   String

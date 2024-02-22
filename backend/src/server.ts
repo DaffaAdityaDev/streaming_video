@@ -1,5 +1,5 @@
 import express, { Request, Response } from 'express';
-import { streamVideoFile, handleFileUpload, MakeVideoQueue } from './utils';
+import { streamVideoFile, handleFileUpload, MakeVideoQueue, handleTitleAndDescVideo } from './utils';
 // import checkToken from './utils/checkToken';
 import fs from 'fs';
 import path from 'path';
@@ -225,6 +225,11 @@ APP.get('/video/*', async(req: Request, res: Response) => {
 // upload video
 APP.post('/upload', upload.single('video'), async(req: Request, res: Response) => {
   await handleFileUpload(req, res, videoQueue, io);
+});
+
+// upload title and description
+APP.post('/upload/title', async(req: Request, res: Response) => {
+  await handleTitleAndDescVideo(req, res, videoQueue);
 });
 
 APP.listen(PORT, () => {

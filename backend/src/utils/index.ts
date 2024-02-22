@@ -291,6 +291,12 @@ export async function handleFileUpload(req: Request, res: Response, VideoQueue: 
     return;
   }
   const file = req.file;
+
+  // GMT+7
+  const currentTime = new Date();
+  const timeGMT7 = 7 * 60 * 60 * 1000; // 7 hours in milliseconds
+  const timeUpload = new Date(currentTime.getTime() + timeGMT7).toISOString();
+
   const data = {
     // id: 0, // You'll need to generate or fetch this
     title: file.originalname,
@@ -301,7 +307,7 @@ export async function handleFileUpload(req: Request, res: Response, VideoQueue: 
     duration: 100000, // You'll need to generate or fetch this
     view: 0, // You'll need to generate or fetch this
     likes: 0, // You'll need to generate or fetch this
-    timeUpload: new Date().toISOString(),
+    timeUpload: timeUpload,
     filename: file.filename,
     path: file.path,
     size: file.size
@@ -309,17 +315,34 @@ export async function handleFileUpload(req: Request, res: Response, VideoQueue: 
 
   fs.writeFileSync('data.txt', JSON.stringify(data));
 
+  handleTitleAndDescVideo(req, res, data);
+}
+
+export async function handleTitleAndDescVideo(req: Request, res: Response, data: any) {
+  const { title, description } = req.body;
+
+  console.log('data:', data);
+
+  const fileData = {
+    ...data,
+    title,
+    description,
+  };
+
+  console.log('File data:', fileData);
+
   try {
     const pushVideo = await prisma.videos.create({
       data: {
-        title_video: data.title,
-        channel: data.channel,
-        thumbnail: data.img,
-        slug: data.slug,
-        quality: data.quality,
-        views: data.view,
-        likes: data.likes,
-        created_at: data.timeUpload,
+        title_video: fileData.title,
+        description: fileData.description,
+        channel: fileData.channel,
+        thumbnail: fileData.img,
+        slug: fileData.slug,
+        quality: fileData.quality,
+        views: fileData.view,
+        likes: fileData.likes,
+        created_at: fileData.timeUpload,
         id_user: 1,
       },
     });
