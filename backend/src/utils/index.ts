@@ -318,46 +318,68 @@ export async function handleFileUpload(req: Request, res: Response, VideoQueue: 
 
   fs.writeFileSync('data.txt', JSON.stringify(data));
 
-  handleTitleAndDescVideo(req, res, data);
+  let checkIfUser1 = await prisma.users.findFirst({
+    where: {
+      id_user: 1,
+    },
+  });
+
+  if (!checkIfUser1) {
+    await prisma.users.create({
+      data: {
+        username: 'admin',
+        email: 'admin@gmail.com',
+        password: 'admin',
+        image_url: 'https://media.tenor.com/ZnP0C4JkNEYAAAAC/gojo-sukuna.gif',
+      },
+    });
+  }
+
+  await prisma.videos.create({
+    data: {
+      title_video: data.title,
+      description: data.channel,
+      channel: 'undefined',
+      thumbnail: data.img,
+      slug: data.slug,
+      quality: data.quality,
+      views: data.view,
+      likes: data.likes,
+      id_user: 1,
+    },
+  });
+
+  
 }
 
 export async function handleTitleAndDescVideo(req: Request, res: Response, data: any) {
-  const { title, description } = req.body;
+  const { title, description, channel, slug } = req.body;
 
-  console.log('data:', data);
-
-  const fileData = {
-    ...data,
-    title,
-    description,
-  };
-
-  console.log('File data:', fileData);
+  console.log('title', title, 'description', description, 'slug', channel);
+  // res.status(200).send('OK');
 
   try {
-    const pushVideo = await prisma.videos.create({
-      data: {
-        title_video: fileData.title,
-        description: fileData.description,
-        channel: fileData.channel,
-        thumbnail: fileData.img,
-        slug: fileData.slug,
-        quality: fileData.quality,
-        views: fileData.view,
-        likes: fileData.likes,
-        created_at: fileData.timeUpload,
-        id_user: 1,
-      },
-    });
+    const pushVideo = await prisma.videos.update({
+      where: {
+        slug: slug,
+        },
+        data: {
+          title_video: title,
+          description: description,
+          channel: channel,
+        },
+      }
+    )
 
-    res.json({
-      message: 'File uploaded successfully',
-      result: pushVideo,
+    res.status(200).json({
+      status: 'success',
+      message: 'Video created successfully',
+      data: pushVideo,
     });
   } catch (error) {
-    console.error('Error saving video data to database:', error);
-    res.status(500).json({
-      message: 'Internal server error',
+    res.status(200).json({
+      status: 'error',
+      message: error,
     });
   }
 }

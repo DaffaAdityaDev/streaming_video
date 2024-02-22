@@ -24,13 +24,13 @@ model Videos {
   title_video String
   description String
   channel     String
-  slug        String
+  slug        String     @unique
   thumbnail   String
   quality     String
   views       Int
   likes       Int
-  created_at  DateTime   @default(now())
-  id_user     Int
+  created_at  DateTime?   @default(now())
+  id_user     Int       
   comments    Comments[]
   user        Users      @relation(fields: [id_user], references: [id_user])
 }
