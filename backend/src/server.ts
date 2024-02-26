@@ -1,6 +1,6 @@
 import express, { Request, Response } from 'express';
 import { streamVideoFile, handleFileUpload, MakeVideoQueue, handleTitleAndDescVideo } from './utils';
-// import checkToken from './utils/checkToken';
+import checkToken from './utils/checkToken';
 import fs from 'fs';
 import path from 'path';
 import multer from 'multer';
@@ -223,7 +223,7 @@ APP.get('/video/*', async(req: Request, res: Response) => {
 });
 
 // upload video
-APP.post('/upload', upload.single('video'), async(req: Request, res: Response) => {
+APP.post('/upload', checkToken, upload.single('video'), async(req: Request, res: Response) => {
   await handleFileUpload(req, res, videoQueue, io);
 });
 

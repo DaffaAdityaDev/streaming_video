@@ -303,7 +303,7 @@ export async function handleFileUpload(req: Request, res: Response, VideoQueue: 
   const data = {
     // id: 0, // You'll need to generate or fetch this
     title: file.originalname,
-    channel: 'Description', // You'll need to generate or fetch this
+    channel: 'test', // You'll need to generate or fetch this
     img: 'https://media.tenor.com/ZnP0C4JkNEYAAAAC/gojo-sukuna.gif', // You'll need to generate or fetch this
     slug: uniqueId,
     quality: '1080p', // You'll need to generate or fetch this
@@ -339,7 +339,7 @@ export async function handleFileUpload(req: Request, res: Response, VideoQueue: 
     data: {
       title_video: data.title,
       description: data.channel,
-      channel: 'undefined',
+      channel: data.channel,
       thumbnail: data.img,
       slug: data.slug,
       quality: data.quality,
@@ -353,9 +353,9 @@ export async function handleFileUpload(req: Request, res: Response, VideoQueue: 
 }
 
 export async function handleTitleAndDescVideo(req: Request, res: Response, data: any) {
-  const { title, description, channel, slug } = req.body;
+  const { title, description, slug } = req.body;
 
-  console.log('title', title, 'description', description, 'slug', channel);
+  console.log('title', title, 'description', description, 'slug');
   // res.status(200).send('OK');
 
   try {
@@ -366,7 +366,6 @@ export async function handleTitleAndDescVideo(req: Request, res: Response, data:
         data: {
           title_video: title,
           description: description,
-          channel: channel,
         },
       }
     )
