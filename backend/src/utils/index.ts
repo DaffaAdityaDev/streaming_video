@@ -300,11 +300,15 @@ export async function handleFileUpload(req: Request, res: Response, VideoQueue: 
   const timeGMT7 = 7 * 60 * 60 * 1000; // 7 hours in milliseconds
   const timeUpload = new Date(currentTime.getTime() + timeGMT7).toISOString();
 
+  // thumbnail video
+  const thumbnailFilename = `${uniqueId}.png`; // Update thumbnail filename
+  const thumbnailPath = path.join(__dirname, `../../thumbnails/${thumbnailFilename}`);
+
   const data = {
     // id: 0, // You'll need to generate or fetch this
     title: file.originalname,
     channel: 'test', // You'll need to generate or fetch this
-    img: 'https://media.tenor.com/ZnP0C4JkNEYAAAAC/gojo-sukuna.gif', // You'll need to generate or fetch this
+    img: thumbnailPath, // You'll need to generate or fetch this
     slug: uniqueId,
     quality: '1080p', // You'll need to generate or fetch this
     duration: 100000, // You'll need to generate or fetch this
