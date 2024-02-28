@@ -222,6 +222,17 @@ APP.get('/video/*', async(req: Request, res: Response) => {
   await streamVideoFile(req, res, slug);
 });
 
+// get all videos
+APP.get('/videos', async(req: Request, res: Response) => {
+  const videos = await prisma.videos.findMany({
+    orderBy: {
+      created_at: 'desc',
+    },
+  });
+
+  res.json(videos);
+});
+
 // upload video
 APP.post('/upload', checkToken, upload.single('video'), async(req: Request, res: Response) => {
   await handleFileUpload(req, res, videoQueue, io);

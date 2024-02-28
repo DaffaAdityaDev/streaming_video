@@ -308,7 +308,7 @@ export async function handleFileUpload(req: Request, res: Response, VideoQueue: 
     // id: 0, // You'll need to generate or fetch this
     title: file.originalname,
     channel: 'test', // You'll need to generate or fetch this
-    img: thumbnailPath, // You'll need to generate or fetch this
+    img: thumbnailFilename, // You'll need to generate or fetch this
     slug: uniqueId,
     quality: '1080p', // You'll need to generate or fetch this
     duration: 100000, // You'll need to generate or fetch this
@@ -349,11 +349,16 @@ export async function handleFileUpload(req: Request, res: Response, VideoQueue: 
       quality: data.quality,
       views: data.view,
       likes: data.likes,
+      created_at: data.timeUpload,
       id_user: 1,
     },
   });
 
-  
+  res.status(200).json({
+    status: 'success',
+    message: 'Video created successfully',
+    data,
+  });
 }
 
 export async function handleTitleAndDescVideo(req: Request, res: Response, data: any) {
