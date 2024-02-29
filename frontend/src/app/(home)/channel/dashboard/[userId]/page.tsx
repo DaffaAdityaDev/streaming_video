@@ -12,6 +12,11 @@ export default function Page({ params }: { params: { userId: string } }) {
     { name: 'Tab 3', isActive: false },
   ])
   const [uploadProgress, setUploadProgress] = useState<UploadProgressItem[]>([])
+  const [Token, setToken] = useState<string | null>(null)
+  
+  useEffect(() => {
+    setToken(localStorage.getItem('token'))
+  }, [])
 
   useEffect(() => {
     const socket = io(`${process.env.NEXT_PUBLIC_BACKEND_WS_URL}`)
@@ -70,12 +75,13 @@ export default function Page({ params }: { params: { userId: string } }) {
       const response = await axios.post(`${process.env.NEXT_PUBLIC_BACKEND_URL}/upload`, formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
+          Authorization: `Bearer ${Token}`,
         },
       })
-      alert('Video uploaded successfully!')
+      alert(`Video uploaded successfully! ${response.data}`)
       // console.log(response.data);
     } catch (error) {
-      alert('Error uploading video.')
+      alert(`Error uploading video. ${(error as Error).message}`)
       // console.error(error);
     }
   }

@@ -7,18 +7,28 @@ import { VideoDataType } from '@/app/types'
 import videoData from '@/data/videoData'
 import CardVideo from '../_components/video/CardVideo'
 
+import axios from 'axios'
+
 export default function Home() {
-  const [data, setData] = useState<VideoDataType[]>(videoData)
+  // const [data, setData] = useState<VideoDataType[]>(videoData)
+  const [data, setData] = useState<VideoDataType[]>([])
   const [dataSearch, setDataSearch] = useState<VideoDataType[]>(data)
   const { search, setSearch } = useContext(AppContext)
 
-  useEffect(() => {
-    let injectData: VideoDataType[] = []
-    for (let i = 0; i < 10; i++) {
-      injectData.push(...videoData)
-    }
-    setData(injectData)
-  }, [])
+  function getDataFromAPI(path: string) {
+    return axios.get(path).then((response) => {
+      return response.data;
+    });
+}
+
+useEffect(() => {
+  const fetchData = async () => {
+      const data = await getDataFromAPI(`${process.env.NEXT_PUBLIC_BACKEND_URL}/videos`);
+      setData(data);
+  };
+
+  fetchData();
+}, []);
 
   useEffect(() => {
     if (search) {
@@ -27,6 +37,8 @@ export default function Home() {
       setDataSearch(data)
     }
   }, [data, search])
+
+  console.log(data)
 
   return (
     <>

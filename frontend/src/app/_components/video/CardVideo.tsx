@@ -13,13 +13,14 @@ export default function CardVideo({
   view,
   timeUpload,
 }: VideoDataType) {
+  let imgHandler = `${process.env.NEXT_PUBLIC_BACKEND_URL}/thumbnail/${slug}`
   return (
     <div className="h-full w-full transform cursor-pointer overflow-hidden rounded-md text-white shadow-md transition duration-300 ease-in-out hover:-translate-y-1 hover:scale-105 hover:shadow-lg">
       <Link href={`/video/watch?video=${slug}&quality=${quality}`}>
         <div className="w-full">
           <img
             className="aspect-video h-full w-full bg-center object-cover"
-            src={img}
+            src={imgHandler}
             alt={title}
           />
         </div>

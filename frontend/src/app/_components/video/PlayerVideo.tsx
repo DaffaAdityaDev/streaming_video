@@ -3,6 +3,8 @@ import React, { useRef, useState, useEffect, useContext } from 'react'
 import { AppContext } from '../context/AppContext'
 
 export const PlayerVideo = ({ src, quality }: { src: string; quality: string }) => {
+  console.log(src)
+  console.log(quality)
   const [qualities, setQualities] = useState(quality)
   const getUrl = (src: string, quality: string) => {
     const BACKENDURL = process.env.NEXT_PUBLIC_BACKEND_URL

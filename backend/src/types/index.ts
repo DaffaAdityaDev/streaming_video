@@ -18,3 +18,9 @@ export interface Task {
   processedVideos: number;
   uniqueId: string;
 }
+
+export interface ResolutionConfig {
+  bitrate: string;
+  width: string;
+  outputDir: string;
+ }

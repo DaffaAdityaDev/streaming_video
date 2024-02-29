@@ -3,7 +3,7 @@ import path from 'path';
 import fs from 'fs';
 import { Request, Response } from 'express';
 import { ParsedQs } from 'qs';
-import { Task } from '../types';
+import { Task, ResolutionConfig } from '../types';
 import async from 'async';
 import { v4 as uuidv4 } from 'uuid';
 import { Server } from 'socket.io';
@@ -167,10 +167,81 @@ export const MakeVideoQueue = (concurrency: number) => async.queue((task: Task, 
     .run();
 }, concurrency);
 
+function processVideo(filePath: string, resolutionConfig: Record<string, ResolutionConfig>, VideoQueue: any, io: any, uniqueId: string): Promise<string> {
+  return new Promise((resolve, reject) => {
+     ffmpeg.ffprobe(filePath, function(err, metadata) {
+       if (err || !metadata) {
+         console.error('Error reading video file:', err);
+         reject(err);
+         return;
+       }
+ 
+       const videoStream = metadata.streams.find(stream => stream.codec_type === 'video');
+ 
+       if (videoStream) {
+         const videoWidth = videoStream.width;
+ 
+         // Sort the resolutions from lowest to highest
+         const sortedResolutions = Object.entries(resolutionConfig).sort((a, b) => {
+           const widthA = parseInt(a[1].width);
+           const widthB = parseInt(b[1].width);
+           return widthA - widthB;
+         });
+
+         // Now you can use the resolution to select the correct output directory and frame size
+         let selectedResolution: [string, any] = ['', {}];
+         for (const [res, config] of sortedResolutions) {
+           const frameWidth = parseInt(config.width);
+           if (videoWidth && videoWidth <= frameWidth) {
+             selectedResolution = [res, config.outputDir];
+             break; // Exit the loop after finding the first matching resolution
+           }
+         }
+ 
+         if (!selectedResolution) {
+           selectedResolution = [sortedResolutions[sortedResolutions.length - 1][0], sortedResolutions[sortedResolutions.length - 1][1].outputDir]; // Select the highest available resolution if none matched
+         }
+
+
+         let bigestResolution: string = selectedResolution[0]
+ 
+         const selectedResolutionIndex = sortedResolutions.findIndex(([res]) => res === selectedResolution[0]);
+         const totalVideos = selectedResolutionIndex + 1; // Total number of videos to be processed
+         let processedVideos = 0; // Counter for processed videos
+ 
+         for (let i = selectedResolutionIndex; i >= 0; i--) {
+           const [res, config] = sortedResolutions[i];
+           const outputDir = config.outputDir;
+           fs.mkdirSync(outputDir, { recursive: true }); // Create the directory if it does not exist
+           const outputFilename = `${uniqueId}.mp4`;
+           const outputPath = path.join(outputDir, outputFilename);
+ 
+           // Add the task to the queue
+           VideoQueue.push({
+             filePath,
+             resolutionConfig: config,
+             outputPath,
+             res,
+             io,
+             totalVideos,
+             processedVideos,
+             uniqueId,
+           });
+         }
+ 
+         resolve(bigestResolution); // Resolve the promise when all tasks are added to the queue
+       } else {
+         console.error('No video stream found in file');
+         reject(new Error('No video stream found in file'));
+       }
+     });
+  });
+ }
 
 export async function handleFileUpload(req: Request, res: Response, VideoQueue: async.AsyncQueue<Task>, io: Server) {
   // req.file is the `video` file
   // req.body will hold the text fields, if there were any
+  console.log('Uploading video:', req.file);
   if (!req.file) {
     res.status(400).send('No file uploaded');
     return;
@@ -221,69 +292,79 @@ export async function handleFileUpload(req: Request, res: Response, VideoQueue: 
   );
 
   const uniqueId = uuidv4();
+
+  let bigestResolution: string = '0p'
+
+  try {
+    bigestResolution = await processVideo(filePath, resolutionConfig, VideoQueue, io, uniqueId);
+  } catch (error) {
+    res.status(500).send('Error processing video');
+    return;
+  }
   
-  ffmpeg.ffprobe(filePath, function(err, metadata) {
+  // ffmpeg.ffprobe(filePath, function(err, metadata) {
     
-    if (err || !metadata) {
-      console.error('Error reading video file:', err);
-      return;
-    }
+  //   if (err || !metadata) {
+  //     console.error('Error reading video file:', err);
+  //     return;
+  //   }
   
-    const videoStream = metadata.streams.find(stream => stream.codec_type === 'video');
+  //   const videoStream = metadata.streams.find(stream => stream.codec_type === 'video');
   
-    if (videoStream) {
-      const videoWidth = videoStream.width;
+  //   if (videoStream) {
+  //     const videoWidth = videoStream.width;
 
-      // Sort the resolutions from lowest to highest
-      const sortedResolutions = Object.entries(resolutionConfig).sort((a, b) => {
-        const widthA = parseInt(a[1].width);
-        const widthB = parseInt(b[1].width);
-        return widthA - widthB;
-      });
+  //     // Sort the resolutions from lowest to highest
+  //     const sortedResolutions = Object.entries(resolutionConfig).sort((a, b) => {
+  //       const widthA = parseInt(a[1].width);
+  //       const widthB = parseInt(b[1].width);
+  //       return widthA - widthB;
+  //     });
 
-      // Now you can use the resolution to select the correct output directory and frame size
-      let selectedResolution: [string, any] = ['', {}];
-      for (const [res, config] of sortedResolutions) {
-        const frameWidth = parseInt(config.width);
-        if (videoWidth && videoWidth <= frameWidth) {
-          selectedResolution = [res, config.outputDir];
-          break; // Exit the loop after finding the first matching resolution
-        }
-      }
+  //     // Now you can use the resolution to select the correct output directory and frame size
+  //     let selectedResolution: [string, any] = ['', {}];
+  //     for (const [res, config] of sortedResolutions) {
+  //       const frameWidth = parseInt(config.width);
+  //       if (videoWidth && videoWidth <= frameWidth) {
+  //         selectedResolution = [res, config.outputDir];
+  //         break; // Exit the loop after finding the first matching resolution
+  //       }
+  //     }
 
-      if (!selectedResolution) {
-        selectedResolution = [sortedResolutions[sortedResolutions.length - 1][0], sortedResolutions[sortedResolutions.length - 1][1].outputDir]; // Select the highest available resolution if none matched
-      }
+  //     if (!selectedResolution) {
+  //       selectedResolution = [sortedResolutions[sortedResolutions.length - 1][0], sortedResolutions[sortedResolutions.length - 1][1].outputDir]; // Select the highest available resolution if none matched
+  //     }
 
-      // const [res, outputDir] = selectedResolution;
-      const selectedResolutionIndex = sortedResolutions.findIndex(([res]) => res === selectedResolution[0]);
+  //     // const [res, outputDir] = selectedResolution;
+  //     const selectedResolutionIndex = sortedResolutions.findIndex(([res]) => res === selectedResolution[0]);
       
-      const totalVideos = selectedResolutionIndex +   1; // Total number of videos to be processed
-      let processedVideos =   0; // Counter for processed videos
+  //     const totalVideos = selectedResolutionIndex +   1; // Total number of videos to be processed
+  //     let processedVideos =   0; // Counter for processed videos
 
-      for (let i = selectedResolutionIndex; i >= 0; i--) {
-        const [res, config] = sortedResolutions[i];
-        const outputDir = config.outputDir;
-        fs.mkdirSync(outputDir, { recursive: true }); // Create the directory if it does not exist
-        const outputFilename = `${uniqueId}.mp4`;
-        const outputPath = path.join(outputDir, outputFilename);
+  //     for (let i = selectedResolutionIndex; i >= 0; i--) {
+  //       const [res, config] = sortedResolutions[i];
+  //       const outputDir = config.outputDir;
+  //       fs.mkdirSync(outputDir, { recursive: true }); // Create the directory if it does not exist
+  //       const outputFilename = `${uniqueId}.mp4`;
+  //       const outputPath = path.join(outputDir, outputFilename);
+        
 
-        // Add the task to the queue
-        VideoQueue.push({
-          filePath,
-          resolutionConfig: config,
-          outputPath,
-          res,
-          io,
-          totalVideos,
-          processedVideos,
-          uniqueId,
-        });
-      }
-    } else {
-      console.error('No video stream found in file');
-    }
-  });
+  //       // Add the task to the queue
+  //       VideoQueue.push({
+  //         filePath,
+  //         resolutionConfig: config,
+  //         outputPath,
+  //         res,
+  //         io,
+  //         totalVideos,
+  //         processedVideos,
+  //         uniqueId,
+  //       });
+  //     }
+  //   } else {
+  //     console.error('No video stream found in file');
+  //   }
+  // });
 
   
   const videoPath = req.file.path;
@@ -310,7 +391,7 @@ export async function handleFileUpload(req: Request, res: Response, VideoQueue: 
     channel: 'test', // You'll need to generate or fetch this
     img: thumbnailFilename, // You'll need to generate or fetch this
     slug: uniqueId,
-    quality: '1080p', // You'll need to generate or fetch this
+    quality: bigestResolution, // You'll need to generate or fetch this
     duration: 100000, // You'll need to generate or fetch this
     view: 0, // You'll need to generate or fetch this
     likes: 0, // You'll need to generate or fetch this

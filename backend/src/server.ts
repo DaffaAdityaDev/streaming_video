@@ -47,9 +47,9 @@ io.on('connection', (socket) => {
 APP.use(express.json());
 APP.use((req: Request, res: Response, next) => {
   res.header('Access-Control-Allow-Origin', '*');
-  res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept');
+  res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization');
   next();
-});
+ });
 APP.use('/api-docs', swaggerUi.serve, swaggerUi.setup(openApiJSON));
 
 const storage = multer.diskStorage({
@@ -232,6 +232,18 @@ APP.get('/videos', async(req: Request, res: Response) => {
 
   res.json(videos);
 });
+
+APP.get('/thumbnail/:slug', (req: Request, res: Response) => {
+  const { slug } = req.params;
+  const thumbnailPath = path.join(__dirname, `../thumbnails/${slug}.png`);
+  console.log(thumbnailPath);
+ 
+  if (!fs.existsSync(thumbnailPath)) {
+     return res.status(404).send('Thumbnail not found');
+  }
+ 
+  res.sendFile(thumbnailPath);
+ });
 
 // upload video
 APP.post('/upload', checkToken, upload.single('video'), async(req: Request, res: Response) => {
