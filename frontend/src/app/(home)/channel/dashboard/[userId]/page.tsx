@@ -1,4 +1,5 @@
 'use client'
+import VideoList from '@/app/_components/dashboard/VideoList'
 import { UploadProgressItem } from '@/app/types'
 import axios from 'axios'
 import { useEffect, useState } from 'react'
@@ -13,10 +14,19 @@ export default function Page({ params }: { params: { userId: string } }) {
   ])
   const [uploadProgress, setUploadProgress] = useState<UploadProgressItem[]>([])
   const [Token, setToken] = useState<string | null>(null)
+  const [usernames, setUsernames] = useState<string | null>(null)
+  const [email, setEmail] = useState<string | null>(null)
+
   
   useEffect(() => {
     setToken(localStorage.getItem('token'))
+    setUsernames(localStorage.getItem('username'))
+    setEmail(localStorage.getItem('email'))
   }, [])
+
+  console.log("Token", Token);
+  console.log("usernames", usernames);
+  console.log("email", email);
 
   useEffect(() => {
     const socket = io(`${process.env.NEXT_PUBLIC_BACKEND_WS_URL}`)
@@ -155,7 +165,7 @@ export default function Page({ params }: { params: { userId: string } }) {
       )}
       {currTab[1].isActive && (
         <div>
-          <h1>My Videos</h1>
+          <VideoList email={email} />
         </div>
       )}
       {currTab[2].isActive && (

@@ -12,8 +12,8 @@ export default function Auth({
   setEmail,
   password,
   setPassword,
-  error,
-  setError,
+  alertMessage,
+  setAlertMessage,
   gotoAltPath,
   haveAccount,
 }: AuthProps) {
@@ -24,9 +24,9 @@ export default function Auth({
     if (target.name === 'email') {
       setEmail(target.value)
       if (!checkEmailIsValid(target.value)) {
-        setError('Please enter a valid email address')
+        setAlertMessage({ text: 'Invalid email', type: 'error' })
       } else {
-        setError('')
+        setAlertMessage({ text: '', type: 'success' })
       }
     }
     if (target.name === 'password') {
@@ -44,7 +44,7 @@ export default function Auth({
     router.push('/')
   }
 
-  console.log(error)
+  // console.log(alertMessage)
 
   return (
     <div className="-mt-20 flex flex-col items-center justify-center">
@@ -60,8 +60,9 @@ export default function Auth({
                     <p>{input.placeholder}</p>
                     <label
                       className={`input input-bordered flex items-center gap-2 bg-neutral ${
-                        error && 'input-error'
-                      }`}
+                        alertMessage.type === 'error' && 'input-error'
+                      
+                      }`} 
                     >
                       <svg
                         xmlns="http://www.w3.org/2000/svg"
@@ -89,7 +90,7 @@ export default function Auth({
                     <label>{input.placeholder}</label>
                     <label
                       className={`input input-bordered flex items-center gap-2 bg-neutral ${
-                        error && 'input-error'
+                        alertMessage.type === 'error' && 'input-error'
                       }`}
                     >
                       <svg
@@ -121,7 +122,7 @@ export default function Auth({
                     <label>{input.placeholder}</label>
                     <label
                       className={`input input-bordered flex items-center gap-2 bg-neutral ${
-                        error && 'input-error'
+                        alertMessage.type === 'error' && 'input-error'
                       }`}
                     >
                       <svg
@@ -153,27 +154,27 @@ export default function Auth({
         <button className="btn btn-outline btn-accent mt-4 w-full" onClick={handleSkipLogin}>
           Go To Main Page
         </button>
-        {error && (
-          <div
-            role="alert"
-            className="alert alert-error absolute mt-20 flex w-full items-center justify-center "
+        {alertMessage.text && (
+        <div
+          role="alert"
+          className={`alert ${alertMessage.type === 'success' ? 'alert-success' : 'alert-error'} absolute mt-20 flex w-full items-center justify-center `}
+        >
+          <svg
+            xmlns="http://www.w3.org/20000/svg"
+            className={`h-6 w-6 shrink-0 stroke-current ${alertMessage.type === 'success' ? 'text-green-500' : 'text-red-500'}`}
+            fill="none"
+            viewBox="0 0 24 24"
           >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              className="h-6 w-6 shrink-0 stroke-current"
-              fill="none"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth="2"
-                d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"
-              />
-            </svg>
-            <span>{error}</span>
-          </div>
-        )}
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth="2"
+              d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"
+            />
+          </svg>
+          <span>{alertMessage.text}</span>
+        </div>
+      )}
         {gotoAltPath && (
           <div className="mt-2 flex w-full justify-center">
             <p>

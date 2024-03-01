@@ -3,7 +3,7 @@ import path from 'path';
 import fs from 'fs';
 import { Request, Response } from 'express';
 import { ParsedQs } from 'qs';
-import { Task, ResolutionConfig } from '../types';
+import { Task, ResolutionConfig, RequestWithUser } from '../types';
 import async from 'async';
 import { v4 as uuidv4 } from 'uuid';
 import { Server } from 'socket.io';
@@ -238,9 +238,16 @@ function processVideo(filePath: string, resolutionConfig: Record<string, Resolut
   });
  }
 
-export async function handleFileUpload(req: Request, res: Response, VideoQueue: async.AsyncQueue<Task>, io: Server) {
+export async function handleFileUpload(req: RequestWithUser, res: Response, VideoQueue: async.AsyncQueue<Task>, io: Server) {
   // req.file is the `video` file
   // req.body will hold the text fields, if there were any
+  if (!req.user) {
+    return res.status(401).send('Unauthorized: No user information provided');
+}
+// Access the user's email from the request object
+const userEmail = req.user.email;
+console.log("User's email:", userEmail);
+
   console.log('Uploading video:', req.file);
   if (!req.file) {
     res.status(400).send('No file uploaded');
@@ -403,22 +410,37 @@ export async function handleFileUpload(req: Request, res: Response, VideoQueue: 
 
   fs.writeFileSync('data.txt', JSON.stringify(data));
 
-  let checkIfUser1 = await prisma.users.findFirst({
+  // let checkIfUser1 = await prisma.users.findFirst({
+  //   where: {
+  //     id_user: 1,
+  //   },
+  // });
+
+  // if (!checkIfUser1) {
+  //   await prisma.users.create({
+  //     data: {
+  //       username: 'admin',
+  //       email: 'admin@gmail.com',
+  //       password: 'admin',
+  //       image_url: 'https://media.tenor.com/ZnP0C4JkNEYAAAAC/gojo-sukuna.gif',
+  //     },
+  //   });
+  // }
+
+  let user = await prisma.users.findFirst({
     where: {
-      id_user: 1,
+      email: userEmail,
     },
   });
 
-  if (!checkIfUser1) {
-    await prisma.users.create({
-      data: {
-        username: 'admin',
-        email: 'admin@gmail.com',
-        password: 'admin',
-        image_url: 'https://media.tenor.com/ZnP0C4JkNEYAAAAC/gojo-sukuna.gif',
-      },
+  if (!user) {
+    return res.status(404).json({
+       status: 'error',
+       message: 'User not found',
     });
-  }
+   }
+
+
 
   await prisma.videos.create({
     data: {
@@ -431,7 +453,7 @@ export async function handleFileUpload(req: Request, res: Response, VideoQueue: 
       views: data.view,
       likes: data.likes,
       created_at: data.timeUpload,
-      id_user: 1,
+      id_user: user.id_user,
     },
   });
 

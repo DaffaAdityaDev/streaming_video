@@ -233,6 +233,47 @@ APP.get('/videos', async(req: Request, res: Response) => {
   res.json(videos);
 });
 
+// get specific user video
+APP.post('/videos', async (req, res) => {
+  const { email } = req.body;
+  try {
+     // Find the user by email to get their id_user
+     const user = await prisma.users.findUnique({
+       where: {
+         email: email,
+       },
+     });
+     console.log(user)
+ 
+     if (!user) {
+       return res.status(404).json({
+         status: 'error',
+         message: 'User not found',
+       });
+     }
+ 
+     // Fetch videos for the specific user using their id_user
+     const videos = await prisma.videos.findMany({
+       where: {
+         id_user: user.id_user,
+       },
+       include: {
+         user: true, // Include user details in the response
+       },
+     });
+ 
+     res.status(200).json({
+       status: 'success',
+       data: videos,
+     });
+  } catch (error) {
+     res.status(500).json({
+       status: 'error',
+       message: (error as Error).message,
+     });
+  }
+ });
+
 APP.get('/thumbnail/:slug', (req: Request, res: Response) => {
   const { slug } = req.params;
   const thumbnailPath = path.join(__dirname, `../thumbnails/${slug}.png`);

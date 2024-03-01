@@ -1,6 +1,6 @@
 'use client'
 import { useRouter } from 'next/navigation'
-import React, { useEffect } from 'react'
+import React, { useEffect, useState } from 'react'
 import axios from 'axios'
 import Auth from '@/app/_components/auth'
 import Lamp from '@/app/_components/animation/lamp'
@@ -10,7 +10,7 @@ export default function Register() {
   const [username, setUsername] = React.useState('')
   const [email, setEmail] = React.useState('')
   const [password, setPassword] = React.useState('')
-  const [error, setError] = React.useState('')
+  const [alertMessage, setAlertMessage] =  useState({ text: '', type: 'none' });
 
   const formMaker = [
     {
@@ -47,7 +47,7 @@ export default function Register() {
     const passwordInput = target.elements.namedItem('password') as HTMLInputElement
 
     if (!emailInput || !passwordInput || !usernameInput) {
-      setError('Please fill in all fields')
+      setAlertMessage({ text: 'Please fill in all fields', type: 'error' })
       return
     }
 
@@ -68,17 +68,19 @@ export default function Register() {
       .then((response) => {
         // console.log(response.data)
         if (response.data.status === 'success') {
-          console.log('Login successful')
-          router.push('/login')
+          setAlertMessage({ text: response.data.message, type: 'success' })
+          setTimeout(() => {
+            router.push('/login'); // Redirect to the home page or any other page
+          }, 2000);
         }
         if (response.data.status === 'error') {
           // console.log("error", response.data.message)
-          setError(response.data.message)
+          setAlertMessage({ text: response.data.message, type: 'error' })
         }
       })
       .catch((error) => {
         console.log('catch', error)
-        setError(error.toString())
+        setAlertMessage({ text: 'An error occurred', type: 'error' })
       })
   }
 
@@ -94,8 +96,8 @@ export default function Register() {
           setEmail={setEmail}
           password={password}
           setPassword={setPassword}
-          error={error}
-          setError={setError}
+          alertMessage={alertMessage}
+          setAlertMessage={setAlertMessage}
           gotoAltPath="login"
           haveAccount={true}
         />

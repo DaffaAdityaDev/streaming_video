@@ -12,6 +12,19 @@ export interface VideoDataType {
   timeUpload: string
 }
 
+export interface ListVideo {
+  channel: string;
+  created_at: string;
+  description: string;
+  id_user: number;
+  id_video: number;
+  likes: number;
+  quality: string;
+  slug: string;
+  thumbnail: string;
+  title_video: string;
+ }
+
 export interface AuthProps {
   path: string
   message: string
@@ -21,8 +34,8 @@ export interface AuthProps {
   setEmail: (email: string) => void
   password: string
   setPassword: (password: string) => void
-  error: string
-  setError: (error: string) => void
+  alertMessage: { text: string; type: string }
+  setAlertMessage: (message: { text: string; type: 'error' | 'success' }) => void;
   gotoAltPath?: string
   haveAccount?: boolean
 }
@@ -42,3 +55,4 @@ export interface UploadProgressItem {
   reso: string
   path: string
 }
+
