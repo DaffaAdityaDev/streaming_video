@@ -6,6 +6,7 @@ import { PlayerVideo } from '@/app/_components/video/PlayerVideo'
 import { VideoDataType } from '@/app/types'
 import videoData from '@/data/videoData'
 import { useState, useEffect, useContext } from 'react'
+import axios from 'axios'
 
 export default function VideoPlayer({
   params,
@@ -14,18 +15,25 @@ export default function VideoPlayer({
   params: { slug: string }
   searchParams: { [key: string]: string | string[] | undefined }
 }) {
-  const [data, setData] = useState<VideoDataType[]>(videoData)
+  const [data, setData] = useState<VideoDataType[]>([])
   const { isFullScreen, setIsFullScreen } = useContext(AppContext)
 
   // console.log(searchParams)
   // console.log(params)
 
+  function getDataFromAPI(path: string) {
+    return axios.get(path).then((response) => {
+      return response.data
+    })
+  }
+
   useEffect(() => {
-    let injectData: VideoDataType[] = []
-    for (let i = 0; i < 10; i++) {
-      injectData.push(...videoData)
+    const fetchData = async () => {
+      const data = await getDataFromAPI(`${process.env.NEXT_PUBLIC_BACKEND_URL}/videos`)
+      setData(data)
     }
-    setData(injectData)
+
+    fetchData()
   }, [])
 
   return (
@@ -79,9 +87,7 @@ export default function VideoPlayer({
         </div>
       </div>
       <div className="col-span-3 m-4 grid ">
-        {data.map((item, index) => (
-          <CardVideo key={index} {...item} />
-        ))}
+        {data?.map((item, index) => <CardVideo key={index} {...item} />)}
       </div>
     </div>
   )

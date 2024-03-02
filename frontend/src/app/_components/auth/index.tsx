@@ -61,8 +61,7 @@ export default function Auth({
                     <label
                       className={`input input-bordered flex items-center gap-2 bg-neutral ${
                         alertMessage.type === 'error' && 'input-error'
-                      
-                      }`} 
+                      }`}
                     >
                       <svg
                         xmlns="http://www.w3.org/2000/svg"
@@ -155,26 +154,30 @@ export default function Auth({
           Go To Main Page
         </button>
         {alertMessage.text && (
-        <div
-          role="alert"
-          className={`alert ${alertMessage.type === 'success' ? 'alert-success' : 'alert-error'} absolute mt-20 flex w-full items-center justify-center `}
-        >
-          <svg
-            xmlns="http://www.w3.org/20000/svg"
-            className={`h-6 w-6 shrink-0 stroke-current ${alertMessage.type === 'success' ? 'text-green-500' : 'text-red-500'}`}
-            fill="none"
-            viewBox="0 0 24 24"
+          <div
+            role="alert"
+            className={`alert ${
+              alertMessage.type === 'success' ? 'alert-success' : 'alert-error'
+            } absolute mt-20 flex w-full items-center justify-center `}
           >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth="2"
-              d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"
-            />
-          </svg>
-          <span>{alertMessage.text}</span>
-        </div>
-      )}
+            <svg
+              xmlns="http://www.w3.org/20000/svg"
+              className={`h-6 w-6 shrink-0 stroke-current ${
+                alertMessage.type === 'success' ? 'text-green-500' : 'text-red-500'
+              }`}
+              fill="none"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth="2"
+                d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"
+              />
+            </svg>
+            <span>{alertMessage.text}</span>
+          </div>
+        )}
         {gotoAltPath && (
           <div className="mt-2 flex w-full justify-center">
             <p>

@@ -13,17 +13,17 @@ export interface VideoDataType {
 }
 
 export interface ListVideo {
-  channel: string;
-  created_at: string;
-  description: string;
-  id_user: number;
-  id_video: number;
-  likes: number;
-  quality: string;
-  slug: string;
-  thumbnail: string;
-  title_video: string;
- }
+  channel: string
+  created_at: string
+  description: string
+  id_user: number
+  id_video: number
+  likes: number
+  quality: string
+  slug: string
+  thumbnail: string
+  title_video: string
+}
 
 export interface AuthProps {
   path: string
@@ -35,7 +35,7 @@ export interface AuthProps {
   password: string
   setPassword: (password: string) => void
   alertMessage: { text: string; type: string }
-  setAlertMessage: (message: { text: string; type: 'error' | 'success' }) => void;
+  setAlertMessage: (message: { text: string; type: 'error' | 'success' }) => void
   gotoAltPath?: string
   haveAccount?: boolean
 }
@@ -56,3 +56,18 @@ export interface UploadProgressItem {
   path: string
 }
 
+interface FormField {
+  type: string
+  name: string
+  placeholder: string
+  value: string
+  onChange: (event: React.ChangeEvent<HTMLInputElement>) => void
+}
+
+export interface FormGeneratorTemplateItem {
+  id: number
+  title: string
+  description: string
+  icon: string
+  form: FormField[]
+}

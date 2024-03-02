@@ -1,5 +1,5 @@
-import { Server } from "socket.io";
-import { Request } from "express";
+import { Server } from 'socket.io';
+import { Request } from 'express';
 
 interface filePath {
   filePath: string;
@@ -24,10 +24,10 @@ export interface ResolutionConfig {
   bitrate: string;
   width: string;
   outputDir: string;
- }
+}
 
- export interface RequestWithUser extends Request {
+export interface RequestWithUser extends Request {
   user?: {
-     email: string;
+    email: string;
   };
- }
+}

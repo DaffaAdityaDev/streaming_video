@@ -10,7 +10,7 @@ export default function Register() {
   const [username, setUsername] = React.useState('')
   const [email, setEmail] = React.useState('')
   const [password, setPassword] = React.useState('')
-  const [alertMessage, setAlertMessage] =  useState({ text: '', type: 'none' });
+  const [alertMessage, setAlertMessage] = useState({ text: '', type: 'none' })
 
   const formMaker = [
     {
@@ -70,8 +70,8 @@ export default function Register() {
         if (response.data.status === 'success') {
           setAlertMessage({ text: response.data.message, type: 'success' })
           setTimeout(() => {
-            router.push('/login'); // Redirect to the home page or any other page
-          }, 2000);
+            router.push('/login') // Redirect to the home page or any other page
+          }, 2000)
         }
         if (response.data.status === 'error') {
           // console.log("error", response.data.message)

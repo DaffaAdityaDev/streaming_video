@@ -17,18 +17,18 @@ export default function Home() {
 
   function getDataFromAPI(path: string) {
     return axios.get(path).then((response) => {
-      return response.data;
-    });
-}
+      return response.data
+    })
+  }
 
-useEffect(() => {
-  const fetchData = async () => {
-      const data = await getDataFromAPI(`${process.env.NEXT_PUBLIC_BACKEND_URL}/videos`);
-      setData(data);
-  };
+  useEffect(() => {
+    const fetchData = async () => {
+      const data = await getDataFromAPI(`${process.env.NEXT_PUBLIC_BACKEND_URL}/videos`)
+      setData(data)
+    }
 
-  fetchData();
-}, []);
+    fetchData()
+  }, [])
 
   useEffect(() => {
     if (search) {

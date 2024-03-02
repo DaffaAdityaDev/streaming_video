@@ -17,16 +17,15 @@ export default function Page({ params }: { params: { userId: string } }) {
   const [usernames, setUsernames] = useState<string | null>(null)
   const [email, setEmail] = useState<string | null>(null)
 
-  
   useEffect(() => {
     setToken(localStorage.getItem('token'))
     setUsernames(localStorage.getItem('username'))
     setEmail(localStorage.getItem('email'))
   }, [])
 
-  console.log("Token", Token);
-  console.log("usernames", usernames);
-  console.log("email", email);
+  // console.log('Token', Token)
+  // console.log('usernames', usernames)
+  // console.log('email', email)
 
   useEffect(() => {
     const socket = io(`${process.env.NEXT_PUBLIC_BACKEND_WS_URL}`)

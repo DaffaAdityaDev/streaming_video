@@ -9,8 +9,7 @@ export default function Login() {
   const router = useRouter()
   const [email, setEmail] = React.useState('')
   const [password, setPassword] = React.useState('')
-  const [alertMessage, setAlertMessage] = useState({ text: '', type: 'none' });
-
+  const [alertMessage, setAlertMessage] = useState({ text: '', type: 'none' })
 
   const formMaker = [
     {
