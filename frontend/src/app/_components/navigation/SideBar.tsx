@@ -1,8 +1,8 @@
-import { ReactNode, useContext } from 'react'
-import { AppContext } from '@/app/_components/context/AppContext'
+import { ReactNode, useContext } from 'react';
+import { AppContext } from '@/app/_components/context/AppContext';
 
 export default function SideBar() {
-  const { sidebar, setSidebar } = useContext(AppContext)
+  const { sidebar, setSidebar } = useContext(AppContext);
 
   // function toggleSidebar() {
   //   setSidebar(!sidebar);
@@ -98,5 +98,5 @@ export default function SideBar() {
         </a>
       </li>
     </ul>
-  )
+  );
 }

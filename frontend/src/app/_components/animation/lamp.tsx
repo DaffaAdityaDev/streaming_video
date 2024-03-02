@@ -1,7 +1,7 @@
-'use client'
-import React from 'react'
-import { motion } from 'framer-motion'
-import { cn } from '@/lib/utils/cn'
+'use client';
+import React from 'react';
+import { motion } from 'framer-motion';
+import { cn } from '@/lib/utils/cn';
 
 export default function Lamp({ children }: { children: React.ReactNode }) {
   return (
@@ -19,15 +19,15 @@ export default function Lamp({ children }: { children: React.ReactNode }) {
         {children}
       </motion.h1>
     </LampContainer>
-  )
+  );
 }
 
 export const LampContainer = ({
   children,
   className,
 }: {
-  children: React.ReactNode
-  className?: string
+  children: React.ReactNode;
+  className?: string;
 }) => {
   return (
     <div
@@ -100,5 +100,5 @@ export const LampContainer = ({
         {children}
       </div>
     </div>
-  )
-}
+  );
+};

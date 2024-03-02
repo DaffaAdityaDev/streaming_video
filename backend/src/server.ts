@@ -58,11 +58,13 @@ APP.use((req: Request, res: Response, next) => {
   );
   next();
 });
-APP.use(cors({
-  origin: 'http://localhost:3000', // Replace with the actual origin of your frontend if different
-  methods: ['GET', 'POST', 'PUT', 'DELETE'], // Specify the methods you want to allow
-  allowedHeaders: ['Content-Type', 'Authorization'], // Specify any additional headers you want to allow
-}));
+APP.use(
+  cors({
+    origin: 'http://localhost:3000', // Replace with the actual origin of your frontend if different
+    methods: ['GET', 'POST', 'PUT', 'DELETE'], // Specify the methods you want to allow
+    allowedHeaders: ['Content-Type', 'Authorization'], // Specify any additional headers you want to allow
+  }),
+);
 
 APP.use('/api-docs', swaggerUi.serve, swaggerUi.setup(openApiJSON));
 
@@ -318,10 +320,111 @@ APP.post(
   },
 );
 
+APP.post(
+  '/upload',
+  checkToken,
+  upload.single('video'),
+  async (req: Request, res: Response) => {
+    await handleFileUpload(req, res, videoQueue, io);
+  },
+);
+
 // upload title and description
 APP.post('/upload/title', async (req: Request, res: Response) => {
   await handleTitleAndDescVideo(req, res, videoQueue);
 });
+
+// for comments CRUD
+APP.post('/comments', checkToken, async (req: Request, res: Response) => {
+  const { body, id_video, email } = req.body;
+  try {
+    // Find the user by email to get their id_user
+    const user = await prisma.users.findUnique({
+      where: {
+        email: email,
+      },
+    });
+
+    if (!user) {
+      return res.status(404).json({
+        status: 'error',
+        message: 'User not found',
+      });
+    }
+
+    // Use the id_user from the found user to create the comment
+    const comment = await prisma.comments.create({
+      data: {
+        body,
+        id_video,
+        id_user: user.id_user,
+      },
+    });
+
+    res.status(201).json({
+      status: 'success',
+      data: comment,
+    });
+  } catch (error) {
+    res.status(500).json({ error: 'Error creating comment' });
+  }
+});
+
+APP.get('/comments/:id_video', async (req: Request, res: Response) => {
+  const { id_video } = req.params;
+  try {
+    const comments = await prisma.comments.findMany({
+      where: { id_video: parseInt(id_video) },
+      include: { user: true },
+    });
+    res.status(200).json({
+      status: 'success',
+      data: comments,
+    });
+  } catch (error) {
+    res.status(500).json({ error: 'Error fetching comments' });
+  }
+});
+
+APP.put(
+  '/comments/:id_comment',
+  checkToken,
+  async (req: Request, res: Response) => {
+    const { id_comment } = req.params;
+    const { body } = req.body;
+    try {
+      const comment = await prisma.comments.update({
+        where: { id_comment: parseInt(id_comment) },
+        data: { body },
+      });
+      res.status(200).json({
+        status: 'success',
+        data: comment,
+      });
+    } catch (error) {
+      res.status(500).json({ error: 'Error updating comment' });
+    }
+  },
+);
+
+APP.delete(
+  '/comments/:id_comment',
+  checkToken,
+  async (req: Request, res: Response) => {
+    const { id_comment } = req.params;
+    try {
+      const comment = await prisma.comments.delete({
+        where: { id_comment: parseInt(id_comment) },
+      });
+      res.status(200).json({
+        status: 'success',
+        data: comment,
+      });
+    } catch (error) {
+      res.status(500).json({ error: 'Error deleting comment' });
+    }
+  },
+);
 
 APP.listen(PORT, () => {
   console.log(`http://localhost:${PORT}`);

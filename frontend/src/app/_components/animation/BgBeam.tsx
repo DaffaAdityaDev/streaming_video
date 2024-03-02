@@ -1,5 +1,5 @@
-import { motion } from 'framer-motion'
-import { cn } from '@/lib/utils/cn'
+import { motion } from 'framer-motion';
+import { cn } from '@/lib/utils/cn';
 
 export default function BgBeam({ className }: { className?: string }) {
   const paths = [
@@ -53,7 +53,7 @@ export default function BgBeam({ className }: { className?: string }) {
     'M-51 -565C-51 -565 17 -160 481 -33C945 94 1013 499 1013 499',
     'M-44 -573C-44 -573 24 -168 488 -41C952 86 1020 491 1020 491',
     'M-37 -581C-37 -581 31 -176 495 -49C959 78 1027 483 1027 483',
-  ]
+  ];
   return (
     <div
       className={cn(
@@ -129,5 +129,5 @@ export default function BgBeam({ className }: { className?: string }) {
         </defs>
       </svg>
     </div>
-  )
+  );
 }

@@ -1,267 +1,267 @@
-'use client'
-import React, { useRef, useState, useEffect, useContext } from 'react'
-import { AppContext } from '../context/AppContext'
+'use client';
+import React, { useRef, useState, useEffect, useContext } from 'react';
+import { AppContext } from '../context/AppContext';
 
 export const PlayerVideo = ({ src, quality }: { src: string; quality: string }) => {
-  console.log(src)
-  console.log(quality)
-  const [qualities, setQualities] = useState(quality)
+  // console.log(src);
+  // console.log(quality);
+  const [qualities, setQualities] = useState(quality);
   const getUrl = (src: string, quality: string) => {
-    const BACKENDURL = process.env.NEXT_PUBLIC_BACKEND_URL
-    let url
+    const BACKENDURL = process.env.NEXT_PUBLIC_BACKEND_URL;
+    let url;
     if (quality === 'defaultQuality') {
-      url = `${BACKENDURL}/video/${quality ? `${quality}` : ''}/${src}.mp4`
+      url = `${BACKENDURL}/video/${quality ? `${quality}` : ''}/${src}.mp4`;
     } else {
-      url = `${BACKENDURL}/video/${quality ? `${quality}` : ''}/${src}`
+      url = `${BACKENDURL}/video/${quality ? `${quality}` : ''}/${src}`;
     }
     // console.log(url)
     // console.log("quality", quality)
     // console.log("src", src)
     // console.log(`${BACKENDURL}/video/${quality}` + src.split('-').slice(0, -1).join('-') + '-' + quality + '.mp4');
-    return url
-  }
+    return url;
+  };
 
   const checkIfVideoResoNotBigerThanCurr = (quality: string) => {
-    const suportedQualities = ['144p', '240p', '480p', '720p', '1080p', '4k']
-    return suportedQualities.splice(0, suportedQualities.indexOf(quality) + 1)
-  }
+    const suportedQualities = ['144p', '240p', '480p', '720p', '1080p', '4k'];
+    return suportedQualities.splice(0, suportedQualities.indexOf(quality) + 1);
+  };
 
-  const supportedQualities = checkIfVideoResoNotBigerThanCurr(quality)
-  const videoRef = useRef<HTMLVideoElement | null>(null)
-  const canvasRef = useRef<HTMLCanvasElement | null>(null)
-  const [urlToVideo, setUrlToVideo] = useState(getUrl(src, qualities))
-  const [currentTime, setCurrentTime] = useState(0)
-  const [duration, setDuration] = useState(0)
-  const [volume, setVolume] = useState(1)
-  const [isVideoReady, setIsVideoReady] = useState(false)
-  const [currentWidthLength, setCurrentWidthLength] = useState(0)
-  const [buffered, setBuffered] = useState(0)
-  const [isBuffered, setIsBuffered] = useState(false)
-  const [currentStatusPlaying, setCurrentStatusPlaying] = useState('Pause')
-  const [clickedShowInfo, setClickedShowInfo] = useState(false)
-  const { isFullScreen, setIsFullScreen } = useContext(AppContext)
+  const supportedQualities = checkIfVideoResoNotBigerThanCurr(quality);
+  const videoRef = useRef<HTMLVideoElement | null>(null);
+  const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  const [urlToVideo, setUrlToVideo] = useState(getUrl(src, qualities));
+  const [currentTime, setCurrentTime] = useState(0);
+  const [duration, setDuration] = useState(0);
+  const [volume, setVolume] = useState(1);
+  const [isVideoReady, setIsVideoReady] = useState(false);
+  const [currentWidthLength, setCurrentWidthLength] = useState(0);
+  const [buffered, setBuffered] = useState(0);
+  const [isBuffered, setIsBuffered] = useState(false);
+  const [currentStatusPlaying, setCurrentStatusPlaying] = useState('Pause');
+  const [clickedShowInfo, setClickedShowInfo] = useState(false);
+  const { isFullScreen, setIsFullScreen } = useContext(AppContext);
   // console.log(isFullScreen)
 
   useEffect(() => {
-    initVideoGlowBg()
+    initVideoGlowBg();
 
     if (videoRef.current) {
-      videoRef.current.pause()
-      setUrlToVideo(getUrl(src, qualities) + '.mp4')
+      videoRef.current.pause();
+      setUrlToVideo(getUrl(src, qualities) + '.mp4');
       // console.log(videoRef.current);
       // console.log("important", urlToVideo)
-      videoRef.current.load()
+      videoRef.current.load();
     }
     if (videoRef.current) {
-      const currentVideoRef = videoRef.current
+      const currentVideoRef = videoRef.current;
       // console.log(currentTime)
-      const onWaiting = () => setIsBuffered(true)
-      const onPlaying = () => setIsBuffered(false)
+      const onWaiting = () => setIsBuffered(true);
+      const onPlaying = () => setIsBuffered(false);
 
       const onCanPlay = () => {
-        currentVideoRef.play()
-      }
+        currentVideoRef.play();
+      };
 
       const onLoadedMetadata = () => {
         // console.log('onLoadedMetadata', currentTime)
         if (currentTime !== undefined) {
-          currentVideoRef.currentTime = currentTime
+          currentVideoRef.currentTime = currentTime;
         }
-      }
+      };
 
-      currentVideoRef.addEventListener('canplay', onCanPlay)
-      currentVideoRef?.addEventListener('timeupdate', handleTimeUpdate)
-      currentVideoRef?.addEventListener('durationchange', handleDurationChange)
-      currentVideoRef.addEventListener('progress', handleProgress)
-      currentVideoRef.addEventListener('waiting', onWaiting)
-      currentVideoRef.addEventListener('playing', onPlaying)
-      currentVideoRef.addEventListener('loadedmetadata', onLoadedMetadata)
+      currentVideoRef.addEventListener('canplay', onCanPlay);
+      currentVideoRef?.addEventListener('timeupdate', handleTimeUpdate);
+      currentVideoRef?.addEventListener('durationchange', handleDurationChange);
+      currentVideoRef.addEventListener('progress', handleProgress);
+      currentVideoRef.addEventListener('waiting', onWaiting);
+      currentVideoRef.addEventListener('playing', onPlaying);
+      currentVideoRef.addEventListener('loadedmetadata', onLoadedMetadata);
 
-      handleMetadataLoad()
+      handleMetadataLoad();
 
       return () => {
-        currentVideoRef.removeEventListener('canplay', onCanPlay)
-        currentVideoRef?.removeEventListener('timeupdate', handleTimeUpdate)
-        currentVideoRef?.removeEventListener('durationchange', handleDurationChange)
-        currentVideoRef.removeEventListener('progress', handleProgress)
-        currentVideoRef.removeEventListener('waiting', onWaiting)
-        currentVideoRef.removeEventListener('playing', onPlaying)
-        currentVideoRef.removeEventListener('loadedmetadata', onLoadedMetadata)
-      }
+        currentVideoRef.removeEventListener('canplay', onCanPlay);
+        currentVideoRef?.removeEventListener('timeupdate', handleTimeUpdate);
+        currentVideoRef?.removeEventListener('durationchange', handleDurationChange);
+        currentVideoRef.removeEventListener('progress', handleProgress);
+        currentVideoRef.removeEventListener('waiting', onWaiting);
+        currentVideoRef.removeEventListener('playing', onPlaying);
+        currentVideoRef.removeEventListener('loadedmetadata', onLoadedMetadata);
+      };
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [qualities, src, urlToVideo])
+  }, [qualities, src, urlToVideo]);
 
   useEffect(() => {
-    setCurrentWidthLength(Math.floor((currentTime / duration) * 100) + 0.5)
-    setCurrentStatusPlaying(videoRef.current?.paused ? 'Pause' : 'Play')
-  }, [currentTime, duration])
+    setCurrentWidthLength(Math.floor((currentTime / duration) * 100) + 0.5);
+    setCurrentStatusPlaying(videoRef.current?.paused ? 'Pause' : 'Play');
+  }, [currentTime, duration]);
 
   useEffect(() => {
-    handleScrollIfFullScreen()
+    handleScrollIfFullScreen();
     const handleEscKey = (event: KeyboardEvent) => {
       if (event.key === 'Escape' && isFullScreen && !document.fullscreenElement) {
-        setIsFullScreen(false)
+        setIsFullScreen(false);
       }
-    }
+    };
 
     // Add the event listener when the component mounts
-    document.addEventListener('keydown', handleEscKey)
+    document.addEventListener('keydown', handleEscKey);
 
     // Remove the event listener when the component unmounts
     return () => {
-      document.removeEventListener('keydown', handleEscKey)
-    }
-  }, [isFullScreen])
+      document.removeEventListener('keydown', handleEscKey);
+    };
+  }, [isFullScreen]);
 
   if (!src || typeof src !== 'string') {
-    return <div>Error: Invalid video source</div>
+    return <div>Error: Invalid video source</div>;
   }
 
   const initVideoGlowBg = () => {
     if (videoRef.current && canvasRef.current) {
       // Instantiate the VideoWithBackground class
-      const videoGlow = new VideoWithBackground(videoRef.current, canvasRef.current)
+      const videoGlow = new VideoWithBackground(videoRef.current, canvasRef.current);
 
       // Clean up when the component unmounts
       return () => {
-        videoGlow.cleanup()
-      }
+        videoGlow.cleanup();
+      };
     }
-  }
+  };
 
   const handleQualityChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
-    playPauseVideo()
-    setQualities(event.target.value)
-  }
+    playPauseVideo();
+    setQualities(event.target.value);
+  };
 
   const handleClickShowInfo = () => {
-    setClickedShowInfo(!clickedShowInfo)
+    setClickedShowInfo(!clickedShowInfo);
     setTimeout(() => {
-      setClickedShowInfo(false)
-    }, 1000)
-  }
+      setClickedShowInfo(false);
+    }, 1000);
+  };
 
   const playPauseVideo = () => {
-    handleClickShowInfo()
+    handleClickShowInfo();
     if (videoRef.current?.paused) {
-      videoRef.current.play()
+      videoRef.current.play();
     } else {
-      videoRef.current?.pause()
+      videoRef.current?.pause();
     }
-  }
+  };
 
   const handleVolumeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const newVolume = parseFloat(e.target.value) || 0
+    const newVolume = parseFloat(e.target.value) || 0;
 
     // Validate the volume value
     if (isNaN(newVolume) || newVolume < 0 || newVolume > 1) {
-      console.error('Invalid volume value')
-      return
+      console.error('Invalid volume value');
+      return;
     }
 
-    setVolume(newVolume)
+    setVolume(newVolume);
     if (videoRef.current) {
-      videoRef.current.volume = newVolume
+      videoRef.current.volume = newVolume;
     }
-  }
+  };
 
   const handleProgress = () => {
     if (videoRef.current) {
-      const bf = videoRef.current.buffered
-      const time = videoRef.current.currentTime
+      const bf = videoRef.current.buffered;
+      const time = videoRef.current.currentTime;
 
-      let loadEndPercentage = 0
+      let loadEndPercentage = 0;
 
       for (let i = 0; i < bf.length; i++) {
         if (bf.start(i) <= time && time <= bf.end(i)) {
-          loadEndPercentage = bf.end(i) / videoRef.current.duration
-          break
+          loadEndPercentage = bf.end(i) / videoRef.current.duration;
+          break;
         }
       }
 
       // Now you can use loadEndPercentage to update your progress bar
-      setBuffered(loadEndPercentage)
+      setBuffered(loadEndPercentage);
     }
-  }
+  };
 
   const formatTime = (time: number): string => {
     if (typeof time !== 'number' || time < 0 || !isFinite(time)) {
-      return '00:00'
+      return '00:00';
     }
 
-    const minutes = Math.floor(time / 60)
-    const seconds = Math.floor(time % 60)
-    return `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`
-  }
+    const minutes = Math.floor(time / 60);
+    const seconds = Math.floor(time % 60);
+    return `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+  };
 
   const skipVideo = (seconds: number) => {
     if (videoRef.current) {
-      const newTime = videoRef.current.currentTime + seconds
+      const newTime = videoRef.current.currentTime + seconds;
 
       // Validate the currentTime value
       if (isNaN(newTime) || newTime < 0 || newTime > videoRef.current.duration) {
-        console.error('Invalid currentTime value')
-        return
+        console.error('Invalid currentTime value');
+        return;
       }
 
-      videoRef.current.currentTime = newTime
+      videoRef.current.currentTime = newTime;
     }
-  }
+  };
 
   const handleTimeUpdate = () => {
     if (videoRef.current) {
-      setCurrentTime(videoRef.current.currentTime)
+      setCurrentTime(videoRef.current.currentTime);
     }
-  }
+  };
 
   const handleMetadataLoad = () => {
     if (typeof videoRef.current?.duration === 'number') {
-      setDuration(videoRef.current.duration)
+      setDuration(videoRef.current.duration);
     }
-  }
+  };
 
   const handleDurationChange = () => {
     if (videoRef.current && typeof videoRef.current.duration === 'number') {
-      setDuration(videoRef.current.duration)
+      setDuration(videoRef.current.duration);
     }
-  }
+  };
 
   const handleSliderChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const newTime = parseFloat(e.target.value)
+    const newTime = parseFloat(e.target.value);
 
     // Validate the currentTime value
     if (isNaN(newTime) || newTime < 0 || newTime > duration) {
-      console.error('Invalid currentTime value')
-      return
+      console.error('Invalid currentTime value');
+      return;
     }
 
     if (videoRef.current) {
-      videoRef.current.currentTime = newTime
+      videoRef.current.currentTime = newTime;
     }
-  }
+  };
 
   const handleScreenMode = () => {
     if (isFullScreen) {
       if (document.exitFullscreen) {
-        document.exitFullscreen()
+        document.exitFullscreen();
       } else if (document.exitFullscreen) {
-        document.exitFullscreen()
+        document.exitFullscreen();
       } else if (document.exitFullscreen) {
-        document.exitFullscreen()
+        document.exitFullscreen();
       }
-      setIsFullScreen(false)
+      setIsFullScreen(false);
     } else {
       if (document.documentElement.requestFullscreen) {
-        document.documentElement.requestFullscreen()
+        document.documentElement.requestFullscreen();
       } else if (document.documentElement.requestFullscreen) {
-        document.documentElement.requestFullscreen()
+        document.documentElement.requestFullscreen();
       } else if (document.documentElement.requestFullscreen) {
-        document.documentElement.requestFullscreen()
+        document.documentElement.requestFullscreen();
       }
-      setIsFullScreen(true)
+      setIsFullScreen(true);
     }
-  }
+  };
 
   // if (document.fullscreenElement) {
   //   console.log('The browser is in fullscreen mode.');
@@ -271,13 +271,13 @@ export const PlayerVideo = ({ src, quality }: { src: string; quality: string }) 
 
   const handleScrollIfFullScreen = () => {
     if (isFullScreen) {
-      document.body.style.cssText = 'overflow: hidden; position:fixed;'
+      document.body.style.cssText = 'overflow: hidden; position:fixed;';
       // console.log('hidden')
     } else {
-      document.body.style.cssText = 'overflow: auto; position:static;'
+      document.body.style.cssText = 'overflow: auto; position:static;';
       // console.log('auto')
     }
-  }
+  };
 
   return (
     <div
@@ -526,20 +526,20 @@ export const PlayerVideo = ({ src, quality }: { src: string; quality: string }) 
         </div>
       </div>
     </div>
-  )
-}
+  );
+};
 
 class VideoWithBackground {
-  video: HTMLVideoElement
-  canvas: HTMLCanvasElement
-  step: number = 0 // Initialize with a default value
-  ctx?: CanvasRenderingContext2D // Keep the type as undefined
+  video: HTMLVideoElement;
+  canvas: HTMLCanvasElement;
+  step: number = 0; // Initialize with a default value
+  ctx?: CanvasRenderingContext2D; // Keep the type as undefined
 
   constructor(videoElement: HTMLVideoElement, canvasElement: HTMLCanvasElement) {
-    this.video = videoElement
-    this.canvas = canvasElement
+    this.video = videoElement;
+    this.canvas = canvasElement;
 
-    this.init()
+    this.init();
   }
 
   draw = () => {
@@ -548,13 +548,13 @@ class VideoWithBackground {
       //   this.ctx.drawImage(this.video,  0,  0, this.canvas.width, this.canvas.height);
       // }
       // Save the current state of the context
-      this.ctx.save()
+      this.ctx.save();
 
       // Translate the context to the center of the canvas
-      this.ctx.translate(this.canvas.width / 2, this.canvas.height / 2)
+      this.ctx.translate(this.canvas.width / 2, this.canvas.height / 2);
 
       // Scale the context by  1.0 (100%)
-      this.ctx.scale(1.0, 1.0)
+      this.ctx.scale(1.0, 1.0);
 
       // Create a radial gradient
       const gradient = this.ctx.createRadialGradient(
@@ -564,21 +564,21 @@ class VideoWithBackground {
         this.canvas.width / 2,
         this.canvas.height / 2,
         this.canvas.width / 2,
-      )
+      );
       // Start with solid black at the center
-      gradient.addColorStop(0, 'rgba(0,  0,  0,  1)')
+      gradient.addColorStop(0, 'rgba(0,  0,  0,  1)');
       // Gradually fade to transparent towards the edges
-      gradient.addColorStop(0.5, 'rgba(0,  0,  0,  0.5)')
-      gradient.addColorStop(1, 'rgba(0,  0,  0,  0)')
+      gradient.addColorStop(0.5, 'rgba(0,  0,  0,  0.5)');
+      gradient.addColorStop(1, 'rgba(0,  0,  0,  0)');
 
       // Apply the gradient as a mask
-      this.ctx.fillStyle = gradient
+      this.ctx.fillStyle = gradient;
       this.ctx.fillRect(
         -this.canvas.width / 2,
         -this.canvas.height / 2,
         this.canvas.width,
         this.canvas.height,
-      )
+      );
 
       // Draw the video frame at the center of the canvas
       this.ctx.drawImage(
@@ -587,54 +587,54 @@ class VideoWithBackground {
         -this.canvas.height / 2,
         this.canvas.width,
         this.canvas.height,
-      )
+      );
 
       // Restore the context to its original state
-      this.ctx.restore()
+      this.ctx.restore();
     }
-  }
+  };
   drawLoop = () => {
-    this.draw()
-    this.step = window.requestAnimationFrame(this.drawLoop)
-  }
+    this.draw();
+    this.step = window.requestAnimationFrame(this.drawLoop);
+  };
 
   drawPause = () => {
-    window.cancelAnimationFrame(this.step)
-    this.step = 0 // Reset to the default value
-  }
+    window.cancelAnimationFrame(this.step);
+    this.step = 0; // Reset to the default value
+  };
 
   init = () => {
     if (this.canvas && this.video) {
-      const ctx = this.canvas.getContext('2d')
+      const ctx = this.canvas.getContext('2d');
       if (ctx) {
-        this.ctx = ctx
-        this.ctx.filter = 'blur(25px)'
+        this.ctx = ctx;
+        this.ctx.filter = 'blur(25px)';
 
         // Check for prefers-reduced-motion setting
-        const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+        const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
         if (!prefersReducedMotion) {
           // Add event listeners for the video element
-          this.video.addEventListener('loadeddata', this.draw, false)
-          this.video.addEventListener('seeked', this.draw, false)
-          this.video.addEventListener('play', this.drawLoop, false)
-          this.video.addEventListener('pause', this.drawPause, false)
-          this.video.addEventListener('ended', this.drawPause, false)
+          this.video.addEventListener('loadeddata', this.draw, false);
+          this.video.addEventListener('seeked', this.draw, false);
+          this.video.addEventListener('play', this.drawLoop, false);
+          this.video.addEventListener('pause', this.drawPause, false);
+          this.video.addEventListener('ended', this.drawPause, false);
         }
       } else {
-        console.error('Failed to get canvas context')
+        console.error('Failed to get canvas context');
       }
     } else {
-      console.error('Video or canvas element is not available')
+      console.error('Video or canvas element is not available');
     }
-  }
+  };
 
   cleanup = () => {
     if (this.video && this.canvas) {
-      this.video.removeEventListener('loadeddata', this.draw)
-      this.video.removeEventListener('seeked', this.draw)
-      this.video.removeEventListener('play', this.drawLoop)
-      this.video.removeEventListener('pause', this.drawPause)
-      this.video.removeEventListener('ended', this.drawPause)
+      this.video.removeEventListener('loadeddata', this.draw);
+      this.video.removeEventListener('seeked', this.draw);
+      this.video.removeEventListener('play', this.drawLoop);
+      this.video.removeEventListener('pause', this.drawPause);
+      this.video.removeEventListener('ended', this.drawPause);
     }
-  }
+  };
 }

@@ -1,4 +1,4 @@
-import { createContext } from 'react'
+import { createContext } from 'react';
 
 export const AppContext = createContext({
   search: '',
@@ -7,4 +7,4 @@ export const AppContext = createContext({
   setSidebar: (value: boolean) => {},
   isFullScreen: false,
   setIsFullScreen: (value: boolean) => {},
-})
+});

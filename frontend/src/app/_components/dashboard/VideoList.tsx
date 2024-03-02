@@ -1,17 +1,19 @@
-import React, { useState, useEffect } from 'react'
-import axios from 'axios'
-import { FormGeneratorTemplateItem, ListVideo } from '@/app/types'
+import React, { useState, useEffect } from 'react';
+import axios from 'axios';
+import { FormGeneratorTemplateItem, ListVideo } from '@/app/types';
 
 export default function VideoList({ email }: any) {
-  const [videos, setVideos] = useState<ListVideo[]>([])
-  const [editingVideoId, setEditingVideoId] = useState<number>(0)
-  const [FormSelected, setFormSelected] = useState(0)
-  const [formGeneratorTemplate, setFormGeneratorTemplate] = useState<FormGeneratorTemplateItem[]>([])
-  const [showToast, setShowToast] = useState(false)
+  const [videos, setVideos] = useState<ListVideo[]>([]);
+  const [editingVideoId, setEditingVideoId] = useState<number>(0);
+  const [FormSelected, setFormSelected] = useState(0);
+  const [formGeneratorTemplate, setFormGeneratorTemplate] = useState<FormGeneratorTemplateItem[]>(
+    [],
+  );
+  const [showToast, setShowToast] = useState(false);
 
   useEffect(() => {
     // console.log("editingVideoId", videos.findIndex(video => video.id_video === editingVideoId));
-    let newFormGeneratorTemplate: FormGeneratorTemplateItem[] = []
+    let newFormGeneratorTemplate: FormGeneratorTemplateItem[] = [];
     videos.forEach((video, index) => {
       if (index === videos.findIndex((video) => video.id_video === editingVideoId)) {
         newFormGeneratorTemplate.push(
@@ -27,7 +29,7 @@ export default function VideoList({ email }: any) {
                 placeholder: 'Title',
                 value: video.title_video,
                 onChange: (event: React.ChangeEvent<HTMLInputElement>) => {
-                  console.log(event.target.value)
+                  console.log(event.target.value);
                 },
               },
             ],
@@ -44,28 +46,27 @@ export default function VideoList({ email }: any) {
                 placeholder: 'Description',
                 value: video.description,
                 onChange: (event: React.ChangeEvent<HTMLInputElement>) => {
-                  console.log(event.target.value)
+                  console.log(event.target.value);
                 },
               },
             ],
           },
-        )
+        );
       }
-    })
-    setFormGeneratorTemplate(newFormGeneratorTemplate)
-  }, [editingVideoId])
+    });
+    setFormGeneratorTemplate(newFormGeneratorTemplate);
+  }, [editingVideoId]);
 
   const fetchVideos = async () => {
     try {
       const response = await axios.post(`${process.env.NEXT_PUBLIC_BACKEND_URL}/videos`, {
         email,
-      })
-      setVideos(response.data.data)
+      });
+      setVideos(response.data.data);
     } catch (error) {
-      console.error('Error fetching videos:', error)
+      console.error('Error fetching videos:', error);
     }
-  }
-  
+  };
 
   const updateVideoData = async (newTitle: string, newDescription: string, slug: string) => {
     // console.log('newTitle', newTitle)
@@ -76,63 +77,61 @@ export default function VideoList({ email }: any) {
         title: newTitle,
         description: newDescription,
         slug: slug,
-      })
-      console.log(response.data)
+      });
+      console.log(response.data);
       if (response.data.status === 'success') {
         // alert('Video data updated successfully')
-        fetchVideos()
-        setShowToast(true)
+        fetchVideos();
+        setShowToast(true);
         setTimeout(() => {
-          setShowToast(false)
-        }, 3000)
-        const modalElement = document.getElementById(
-          'my_modal_3',
-        ) as HTMLDialogElement
+          setShowToast(false);
+        }, 3000);
+        const modalElement = document.getElementById('my_modal_3') as HTMLDialogElement;
         if (modalElement) {
-          modalElement.close()
+          modalElement.close();
         }
       } else {
-        alert('Failed to update video data')
+        alert('Failed to update video data');
       }
       // setVideoData(response.data);
     } catch (error) {
-      console.error('Failed to update video data:', error)
+      console.error('Failed to update video data:', error);
     }
-  }
+  };
 
   useEffect(() => {
-    fetchVideos()
-  }, [email])
+    fetchVideos();
+  }, [email]);
 
   const handleInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     // Find the index of the form that contains the input field being updated
     const formIndex = formGeneratorTemplate.findIndex((form) =>
       form.form.some((field) => field.name === event.target.name),
-    )
+    );
     if (formIndex !== -1) {
       // Find the index of the input field within the form
       const inputIndex = formGeneratorTemplate[formIndex].form.findIndex(
         (field) => field.name === event.target.name,
-      )
+      );
       if (inputIndex !== -1) {
         // Update the value of the input field
-        const updatedFormGeneratorTemplate = [...formGeneratorTemplate]
-        updatedFormGeneratorTemplate[formIndex].form[inputIndex].value = event.target.value
-        setFormGeneratorTemplate(updatedFormGeneratorTemplate)
+        const updatedFormGeneratorTemplate = [...formGeneratorTemplate];
+        updatedFormGeneratorTemplate[formIndex].form[inputIndex].value = event.target.value;
+        setFormGeneratorTemplate(updatedFormGeneratorTemplate);
       }
     }
-  }
+  };
 
-  console.log(videos)
+  console.log(videos);
   return (
     <>
-     {showToast && (
-      <div className="absolute toast toast-bottom toast-end">
-        <div className="alert alert-success">
-          <span>Change Data Success</span>
+      {showToast && (
+        <div className="toast toast-end toast-bottom absolute">
+          <div className="alert alert-success">
+            <span>Change Data Success</span>
+          </div>
         </div>
-      </div>
-    )}
+      )}
       <dialog id="my_modal_3" className="modal">
         <div className="modal-box h-fit max-w-[100%]">
           <form method="dialog">
@@ -141,22 +140,22 @@ export default function VideoList({ email }: any) {
           </form>
           <div className="">
             <div>
-              <p className='text-xl font-bold'>Please Select one of option below</p>
-              <p className='text-sm font-light'>Follow the simple step to complete you edit</p>
+              <p className="text-xl font-bold">Please Select one of option below</p>
+              <p className="text-sm font-light">Follow the simple step to complete you edit</p>
               <div>
                 <div className="mt-2 flex">
                   <div className="mr-4 flex flex-col gap-4">
                     {formGeneratorTemplate.map((data, index) => (
                       <div
                         key={index}
-                        className="flex justify-between cursor-pointer"
+                        className="flex cursor-pointer justify-between"
                         onClick={() => {
-                          setFormSelected(data.id)
+                          setFormSelected(data.id);
                         }}
                       >
                         <div className="w-1/2">
-                          <p className='text-xl font-bold'>{data.title}</p>
-                          <p className='text-sm font-light'>{data.description}</p>
+                          <p className="text-xl font-bold">{data.title}</p>
+                          <p className="text-sm font-light">{data.description}</p>
                         </div>
                         <div
                           className={`h-20 w-20 rounded-full p-3 ${
@@ -194,15 +193,14 @@ export default function VideoList({ email }: any) {
                         </div>
                       </div>
                     ))}
-                    
                   </div>
-                            
-                  <div className="w-full h-full">
+
+                  <div className="h-full w-full">
                     {formGeneratorTemplate[FormSelected]?.form.map(
                       (form, index) => (
                         console.log(form),
                         (
-                          <div key={index} className="flex flex-col h-full">
+                          <div key={index} className="flex h-full flex-col">
                             <div className="flex flex-col">
                               <label className="input input-bordered flex items-center gap-2">
                                 {form.placeholder}
@@ -218,7 +216,7 @@ export default function VideoList({ email }: any) {
                             </div>
 
                             <button
-                              className="btn btn-outline btn-accent w-20 self-end mt-4"
+                              className="btn btn-outline btn-accent mt-4 w-20 self-end"
                               onClick={() => {
                                 updateVideoData(
                                   formGeneratorTemplate[0].form[0].value,
@@ -226,7 +224,7 @@ export default function VideoList({ email }: any) {
                                   videos[
                                     videos.findIndex((video) => video.id_video === editingVideoId)
                                   ].slug,
-                                )
+                                );
                               }}
                             >
                               Save
@@ -244,7 +242,7 @@ export default function VideoList({ email }: any) {
       </dialog>
       <div className="flex w-full justify-center">
         <div className="w-[80%] overflow-x-auto">
-          <table className="table table-lg table-pin-rows table-pin-cols table-zebra w-full">
+          <table className="table table-zebra table-pin-rows table-pin-cols table-lg w-full">
             {/* head */}
             <thead>
               <tr>
@@ -254,7 +252,7 @@ export default function VideoList({ email }: any) {
                 <th>Option</th>
               </tr>
             </thead>
-            <tbody className=''>
+            <tbody className="">
               {videos.map((video, index) => (
                 <tr key={index}>
                   <td>
@@ -267,7 +265,7 @@ export default function VideoList({ email }: any) {
                           />
                         </div>
                       </div>
-                        <p className="font-bold ">{video.title_video}</p>
+                      <p className="font-bold ">{video.title_video}</p>
                     </div>
                   </td>
                   <td>
@@ -280,12 +278,12 @@ export default function VideoList({ email }: any) {
                     <button
                       className="btn btn-ghost btn-md"
                       onClick={() => {
-                        setEditingVideoId(video.id_video)
+                        setEditingVideoId(video.id_video);
                         const modalElement = document.getElementById(
                           'my_modal_3',
-                        ) as HTMLDialogElement
+                        ) as HTMLDialogElement;
                         if (modalElement) {
-                          modalElement.showModal()
+                          modalElement.showModal();
                         }
                       }}
                     >
@@ -307,8 +305,7 @@ export default function VideoList({ email }: any) {
     </tfoot> */}
           </table>
         </div>
-        
       </div>
     </>
-  )
+  );
 }

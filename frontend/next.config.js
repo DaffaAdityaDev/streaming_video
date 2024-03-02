@@ -6,6 +6,6 @@ const nextConfig = {
     path: '',
     domains: ['media.tenor.com'],
   },
-}
+};
 
-module.exports = nextConfig
+module.exports = nextConfig;

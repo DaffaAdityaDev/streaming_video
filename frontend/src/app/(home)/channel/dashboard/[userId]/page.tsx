@@ -1,34 +1,34 @@
-'use client'
-import VideoList from '@/app/_components/dashboard/VideoList'
-import { UploadProgressItem } from '@/app/types'
-import axios from 'axios'
-import { useEffect, useState } from 'react'
-import io from 'socket.io-client'
+'use client';
+import VideoList from '@/app/_components/dashboard/VideoList';
+import { UploadProgressItem } from '@/app/types';
+import axios from 'axios';
+import { useEffect, useState } from 'react';
+import io from 'socket.io-client';
 
 export default function Page({ params }: { params: { userId: string } }) {
-  const [selectedFile, setSelectedFile] = useState<File | null>(null)
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [currTab, setCurrTab] = useState([
     { name: 'Upload', isActive: true },
     { name: 'My Video', isActive: false },
     { name: 'Tab 3', isActive: false },
-  ])
-  const [uploadProgress, setUploadProgress] = useState<UploadProgressItem[]>([])
-  const [Token, setToken] = useState<string | null>(null)
-  const [usernames, setUsernames] = useState<string | null>(null)
-  const [email, setEmail] = useState<string | null>(null)
+  ]);
+  const [uploadProgress, setUploadProgress] = useState<UploadProgressItem[]>([]);
+  const [Token, setToken] = useState<string | null>(null);
+  const [usernames, setUsernames] = useState<string | null>(null);
+  const [email, setEmail] = useState<string | null>(null);
 
   useEffect(() => {
-    setToken(localStorage.getItem('token'))
-    setUsernames(localStorage.getItem('username'))
-    setEmail(localStorage.getItem('email'))
-  }, [])
+    setToken(localStorage.getItem('token'));
+    setUsernames(localStorage.getItem('username'));
+    setEmail(localStorage.getItem('email'));
+  }, []);
 
   // console.log('Token', Token)
   // console.log('usernames', usernames)
   // console.log('email', email)
 
   useEffect(() => {
-    const socket = io(`${process.env.NEXT_PUBLIC_BACKEND_WS_URL}`)
+    const socket = io(`${process.env.NEXT_PUBLIC_BACKEND_WS_URL}`);
 
     socket.on('uploadProgress', (data) => {
       // console.log("test", data.path);
@@ -37,13 +37,13 @@ export default function Page({ params }: { params: { userId: string } }) {
         // Find the index of the existing progress object for this file and resolution
         const index = prevProgress.findIndex(
           (item) => item.file === data.file && item.reso === data.resolution,
-        )
+        );
         // console.log(data);
         if (index !== -1) {
           // If the progress object for this file and resolution already exists, update it
-          const updatedProgress = [...prevProgress]
-          updatedProgress[index] = { ...updatedProgress[index], progress: data.progress }
-          return updatedProgress
+          const updatedProgress = [...prevProgress];
+          updatedProgress[index] = { ...updatedProgress[index], progress: data.progress };
+          return updatedProgress;
         } else {
           // If the progress object for this file and resolution does not exist, add a new one
           return [
@@ -54,31 +54,31 @@ export default function Page({ params }: { params: { userId: string } }) {
               reso: data.resolution,
               path: `${process.env.NEXT_PUBLIC_BACKEND_URL}/video/${data.resolution}/${data.file}.mp4`,
             },
-          ]
+          ];
         }
-      })
+      });
       // Update your UI with the progress data
-    })
+    });
 
     return () => {
-      socket.disconnect()
-    }
-  }, [])
+      socket.disconnect();
+    };
+  }, []);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
-      setSelectedFile(e.target.files[0])
+      setSelectedFile(e.target.files[0]);
     }
-  }
+  };
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault()
+    event.preventDefault();
     if (!selectedFile) {
-      alert('Please select a file')
-      return
+      alert('Please select a file');
+      return;
     }
-    const formData = new FormData()
-    formData.append('video', selectedFile)
+    const formData = new FormData();
+    formData.append('video', selectedFile);
 
     try {
       const response = await axios.post(`${process.env.NEXT_PUBLIC_BACKEND_URL}/upload`, formData, {
@@ -86,14 +86,14 @@ export default function Page({ params }: { params: { userId: string } }) {
           'Content-Type': 'multipart/form-data',
           Authorization: `Bearer ${Token}`,
         },
-      })
-      alert(`Video uploaded successfully! ${response.data}`)
+      });
+      alert(`Video uploaded successfully! ${response.data}`);
       // console.log(response.data);
     } catch (error) {
-      alert(`Error uploading video. ${(error as Error).message}`)
+      alert(`Error uploading video. ${(error as Error).message}`);
       // console.error(error);
     }
-  }
+  };
   return (
     <div className="flex h-full w-full flex-col items-center justify-center">
       <div role="tablist" className="tabs tabs-bordered mb-20">
@@ -102,7 +102,7 @@ export default function Page({ params }: { params: { userId: string } }) {
             key={index}
             className={`tab ${tab.isActive ? 'tab-active' : ''}`}
             onClick={() => {
-              setCurrTab(currTab.map((t, i) => ({ ...t, isActive: i === index })))
+              setCurrTab(currTab.map((t, i) => ({ ...t, isActive: i === index })));
             }}
           >
             {tab.name}
@@ -173,5 +173,5 @@ export default function Page({ params }: { params: { userId: string } }) {
         </div>
       )}
     </div>
-  )
+  );
 }

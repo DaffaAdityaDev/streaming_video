@@ -1,71 +1,71 @@
 /* eslint-disable @next/next/no-img-element */
-'use client'
-import React, { useState, useEffect, useCallback, useContext } from 'react'
-import Link from 'next/link'
-import { AppContext } from '../context/AppContext'
-import { useRouter } from 'next/navigation'
+'use client';
+import React, { useState, useEffect, useCallback, useContext } from 'react';
+import Link from 'next/link';
+import { AppContext } from '../context/AppContext';
+import { useRouter } from 'next/navigation';
 export default function Navbar() {
-  const router = useRouter()
+  const router = useRouter();
   const {
     search,
     setSearch,
     sidebar,
     setSidebar,
     isFullScreen: screenMode,
-  } = useContext(AppContext)
-  const [isVisible, setIsVisible] = useState(true)
-  const [handleTransparent, setHandleTransparent] = useState(true)
-  const [prevScrollpos, setPrevScrollpos] = useState(0)
-  const [token, setToken] = useState('')
+  } = useContext(AppContext);
+  const [isVisible, setIsVisible] = useState(true);
+  const [handleTransparent, setHandleTransparent] = useState(true);
+  const [prevScrollpos, setPrevScrollpos] = useState(0);
+  const [token, setToken] = useState('');
 
   // Function to handle scroll events
   const handleScroll = useCallback(() => {
-    const currentScrollPos = window.pageYOffset
+    const currentScrollPos = window.pageYOffset;
     if (currentScrollPos > prevScrollpos) {
-      setIsVisible(false)
-      setHandleTransparent(true)
+      setIsVisible(false);
+      setHandleTransparent(true);
     } else {
-      setIsVisible(true)
-      setHandleTransparent(false)
+      setIsVisible(true);
+      setHandleTransparent(false);
     }
 
-    setPrevScrollpos(currentScrollPos)
+    setPrevScrollpos(currentScrollPos);
     if (sidebar) {
-      const labelElement = document.querySelector('.btn.btn-circle') as HTMLElement
+      const labelElement = document.querySelector('.btn.btn-circle') as HTMLElement;
       if (labelElement) {
-        labelElement.click()
+        labelElement.click();
       }
     }
-  }, [prevScrollpos]) // Only re-create the function when prevScrollpos changes
+  }, [prevScrollpos]); // Only re-create the function when prevScrollpos changes
 
   useEffect(() => {
-    window.addEventListener('scroll', handleScroll)
-    setToken(localStorage.getItem('token') || '')
+    window.addEventListener('scroll', handleScroll);
+    setToken(localStorage.getItem('token') || '');
 
     // console.log(handleTransparent)
     if (prevScrollpos === 0) {
-      setHandleTransparent(true)
+      setHandleTransparent(true);
     }
     return () => {
-      window.removeEventListener('scroll', handleScroll)
-    }
-  }, [handleScroll]) // Now handleScroll is stable and won't cause the effect to re-run
+      window.removeEventListener('scroll', handleScroll);
+    };
+  }, [handleScroll]); // Now handleScroll is stable and won't cause the effect to re-run
 
   // Class to apply based on the visibility state
-  const navbarClass = isVisible ? 'translate-y-0' : '-translate-y-full'
-  const bgClass = handleTransparent ? '' : 'bg-primary-content'
+  const navbarClass = isVisible ? 'translate-y-0' : '-translate-y-full';
+  const bgClass = handleTransparent ? '' : 'bg-primary-content';
 
   function toggleSidebar() {
-    setSidebar(!sidebar)
+    setSidebar(!sidebar);
   }
 
   function handleLogout() {
-    localStorage.removeItem('token')
-    router.push('/login')
+    localStorage.removeItem('token');
+    router.push('/login');
   }
 
   function handleLogin() {
-    router.push('/login')
+    router.push('/login');
   }
 
   return (
@@ -161,5 +161,5 @@ export default function Navbar() {
         </div>
       </div>
     </div>
-  )
+  );
 }

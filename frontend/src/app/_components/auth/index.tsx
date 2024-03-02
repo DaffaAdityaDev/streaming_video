@@ -1,7 +1,7 @@
-'use client'
-import { useRouter } from 'next/navigation'
-import React, { useEffect } from 'react'
-import { AuthProps, FormInput } from '@/app/types'
+'use client';
+import { useRouter } from 'next/navigation';
+import React, { useEffect } from 'react';
+import { AuthProps, FormInput } from '@/app/types';
 
 export default function Auth({
   path,
@@ -17,31 +17,31 @@ export default function Auth({
   gotoAltPath,
   haveAccount,
 }: AuthProps) {
-  const router = useRouter()
+  const router = useRouter();
 
   function handleInputChange(event: React.ChangeEvent<HTMLInputElement>) {
-    const target = event.target
+    const target = event.target;
     if (target.name === 'email') {
-      setEmail(target.value)
+      setEmail(target.value);
       if (!checkEmailIsValid(target.value)) {
-        setAlertMessage({ text: 'Invalid email', type: 'error' })
+        setAlertMessage({ text: 'Invalid email', type: 'error' });
       } else {
-        setAlertMessage({ text: '', type: 'success' })
+        setAlertMessage({ text: '', type: 'success' });
       }
     }
     if (target.name === 'password') {
-      setPassword(target.value)
+      setPassword(target.value);
     }
   }
 
   function checkEmailIsValid(email: string) {
-    const re = /\S+@\S+\.\S+/
-    return re.test(email)
+    const re = /\S+@\S+\.\S+/;
+    return re.test(email);
   }
 
   function handleSkipLogin() {
-    localStorage.setItem('token', '')
-    router.push('/')
+    localStorage.setItem('token', '');
+    router.push('/');
   }
 
   // console.log(alertMessage)
@@ -81,7 +81,7 @@ export default function Auth({
                       />
                     </label>
                   </div>
-                )
+                );
               }
               if (input.type === 'password') {
                 return (
@@ -113,7 +113,7 @@ export default function Auth({
                       />
                     </label>
                   </div>
-                )
+                );
               }
               if (input.type === 'text') {
                 return (
@@ -143,7 +143,7 @@ export default function Auth({
                       />
                     </label>
                   </div>
-                )
+                );
               }
             })}
           <button className="btn btn-primary mt-4 w-full text-white" type="submit">
@@ -190,5 +190,5 @@ export default function Auth({
         )}
       </div>
     </div>
-  )
+  );
 }

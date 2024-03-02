@@ -94,7 +94,7 @@ export async function streamVideoFile(
   const videoPath = path.join(__dirname, `../../video/${slugStr}.mp4`);
 
   console.log('Streaming video:', videoPath);
-  console.log(__dirname);
+  // console.log(__dirname);
 
   if (!(await fileExists(videoPath))) {
     const statusCode = 404;
@@ -133,7 +133,7 @@ export async function streamVideoFile(
 
   readStream.on('data', (chunk) => {
     // res.write(chunk);
-    console.log('chunk', chunk);
+    // console.log('chunk', chunk);
   });
 
   readStream.on('end', () => {
@@ -161,7 +161,8 @@ export const MakeVideoQueue = (concurrency: number) =>
       .output(task.outputPath)
       .on('start', function (commandLine) {
         console.log(
-          `[${task.res}] Spawned Ffmpeg with command: ${commandLine}`,
+          // `[${task.res}] Spawned Ffmpeg with command: ${commandLine}`,
+          'Start converting video...',
         );
       })
       .on('error', function (err, stdout, stderr) {
@@ -177,6 +178,9 @@ export const MakeVideoQueue = (concurrency: number) =>
             (task.processedVideos / task.totalVideos) * 100 +
             progress.percent / task.totalVideos;
           // Emit progress update to the client
+          console.log(
+            `[${task.res}] Conversion Progress: ${overallProgress.toFixed(2)}%`,
+          );
           task.io.emit('uploadProgress', {
             file: task.uniqueId,
             resolution: task.res,

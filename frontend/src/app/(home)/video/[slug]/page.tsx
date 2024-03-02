@@ -1,40 +1,42 @@
-'use client'
-import { AppContext } from '@/app/_components/context/AppContext'
+'use client';
+import { AppContext } from '@/app/_components/context/AppContext';
 /* eslint-disable @next/next/no-img-element */
-import CardVideo from '@/app/_components/video/CardVideo'
-import { PlayerVideo } from '@/app/_components/video/PlayerVideo'
-import { VideoDataType } from '@/app/types'
-import videoData from '@/data/videoData'
-import { useState, useEffect, useContext } from 'react'
-import axios from 'axios'
+import CardVideo from '@/app/_components/video/CardVideo';
+import { PlayerVideo } from '@/app/_components/video/PlayerVideo';
+import { VideoDataType } from '@/app/types';
+import videoData from '@/data/videoData';
+import { useState, useEffect, useContext } from 'react';
+import axios from 'axios';
+import CommentsList from '@/app/_components/comments/commentsList';
+import CommentVideo from '@/app/_components/comments/commentVideo';
 
 export default function VideoPlayer({
   params,
   searchParams,
 }: {
-  params: { slug: string }
-  searchParams: { [key: string]: string | string[] | undefined }
+  params: { slug: string };
+  searchParams: { [key: string]: string | string[] | undefined };
 }) {
-  const [data, setData] = useState<VideoDataType[]>([])
-  const { isFullScreen, setIsFullScreen } = useContext(AppContext)
+  const [data, setData] = useState<VideoDataType[]>([]);
+  const { isFullScreen, setIsFullScreen } = useContext(AppContext);
 
   // console.log(searchParams)
   // console.log(params)
 
   function getDataFromAPI(path: string) {
     return axios.get(path).then((response) => {
-      return response.data
-    })
+      return response.data;
+    });
   }
 
   useEffect(() => {
     const fetchData = async () => {
-      const data = await getDataFromAPI(`${process.env.NEXT_PUBLIC_BACKEND_URL}/videos`)
-      setData(data)
-    }
+      const data = await getDataFromAPI(`${process.env.NEXT_PUBLIC_BACKEND_URL}/videos`);
+      setData(data);
+    };
 
-    fetchData()
-  }, [])
+    fetchData();
+  }, []);
 
   return (
     <div className="grid grid-cols-12">
@@ -51,7 +53,7 @@ export default function VideoPlayer({
               : searchParams.quality || 'defaultQuality'
           }
         />
-        <div className=" px-10">
+        <div className="px-10">
           <h1 className="text-2xl">{params.slug}</h1>
           <div className="flex gap-4">
             <div className="avatar">
@@ -85,10 +87,14 @@ export default function VideoPlayer({
             </div>
           </div>
         </div>
+        <div className="mx-10 flex flex-col gap-2">
+          <CommentVideo />
+          <CommentsList id_video={searchParams.id_video ? searchParams.id_video.toString() : ''} />
+        </div>
       </div>
       <div className="col-span-3 m-4 grid ">
         {data?.map((item, index) => <CardVideo key={index} {...item} />)}
       </div>
     </div>
-  )
+  );
 }

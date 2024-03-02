@@ -1,15 +1,15 @@
-'use client'
-import { useRouter } from 'next/navigation'
-import React, { useEffect, useState } from 'react'
-import axios from 'axios'
-import Auth from '@/app/_components/auth'
-import Lamp from '@/app/_components/animation/lamp'
+'use client';
+import { useRouter } from 'next/navigation';
+import React, { useEffect, useState } from 'react';
+import axios from 'axios';
+import Auth from '@/app/_components/auth';
+import Lamp from '@/app/_components/animation/lamp';
 
 export default function Login() {
-  const router = useRouter()
-  const [email, setEmail] = React.useState('')
-  const [password, setPassword] = React.useState('')
-  const [alertMessage, setAlertMessage] = useState({ text: '', type: 'none' })
+  const router = useRouter();
+  const [email, setEmail] = React.useState('');
+  const [password, setPassword] = React.useState('');
+  const [alertMessage, setAlertMessage] = useState({ text: '', type: 'none' });
 
   const formMaker = [
     {
@@ -28,16 +28,16 @@ export default function Login() {
       onChange: (event: React.ChangeEvent<HTMLInputElement>) => setPassword(event.target.value),
       icon: 'key',
     },
-  ]
+  ];
 
   async function handleLogin(event: React.FormEvent<HTMLFormElement>) {
-    event.preventDefault()
-    const target = event.target as HTMLFormElement
-    const emailInput = target.elements.namedItem('email') as HTMLInputElement
-    const passwordInput = target.elements.namedItem('password') as HTMLInputElement
+    event.preventDefault();
+    const target = event.target as HTMLFormElement;
+    const emailInput = target.elements.namedItem('email') as HTMLInputElement;
+    const passwordInput = target.elements.namedItem('password') as HTMLInputElement;
     if (!emailInput || !passwordInput) {
-      setAlertMessage({ text: 'Please fill in all fields', type: 'error' })
-      return
+      setAlertMessage({ text: 'Please fill in all fields', type: 'error' });
+      return;
     }
 
     axios
@@ -57,23 +57,23 @@ export default function Login() {
         // console.log(response.data)
         // setAlertMessage(response.data.message)
         if (response.data.status === 'success') {
-          setAlertMessage({ text: 'Login successful', type: 'success' })
+          setAlertMessage({ text: 'Login successful', type: 'success' });
           // console.log('Login successful')
-          localStorage.setItem('token', response.data.token)
-          localStorage.setItem('username', response.data.username)
-          localStorage.setItem('email', email)
+          localStorage.setItem('token', response.data.token);
+          localStorage.setItem('username', response.data.username);
+          localStorage.setItem('email', email);
           // console.log('Token saved', localStorage.getItem('token'))
-          router.push('/')
+          router.push('/');
         }
         if (response.data.status === 'error') {
           // console.log(response.data.message)
-          setAlertMessage({ text: response.data.message, type: 'error' })
+          setAlertMessage({ text: response.data.message, type: 'error' });
         }
       })
       .catch((error) => {
         // console.log(error)
-        setAlertMessage({ text: 'Internal server error', type: 'error' })
-      })
+        setAlertMessage({ text: 'Internal server error', type: 'error' });
+      });
   }
 
   return (
@@ -94,5 +94,5 @@ export default function Login() {
         />
       </Lamp>
     </>
-  )
+  );
 }

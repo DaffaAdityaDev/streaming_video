@@ -1,4 +1,4 @@
-import { VideoDataType } from '@/app/types'
+import { VideoDataType } from '@/app/types';
 
 export default [
   {
@@ -45,4 +45,4 @@ export default [
     view: 100000,
     timeUpload: '1 day ago',
   },
-] as VideoDataType[]
+] as VideoDataType[];
