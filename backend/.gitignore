@@ -121,3 +121,5 @@ thumbnails/*.png
 .temp
 
 data.txt
+
+profileImage/*.png

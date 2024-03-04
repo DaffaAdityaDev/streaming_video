@@ -40,7 +40,7 @@ export default function Home() {
     }
   }, [data, search]);
 
-  console.log(data);
+  // console.log(data);
 
   return (
     <>

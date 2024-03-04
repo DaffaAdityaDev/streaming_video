@@ -17,7 +17,8 @@ export default function Navbar() {
   const [handleTransparent, setHandleTransparent] = useState(true);
   const [prevScrollpos, setPrevScrollpos] = useState(0);
   const [token, setToken] = useState('');
-
+  const [imageUrl, setImageUrl] = useState('');
+  // console.log(imageUrl);
   // Function to handle scroll events
   const handleScroll = useCallback(() => {
     const currentScrollPos = window.pageYOffset;
@@ -41,6 +42,7 @@ export default function Navbar() {
   useEffect(() => {
     window.addEventListener('scroll', handleScroll);
     setToken(localStorage.getItem('token') || '');
+    setImageUrl(localStorage.getItem('imageUrl') || '');
 
     // console.log(handleTransparent)
     if (prevScrollpos === 0) {
@@ -61,6 +63,9 @@ export default function Navbar() {
 
   function handleLogout() {
     localStorage.removeItem('token');
+    localStorage.removeItem('username');
+    localStorage.removeItem('email');
+    localStorage.removeItem('imageUrl');
     router.push('/login');
   }
 
@@ -126,11 +131,11 @@ export default function Navbar() {
         <div className="dropdown dropdown-end">
           <label tabIndex={0} className="avatar btn btn-circle btn-ghost">
             <div className="w-10 rounded-full">
-              {/* <img
+              <img
                 alt="Tailwind CSS Navbar component"
-                src="/images/stock/photo-1534528741775-53994a69daeb.jpg"
+                src={`${process.env.NEXT_PUBLIC_BACKEND_URL}/profileimages/${imageUrl}`}
                 className="h-full w-full rounded-full object-cover"
-              /> */}
+              />
             </div>
           </label>
           <ul

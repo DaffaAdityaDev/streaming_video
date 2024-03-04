@@ -2,29 +2,10 @@ import React, { useState, useEffect, use } from 'react';
 import axios from 'axios';
 import { Comment } from '@/app/types';
 
-export default function CommentsList({ id_video }: { id_video: string }) {
-  const [comments, setComments] = useState<Comment[]>([]);
-
-  function getCommentsFromAPI(path: string) {
-    return axios.get(path).then((response) => {
-      return response.data;
-    });
-  }
-
-  useEffect(() => {
-    const fetchData = async () => {
-      const comments = await getCommentsFromAPI(
-        `${process.env.NEXT_PUBLIC_BACKEND_URL}/comments/${id_video}`,
-      );
-      setComments(comments.data);
-    };
-
-    fetchData();
-  }, []);
-
+export default function CommentsList({ comments }: { comments: Comment[] }) {
   return (
     <div className="flex flex-col gap-4">
-      {comments.map((comment, index) => {
+      {comments?.map((comment, index) => {
         let formatedDate = new Date(comment.created_at).toLocaleDateString();
         return (
           <div
@@ -34,7 +15,10 @@ export default function CommentsList({ id_video }: { id_video: string }) {
             <div className="flex gap-2">
               <div className="avatar">
                 <div className="w-14 rounded-full">
-                  <img src="https://media.tenor.com/ZnP0C4JkNEYAAAAC/gojo-sukuna.gif" alt="foto" />
+                  <img
+                    src={`${process.env.NEXT_PUBLIC_BACKEND_URL}/profileimages/${comment.user.image_url}`}
+                    alt="foto"
+                  />
                 </div>
               </div>
               <div>

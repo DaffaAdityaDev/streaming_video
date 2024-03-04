@@ -54,7 +54,7 @@ export default function Login() {
         },
       )
       .then((response) => {
-        // console.log(response.data)
+        console.log(response.data);
         // setAlertMessage(response.data.message)
         if (response.data.status === 'success') {
           setAlertMessage({ text: 'Login successful', type: 'success' });
@@ -62,6 +62,7 @@ export default function Login() {
           localStorage.setItem('token', response.data.token);
           localStorage.setItem('username', response.data.username);
           localStorage.setItem('email', email);
+          localStorage.setItem('imageUrl', response.data.image_url);
           // console.log('Token saved', localStorage.getItem('token'))
           router.push('/');
         }

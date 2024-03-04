@@ -1,13 +1,27 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import { UserData } from '@/app/types';
-export default function CommentVideo() {
+export default function CommentVideo({
+  id_video,
+  comments,
+  setComments,
+}: {
+  id_video: string;
+  comments: any;
+  setComments: any;
+}) {
   const [userData, setUserData] = useState<UserData>({
     username: '',
     email: '',
     token: '',
   });
   const [comment, setComment] = useState('');
+
+  function getCommentsFromAPI(path: string) {
+    return axios.get(path).then((response) => {
+      return response.data;
+    });
+  }
 
   useEffect(() => {
     const email = localStorage.getItem('email') || '';
@@ -24,7 +38,7 @@ export default function CommentVideo() {
   function handleComment() {
     let data = {
       body: comment,
-      id_video: 1,
+      id_video: parseInt(id_video),
       email: userData.email,
     };
 
@@ -40,6 +54,12 @@ export default function CommentVideo() {
         if (response.data) {
           setComment('');
         }
+
+        getCommentsFromAPI(`${process.env.NEXT_PUBLIC_BACKEND_URL}/comments/${id_video}`).then(
+          (response) => {
+            setComments(response.data);
+          },
+        );
       })
       .catch((error) => {
         console.log(error);

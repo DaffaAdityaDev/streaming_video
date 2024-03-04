@@ -93,9 +93,33 @@ const storage = multer.diskStorage({
   },
 });
 
+const imageStorage = multer.diskStorage({
+  destination: function (
+    req: any,
+    file: any,
+    cb: (arg0: null, arg1: string) => void,
+  ) {
+    const dir = path.join(__dirname, '../profileImages/');
+
+    // Create the directory if it doesn't exist
+    fs.mkdirSync(dir, { recursive: true });
+
+    cb(null, dir);
+  },
+  filename: function (
+    req: any,
+    file: { fieldname: string; originalname: string },
+    cb: (arg0: null, arg1: string) => void,
+  ) {
+    cb(null, Date.now() + path.extname(file.originalname));
+  },
+});
+
 const upload = multer({ storage: storage });
+const uploadImage = multer({ storage: imageStorage });
 APP.use('/video', express.static('video'));
 APP.use('/thumbnails', express.static('thumbnails'));
+APP.use('/profileimages', express.static('profileImages'));
 
 APP.get('/', (req: Request, res: Response) => {
   res.send('Hello, Developer! start you CRAFT here');
@@ -422,6 +446,58 @@ APP.delete(
       });
     } catch (error) {
       res.status(500).json({ error: 'Error deleting comment' });
+    }
+  },
+);
+
+APP.post(
+  '/uploadProfile',
+  checkToken,
+  uploadImage.single('image'),
+  async (req: Request, res: Response) => {
+    const { id_user } = req.body;
+    console.log(req.file);
+    console.log(req.body);
+
+    // Check if req.file is defined
+    if (!req.file) {
+      return res.status(400).json({
+        status: 'error',
+        message: 'No file uploaded',
+      });
+    }
+
+    // Extract the numeric part of the filename
+    const imageName = path.basename(req.file.path);
+    const imageId = imageName.replace(/image-/, '');
+
+    const userId = parseInt(id_user, 10);
+
+    try {
+      const user = await prisma.users.update({
+        where: { id_user: userId }, // Use the parsed integer value
+        data: { image_url: imageId }, // Update the image_url with the new path
+      });
+
+      return res.json({
+        status: 'success',
+        message: 'Image uploaded successfully',
+        data: user,
+      });
+    } catch (error) {
+      // Check if error is an instance of Error
+      if (error instanceof Error) {
+        return res.status(500).json({
+          status: 'error',
+          message: 'Failed to upload image',
+          error: error.message,
+        });
+      } else {
+        return res.status(500).json({
+          status: 'error',
+          message: 'An unknown error occurred',
+        });
+      }
     }
   },
 );

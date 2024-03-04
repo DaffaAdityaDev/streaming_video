@@ -18,10 +18,19 @@ export default function VideoPlayer({
   searchParams: { [key: string]: string | string[] | undefined };
 }) {
   const [data, setData] = useState<VideoDataType[]>([]);
+  const [comments, setComments] = useState([]);
   const { isFullScreen, setIsFullScreen } = useContext(AppContext);
-
+  const [currentPath, setCurrentPath] = useState('');
   // console.log(searchParams)
   // console.log(params)
+
+  // console.log(data)
+  // console.log(comments)
+  function getCommentsFromAPI(path: string) {
+    return axios.get(path).then((response) => {
+      return response.data;
+    });
+  }
 
   function getDataFromAPI(path: string) {
     return axios.get(path).then((response) => {
@@ -31,12 +40,26 @@ export default function VideoPlayer({
 
   useEffect(() => {
     const fetchData = async () => {
+      const comments = await getCommentsFromAPI(
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/comments/${searchParams.id_video}`,
+      );
+      // console.log(comments.data);
+      setComments(comments.data);
+    };
+
+    fetchData();
+  }, [searchParams]);
+
+  useEffect(() => {
+    const fetchData = async () => {
       const data = await getDataFromAPI(`${process.env.NEXT_PUBLIC_BACKEND_URL}/videos`);
+
+      // console.log(data);
       setData(data);
     };
 
     fetchData();
-  }, []);
+  }, [searchParams]);
 
   return (
     <div className="grid grid-cols-12">
@@ -52,6 +75,7 @@ export default function VideoPlayer({
               ? searchParams.quality[0]
               : searchParams.quality || 'defaultQuality'
           }
+          searchParams={searchParams}
         />
         <div className="px-10">
           <h1 className="text-2xl">{params.slug}</h1>
@@ -88,8 +112,12 @@ export default function VideoPlayer({
           </div>
         </div>
         <div className="mx-10 flex flex-col gap-2">
-          <CommentVideo />
-          <CommentsList id_video={searchParams.id_video ? searchParams.id_video.toString() : ''} />
+          <CommentVideo
+            id_video={searchParams.id_video ? searchParams.id_video.toString() : ''}
+            comments={comments}
+            setComments={setComments}
+          />
+          <CommentsList comments={comments} />
         </div>
       </div>
       <div className="col-span-3 m-4 grid ">

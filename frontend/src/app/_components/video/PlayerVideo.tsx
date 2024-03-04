@@ -6,6 +6,7 @@ export const PlayerVideo = ({ src, quality }: { src: string; quality: string }) 
   // console.log(src);
   // console.log(quality);
   const [qualities, setQualities] = useState(quality);
+  const suportedQualities = ['144p', '240p', '480p', '720p', '1080p', '4k'];
   const getUrl = (src: string, quality: string) => {
     const BACKENDURL = process.env.NEXT_PUBLIC_BACKEND_URL;
     let url;
@@ -20,9 +21,9 @@ export const PlayerVideo = ({ src, quality }: { src: string; quality: string }) 
     // console.log(`${BACKENDURL}/video/${quality}` + src.split('-').slice(0, -1).join('-') + '-' + quality + '.mp4');
     return url;
   };
+  console.log('initial', qualities);
 
   const checkIfVideoResoNotBigerThanCurr = (quality: string) => {
-    const suportedQualities = ['144p', '240p', '480p', '720p', '1080p', '4k'];
     return suportedQualities.splice(0, suportedQualities.indexOf(quality) + 1);
   };
 
@@ -369,7 +370,10 @@ export const PlayerVideo = ({ src, quality }: { src: string; quality: string }) 
           <video
             ref={videoRef}
             className="aspect-video h-full w-full rounded-md"
-            onError={(e) => console.error('Video loading error', e)}
+            onError={(e) => {
+              console.error('Video error:', e);
+              location.reload();
+            }}
             autoPlay
             onCanPlay={() => setIsVideoReady(true)}
             id="videoId"
