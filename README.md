@@ -1,5 +1,5 @@
 # Streaming Video Service
-![alt text](https://via.placeholder.com/150)
+![alt text](/frontend/public/Capture.JPG)
 
 This project is a backend service for a streaming video platform. It allows users to upload, store, and access videos in different resolutions. The service is designed to handle video storage, retrieval, and potentially streaming functionalities.
 
@@ -21,14 +21,15 @@ This project is a backend service for a streaming video platform. It allows user
 - **Tailwind CSS**: For styling the frontend.
 
 ## Project Structure
-- **`backend/`**: Contains the backend code.
+**`backend/`**: Contains the backend code.
  - `src/`: Source code.
  - `prisma/`: Prisma schema for database management.
  - `build/`: Compiled code.
  - `data.txt`: Possibly some sample data.
  - `thumbnails/`: Contains thumbnail images for videos (generated automatically).
  - `video/`: Contains videos in different resolutions (generated automatically).
-- **`frontend/`**: Contains the frontend code.
+
+**`frontend/`**: Contains the frontend code.
  - `src/`: Source code.
  - `public/`: Static assets.
  - `pages/`: Next.js pages.
