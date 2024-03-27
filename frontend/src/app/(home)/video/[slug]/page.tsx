@@ -4,7 +4,7 @@ import { AppContext } from '@/app/_components/context/AppContext';
 import CardVideo from '@/app/_components/video/CardVideo';
 import { PlayerVideo } from '@/app/_components/video/PlayerVideo';
 import { VideoDataType } from '@/app/types';
-import videoData from '@/data/videoData';
+// import videoData from '@/data/videoData';
 import { useState, useEffect, useContext } from 'react';
 import axios from 'axios';
 import CommentsList from '@/app/_components/comments/commentsList';
@@ -75,14 +75,14 @@ export default function VideoPlayer({
               ? searchParams.quality[0]
               : searchParams.quality || 'defaultQuality'
           }
-          searchParams={searchParams}
+          // searchParams={searchParams}
         />
         <div className="px-10">
           <h1 className="text-2xl">{params.slug}</h1>
           <div className="flex gap-4">
             <div className="avatar">
               <div className="w-16 rounded-full">
-                <img src="https://media.tenor.com/ZnP0C4JkNEYAAAAC/gojo-sukuna.gif" alt="foto" />
+                <img src="https://media.istockphoto.com/id/1495088043/vector/user-profile-icon-avatar-or-person-icon-profile-picture-portrait-symbol-default-portrait.jpg?s=612x612&w=0&k=20&c=dhV2p1JwmloBTOaGAtaA3AW1KSnjsdMt7-U_3EZElZ0=" alt="foto" />
               </div>
             </div>
             <div className="flex w-full justify-between">

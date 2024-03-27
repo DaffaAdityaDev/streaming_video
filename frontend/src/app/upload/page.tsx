@@ -1,12 +1,18 @@
 'use client';
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 
 export default function Upload() {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const Token = localStorage.getItem('token');
-  console.log(Token);
-  console.log('jamet');
+  const [Token, setToken] = useState<string | null>(null);
+
+  // Use useEffect to set the token only on the client side
+  useEffect(() => {
+    const token = localStorage.getItem('token');
+    setToken(token);
+  }, []);
+  // console.log(Token);
+  // console.log('jamet');
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     if (event.target.files && event.target.files.length > 0) {

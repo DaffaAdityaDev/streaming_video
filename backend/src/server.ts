@@ -60,7 +60,7 @@ APP.use((req: Request, res: Response, next) => {
 });
 APP.use(
   cors({
-    origin: 'http://localhost:3000', // Replace with the actual origin of your frontend if different
+    origin: '*',
     methods: ['GET', 'POST', 'PUT', 'DELETE'], // Specify the methods you want to allow
     allowedHeaders: ['Content-Type', 'Authorization'], // Specify any additional headers you want to allow
   }),

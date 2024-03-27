@@ -4,7 +4,7 @@ import { useState, useEffect, useContext } from 'react';
 
 import { VideoDataType } from '@/app/types';
 
-import videoData from '@/data/videoData';
+// import videoData from '@/data/videoData';
 import CardVideo from '../_components/video/CardVideo';
 
 import axios from 'axios';
