@@ -5,7 +5,9 @@ This project is a backend service for a streaming video platform. It allows user
 
 ## Features
 - Video upload and processing
+- Simple Video management
 - Video streaming in different resolutions
+- comments on individual video
 - Thumbnail generation for videos
 - User authentication and video metadata management
 - Docker containerization for easy deployment
