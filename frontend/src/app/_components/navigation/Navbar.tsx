@@ -17,6 +17,7 @@ export default function Navbar() {
   const [handleTransparent, setHandleTransparent] = useState(true);
   const [prevScrollpos, setPrevScrollpos] = useState(0);
   const [token, setToken] = useState('');
+  const [username, setUsername] = useState('');
   const [imageUrl, setImageUrl] = useState('');
   // console.log(imageUrl);
   // Function to handle scroll events
@@ -43,6 +44,7 @@ export default function Navbar() {
     window.addEventListener('scroll', handleScroll);
     setToken(localStorage.getItem('token') || '');
     setImageUrl(localStorage.getItem('imageUrl') || '');
+    setUsername(localStorage.getItem('username') || '');
 
     // console.log(handleTransparent)
     if (prevScrollpos === 0) {
@@ -72,6 +74,7 @@ export default function Navbar() {
   function handleLogin() {
     router.push('/login');
   }
+
 
   return (
     <div
@@ -132,9 +135,12 @@ export default function Navbar() {
           <label tabIndex={0} className="avatar btn btn-circle btn-ghost">
             <div className="w-10 rounded-full">
               <img
-                alt="Tailwind CSS Navbar component"
+                alt="Profile"
                 src={`${process.env.NEXT_PUBLIC_BACKEND_URL}/profileimages/${imageUrl}`}
-                className="h-full w-full rounded-full object-cover"
+                className="h-full w-full rounded-full object-cover bg-white"
+                onError={(e) => {
+                  e.currentTarget.src = '/default-profile.jpg';
+                }}
               />
             </div>
           </label>
@@ -151,7 +157,7 @@ export default function Navbar() {
               </li>
             ) : (
               <div>
-                <li>
+                <li onClick={() => router.push(`/channel/${username}`)}>
                   <a className="justify-between">
                     Profile
                     <span className="badge">New</span>

@@ -452,10 +452,10 @@ APP.delete(
 
 APP.post(
   '/uploadProfile',
-  checkToken,
+  // checkToken,
   uploadImage.single('image'),
   async (req: Request, res: Response) => {
-    const { id_user } = req.body;
+    const { username } = req.body;
     console.log(req.file);
     console.log(req.body);
 
@@ -471,11 +471,11 @@ APP.post(
     const imageName = path.basename(req.file.path);
     const imageId = imageName.replace(/image-/, '');
 
-    const userId = parseInt(id_user, 10);
+    // const userId = parseInt(id_user, 10);
 
     try {
       const user = await prisma.users.update({
-        where: { id_user: userId }, // Use the parsed integer value
+        where: { username: username }, // Use the parsed integer value
         data: { image_url: imageId }, // Update the image_url with the new path
       });
 
