@@ -2,8 +2,8 @@
 import { useRouter } from 'next/navigation';
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
-import Auth from '@/app/_components/auth';
-import Lamp from '@/app/_components/animation/lamp';
+import Auth from '@/components/auth';
+import Lamp from '@/components/animation/lamp';
 
 export default function Register() {
   const router = useRouter();
@@ -53,7 +53,7 @@ export default function Register() {
 
     axios
       .post(
-        `${process.env.NEXT_PUBLIC_BACKEND_URL}/register`,
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/v1/user/register`,
         {
           username: username,
           email: email,

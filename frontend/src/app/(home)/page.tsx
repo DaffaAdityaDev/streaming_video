@@ -1,11 +1,11 @@
 'use client';
-import { AppContext } from '@/app/_components/context/AppContext';
+import { AppContext } from '@/components/context/AppContext';
 import { useState, useEffect, useContext } from 'react';
 
 import { VideoDataType } from '@/app/types';
 
 // import videoData from '@/data/videoData';
-import CardVideo from '../_components/video/CardVideo';
+import CardVideo from '@/components/video/CardVideo';
 
 import axios from 'axios';
 
@@ -23,10 +23,15 @@ export default function Home() {
 
   useEffect(() => {
     const fetchData = async () => {
-      const data = await getDataFromAPI(`${process.env.NEXT_PUBLIC_BACKEND_URL}/videos`);
-      setData(data);
+      const response = await getDataFromAPI(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/v1/video`);
+      if (response.status === 'success') {
+        setData(response.data);
+        setDataSearch(response.data);
+      } else {
+        console.error('Failed to fetch videos:', response.message);
+      }
     };
-
+  
     fetchData();
   }, []);
 

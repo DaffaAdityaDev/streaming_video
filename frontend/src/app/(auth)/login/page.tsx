@@ -2,8 +2,8 @@
 import { useRouter } from 'next/navigation';
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
-import Auth from '@/app/_components/auth';
-import Lamp from '@/app/_components/animation/lamp';
+import Auth from '@/components/auth';
+import Lamp from '@/components/animation/lamp';
 
 export default function Login() {
   const router = useRouter();
@@ -42,7 +42,7 @@ export default function Login() {
 
     axios
       .post(
-        `${process.env.NEXT_PUBLIC_BACKEND_URL}/login`,
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/v1/user/login`,
         {
           email: email,
           password: password,

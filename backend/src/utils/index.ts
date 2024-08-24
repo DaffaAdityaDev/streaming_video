@@ -57,420 +57,474 @@ export function generateThumbnail(videoPath: string, uniqueId: string) {
     });
 }
 
-export async function fileExists(filePath: string): Promise<boolean> {
-  try {
-    await promisify(fs.access)(filePath);
-    return true;
-  } catch (error) {
-    return false;
-  }
-}
+// export async function fileExists(filePath: string): Promise<boolean> {
+//   try {
+//     await promisify(fs.access)(filePath);
+//     return true;
+//   } catch (error) {
+//     return false;
+//   }
+// }
 
-function getResolutionConfig(
-  resolutions: string[],
-  bitrates: string[],
-  widths: string[],
-  outputDirs: string[],
-): Record<string, ResolutionConfig> {
-  let config: Record<string, ResolutionConfig> = {};
-  for (let i = 0; i < resolutions.length; i++) {
-    config[resolutions[i]] = {
-      bitrate: bitrates[i],
-      width: widths[i],
-      outputDir: outputDirs[i],
-    };
-  }
-  return config;
-}
+// function getResolutionConfig(
+//   resolutions: string[],
+//   bitrates: string[],
+//   widths: string[],
+//   outputDirs: string[],
+// ): Record<string, ResolutionConfig> {
+//   let config: Record<string, ResolutionConfig> = {};
+//   for (let i = 0; i < resolutions.length; i++) {
+//     config[resolutions[i]] = {
+//       bitrate: bitrates[i],
+//       width: widths[i],
+//       outputDir: outputDirs[i],
+//     };
+//   }
+//   return config;
+// }
 
 // Helper function to stream a video file
-export async function streamVideoFile(
-  req: Request,
-  res: Response,
-  slug: string | ParsedQs | string[] | ParsedQs[],
-): Promise<void> {
-  const slugStr =
-    typeof slug === 'string' ? slug : Array.isArray(slug) ? slug[0] : '';
-  const videoPath = path.join(__dirname, `../../video/${slugStr}.mp4`);
+// export async function streamVideoFile(
+//   req: Request,
+//   res: Response,
+//   slug: string | ParsedQs | string[] | ParsedQs[],
+// ): Promise<void> {
+//   const slugStr =
+//     typeof slug === 'string' ? slug : Array.isArray(slug) ? slug[0] : '';
+//   const videoPath = path.join(__dirname, `../../video/${slugStr}.mp4`);
 
-  console.log('Streaming video:', videoPath);
-  // console.log(__dirname);
+//   console.log('Streaming video:', videoPath);
+//   // console.log(__dirname);
 
-  if (!(await fileExists(videoPath))) {
-    const statusCode = 404;
-    res.status(statusCode).send('Video not found');
-    return;
-  }
+//   if (!(await fileExists(videoPath))) {
+//     const statusCode = 404;
+//     res.status(statusCode).send('Video not found');
+//     return;
+//   }
 
-  const stat = fs.statSync(videoPath);
-  const fileSize = stat.size;
-  const range = req.headers.range;
+//   const stat = fs.statSync(videoPath);
+//   const fileSize = stat.size;
+//   const range = req.headers.range;
 
-  let start, end, contentLength;
-  if (range) {
-    const parts = range.replace(/bytes=/, '').split('-');
-    start = parseInt(parts[0], 10);
-    end = parts[1] ? parseInt(parts[1], 10) : fileSize - 1;
-    contentLength = end - start + 1;
-  } else {
-    start = 0;
-    end = fileSize - 1;
-    contentLength = fileSize;
-  }
+//   let start, end, contentLength;
+//   if (range) {
+//     const parts = range.replace(/bytes=/, '').split('-');
+//     start = parseInt(parts[0], 10);
+//     end = parts[1] ? parseInt(parts[1], 10) : fileSize - 1;
+//     contentLength = end - start + 1;
+//   } else {
+//     start = 0;
+//     end = fileSize - 1;
+//     contentLength = fileSize;
+//   }
 
-  console.log(contentLength, start, end, fileSize);
+//   console.log(contentLength, start, end, fileSize);
 
-  const headers = {
-    'Content-Range': `bytes ${start}-${end}/${fileSize}`,
-    'Accept-Ranges': 'bytes',
-    'Content-Length': contentLength,
-    'Content-Type': 'video/mp4',
-  };
+//   const headers = {
+//     'Content-Range': `bytes ${start}-${end}/${fileSize}`,
+//     'Accept-Ranges': 'bytes',
+//     'Content-Length': contentLength,
+//     'Content-Type': 'video/mp4',
+//   };
 
-  res.writeHead(range ? 206 : 200, headers);
+//   res.writeHead(range ? 206 : 200, headers);
 
-  const readStream = fs.createReadStream(videoPath, { start, end });
+//   const readStream = fs.createReadStream(videoPath, { start, end });
 
-  readStream.on('data', (chunk) => {
-    // res.write(chunk);
-    // console.log('chunk', chunk);
-  });
+//   readStream.on('data', (chunk) => {
+//     // res.write(chunk);
+//     // console.log('chunk', chunk);
+//   });
 
-  readStream.on('end', () => {
-    console.log('stream end');
-    res.end();
-  });
+//   readStream.on('end', () => {
+//     console.log('stream end');
+//     res.end();
+//   });
 
-  readStream.on('error', (err) => {
-    console.error('An error occurred:', err);
-    res.status(500).send('Server error');
-  });
+//   readStream.on('error', (err) => {
+//     console.error('An error occurred:', err);
+//     res.status(500).send('Server error');
+//   });
 
-  readStream.pipe(res);
+//   readStream.pipe(res);
+// }
+interface CustomQueue extends async.QueueObject<Task> {
+  ioMap: Map<string, Server>;
 }
 
-// Create a queue object with concurrency
-export const MakeVideoQueue = (concurrency: number) =>
-  async.queue((task: Task, callback) => {
-    ffmpeg(task.filePath)
-      .inputOptions('-hwaccel auto') // Automatically select the hardware acceleration method
-      .outputOptions('-c:v h264_nvenc') // Use NVENC for encoding if available
+export const MakeVideoQueue = (concurrency: number): CustomQueue => {
+  const queue = async.queue((task: Task, callback) => {
+    const command = ffmpeg(task.filePath)
+      .outputOptions('-c:v libx264') // Use libx264 for software encoding
       .format('mp4')
-      .outputOptions('-vf', `scale=${task.resolutionConfig.width}:-1`) // Set the width and calculate the height
-      .outputOptions('-b:v', task.resolutionConfig.bitrate) // Set the video bitrate
-      .output(task.outputPath)
-      .on('start', function (commandLine) {
-        console.log(
-          // `[${task.res}] Spawned Ffmpeg with command: ${commandLine}`,
-          'Start converting video...',
-        );
+      .outputOptions('-vf', `scale=${task.resolutionConfig.width}:-1`)
+      .outputOptions('-b:v', task.resolutionConfig.bitrate)
+      .output(task.outputPath);
+
+    // Try hardware acceleration first
+    command.outputOptions('-c:v h264_nvenc');
+
+    command
+      .on('start', function () {
+        console.log(`Start converting video ${task.uniqueId} to ${task.res}...`);
       })
       .on('error', function (err, stdout, stderr) {
-        console.log(`[${task.res}] Error: ${err.message}`);
-        console.log(`[${task.res}] ffmpeg stdout: ${stdout}`);
-        console.log(`[${task.res}] ffmpeg stderr: ${stderr}`);
-        callback(); // Call the callback function once the task is done
+        if (err.message.includes('No NVENC capable devices found')) {
+          console.log(`Hardware acceleration not available for ${task.res}, falling back to software encoding...`);
+          // Remove hardware acceleration option and try again with software encoding
+          command.outputOptions('-c:v libx264');
+          command.run();
+        } else {
+          console.error(`Error processing video for ${task.res}:`, err);
+          callback(err);
+        }
       })
       .on('progress', function (progress) {
         if (progress.percent) {
-          // Calculate the overall progress
-          const overallProgress =
-            (task.processedVideos / task.totalVideos) * 100 +
-            progress.percent / task.totalVideos;
-          // Emit progress update to the client
-          console.log(
-            `[${task.res}] Conversion Progress: ${overallProgress.toFixed(2)}%`,
-          );
           task.io.emit('uploadProgress', {
             file: task.uniqueId,
             resolution: task.res,
-            progress: overallProgress.toFixed(2),
+            progress: progress.percent,
           });
         }
       })
       .on('end', function () {
-        console.log(`[${task.res}] Conversion Done`);
-        task.io.emit('uploadProgress', {
-          file: task.uniqueId,
-          resolution: task.res,
-          progress: 100,
-        });
-        callback(); // Call the callback function once the task is done
+        console.log(`Finished converting video ${task.uniqueId} to ${task.res}`);
+        callback();
       })
       .run();
-  }, concurrency);
+  }, concurrency) as CustomQueue;
 
-function processVideo(
-  filePath: string,
-  resolutionConfig: Record<string, ResolutionConfig>,
-  VideoQueue: any,
-  io: any,
-  uniqueId: string,
-): Promise<string> {
-  return new Promise((resolve, reject) => {
-    ffmpeg.ffprobe(filePath, function (err, metadata) {
-      if (err || !metadata) {
-        console.error('Error reading video file:', err);
-        reject(err);
-        return;
-      }
+  queue.ioMap = new Map<string, Server>();
 
-      const videoStream = metadata.streams.find(
-        (stream) => stream.codec_type === 'video',
-      );
+  return queue;
+};
 
-      if (videoStream) {
-        const videoWidth = videoStream.width;
+// Create a queue object with concurrency
+// export const MakeVideoQueue = (concurrency: number) =>
+//   async.queue((task: Task, callback) => {
+//     ffmpeg(task.filePath)
+//       .inputOptions('-hwaccel auto') // Automatically select the hardware acceleration method
+//       .outputOptions('-c:v h264_nvenc') // Use NVENC for encoding if available
+//       .format('mp4')
+//       .outputOptions('-vf', `scale=${task.resolutionConfig.width}:-1`) // Set the width and calculate the height
+//       .outputOptions('-b:v', task.resolutionConfig.bitrate) // Set the video bitrate
+//       .output(task.outputPath)
+//       .on('start', function (commandLine) {
+//         console.log(
+//           // `[${task.res}] Spawned Ffmpeg with command: ${commandLine}`,
+//           'Start converting video...',
+//         );
+//       })
+//       .on('error', function (err, stdout, stderr) {
+//         console.log(`[${task.res}] Error: ${err.message}`);
+//         console.log(`[${task.res}] ffmpeg stdout: ${stdout}`);
+//         console.log(`[${task.res}] ffmpeg stderr: ${stderr}`);
+//         callback(); // Call the callback function once the task is done
+//       })
+//       .on('progress', function (progress) {
+//         if (progress.percent) {
+//           // Calculate the overall progress
+//           const overallProgress =
+//             (task.processedVideos / task.totalVideos) * 100 +
+//             progress.percent / task.totalVideos;
+//           // Emit progress update to the client
+//           console.log(
+//             `[${task.res}] Conversion Progress: ${overallProgress.toFixed(2)}%`,
+//           );
+//           task.io.emit('uploadProgress', {
+//             file: task.uniqueId,
+//             resolution: task.res,
+//             progress: overallProgress.toFixed(2),
+//           });
+//         }
+//       })
+//       .on('end', function () {
+//         console.log(`[${task.res}] Conversion Done`);
+//         task.io.emit('uploadProgress', {
+//           file: task.uniqueId,
+//           resolution: task.res,
+//           progress: 100,
+//         });
+//         callback(); // Call the callback function once the task is done
+//       })
+//       .run();
+//   }, concurrency);
 
-        // Sort the resolutions from lowest to highest
-        const sortedResolutions = Object.entries(resolutionConfig).sort(
-          (a, b) => {
-            const widthA = parseInt(a[1].width);
-            const widthB = parseInt(b[1].width);
-            return widthA - widthB;
-          },
-        );
+// function processVideo(
+//   filePath: string,
+//   resolutionConfig: Record<string, ResolutionConfig>,
+//   VideoQueue: any,
+//   io: any,
+//   uniqueId: string,
+// ): Promise<string> {
+//   return new Promise((resolve, reject) => {
+//     ffmpeg.ffprobe(filePath, function (err, metadata) {
+//       if (err || !metadata) {
+//         console.error('Error reading video file:', err);
+//         reject(err);
+//         return;
+//       }
 
-        // Now you can use the resolution to select the correct output directory and frame size
-        let selectedResolution: [string, any] = ['', {}];
-        for (const [res, config] of sortedResolutions) {
-          const frameWidth = parseInt(config.width);
-          if (videoWidth && videoWidth <= frameWidth) {
-            selectedResolution = [res, config.outputDir];
-            break; // Exit the loop after finding the first matching resolution
-          }
-        }
+//       const videoStream = metadata.streams.find(
+//         (stream) => stream.codec_type === 'video',
+//       );
 
-        if (!selectedResolution) {
-          selectedResolution = [
-            sortedResolutions[sortedResolutions.length - 1][0],
-            sortedResolutions[sortedResolutions.length - 1][1].outputDir,
-          ]; // Select the highest available resolution if none matched
-        }
+//       if (videoStream) {
+//         const videoWidth = videoStream.width;
 
-        let bigestResolution: string = selectedResolution[0];
+//         // Sort the resolutions from lowest to highest
+//         const sortedResolutions = Object.entries(resolutionConfig).sort(
+//           (a, b) => {
+//             const widthA = parseInt(a[1].width);
+//             const widthB = parseInt(b[1].width);
+//             return widthA - widthB;
+//           },
+//         );
 
-        const selectedResolutionIndex = sortedResolutions.findIndex(
-          ([res]) => res === selectedResolution[0],
-        );
-        const totalVideos = selectedResolutionIndex + 1; // Total number of videos to be processed
-        let processedVideos = 0; // Counter for processed videos
+//         // Now you can use the resolution to select the correct output directory and frame size
+//         let selectedResolution: [string, any] = ['', {}];
+//         for (const [res, config] of sortedResolutions) {
+//           const frameWidth = parseInt(config.width);
+//           if (videoWidth && videoWidth <= frameWidth) {
+//             selectedResolution = [res, config.outputDir];
+//             break; // Exit the loop after finding the first matching resolution
+//           }
+//         }
 
-        for (let i = selectedResolutionIndex; i >= 0; i--) {
-          const [res, config] = sortedResolutions[i];
-          const outputDir = config.outputDir;
-          fs.mkdirSync(outputDir, { recursive: true }); // Create the directory if it does not exist
-          const outputFilename = `${uniqueId}.mp4`;
-          const outputPath = path.join(outputDir, outputFilename);
+//         if (!selectedResolution) {
+//           selectedResolution = [
+//             sortedResolutions[sortedResolutions.length - 1][0],
+//             sortedResolutions[sortedResolutions.length - 1][1].outputDir,
+//           ]; // Select the highest available resolution if none matched
+//         }
 
-          // Add the task to the queue
-          VideoQueue.push({
-            filePath,
-            resolutionConfig: config,
-            outputPath,
-            res,
-            io,
-            totalVideos,
-            processedVideos,
-            uniqueId,
-          });
-        }
+//         let bigestResolution: string = selectedResolution[0];
 
-        resolve(bigestResolution); // Resolve the promise when all tasks are added to the queue
-      } else {
-        console.error('No video stream found in file');
-        reject(new Error('No video stream found in file'));
-      }
-    });
-  });
-}
+//         const selectedResolutionIndex = sortedResolutions.findIndex(
+//           ([res]) => res === selectedResolution[0],
+//         );
+//         const totalVideos = selectedResolutionIndex + 1; // Total number of videos to be processed
+//         let processedVideos = 0; // Counter for processed videos
 
-export async function handleFileUpload(
-  req: RequestWithUser,
-  res: Response,
-  VideoQueue: async.AsyncQueue<Task>,
-  io: Server,
-) {
-  // req.file is the `video` file
-  // req.body will hold the text fields, if there were any
-  if (!req.user) {
-    return res.status(401).send('Unauthorized: No user information provided');
-  }
-  // Access the user's email from the request object
-  const userEmail = req.user.email;
-  // console.log("User's email:", userEmail);
+//         for (let i = selectedResolutionIndex; i >= 0; i--) {
+//           const [res, config] = sortedResolutions[i];
+//           const outputDir = config.outputDir;
+//           fs.mkdirSync(outputDir, { recursive: true }); // Create the directory if it does not exist
+//           const outputFilename = `${uniqueId}.mp4`;
+//           const outputPath = path.join(outputDir, outputFilename);
 
-  console.log('Uploading video:', req.file);
-  if (!req.file) {
-    res.status(400).send('No file uploaded');
-    return;
-  }
+//           // Add the task to the queue
+//           VideoQueue.push({
+//             filePath,
+//             resolutionConfig: config,
+//             outputPath,
+//             res,
+//             io,
+//             totalVideos,
+//             processedVideos,
+//             uniqueId,
+//           });
+//         }
 
-  const { path: filePath, filename } = req.file;
+//         resolve(bigestResolution); // Resolve the promise when all tasks are added to the queue
+//       } else {
+//         console.error('No video stream found in file');
+//         reject(new Error('No video stream found in file'));
+//       }
+//     });
+//   });
+// }
 
-  if (!fs.existsSync(filePath)) {
-    // If the file doesn't exist, handle the error
-    // For example, you can send a response to the client
-    res.status(404).send('Video file not found');
-    // Or you can create the file
-    // fs.writeFileSync(filePath, '');
-    return;
-  }
+// export async function handleFileUpload(
+//   req: RequestWithUser,
+//   res: Response,
+//   VideoQueue: async.AsyncQueue<Task>,
+//   io: Server,
+// ) {
+//   // req.file is the `video` file
+//   // req.body will hold the text fields, if there were any
+//   if (!req.user) {
+//     console.error('Unauthorized: No user information provided');
+//     return res.status(401).send('Unauthorized: No user information provided');
+//   }
+//   // Access the user's email from the request object
+//   const userEmail = req.user.email;
+//   // console.log("User's email:", userEmail);
 
-  // Define the output directories for each resolution
-  function makeResoltuionConfig(
-    resolution: string[],
-    bitrate: string[],
-    width: string[],
-    outputDir: string[],
-  ): Record<string, { bitrate: string; width: string; outputDir: string }> {
-    let dataObject: Record<
-      string,
-      { bitrate: string; width: string; outputDir: string }
-    > = {};
-    for (let i = 0; i < resolution.length; i++) {
-      dataObject[resolution[i]] = {
-        bitrate: bitrate[i],
-        width: width[i],
-        outputDir: outputDir[i],
-      };
-    }
-    return dataObject;
-  }
+//   console.log('Uploading video:', req.file);
+//   if (!req.file) {
+//     console.error('No file uploaded');
+//     res.status(400).send('No file uploaded');
+//     return;
+//   }
 
-  const videoDir = path.join(__dirname, '../../video/');
-  const resolutionConfig = makeResoltuionConfig(
-    ['144p', '240p', '480p', '720p', '1080p', '4k'],
-    ['1000k', '1500k', '2500k', '5000k', '8000k', '35000k'],
-    ['256', '426', '854', '1280', '1920', '3840'],
-    [
-      path.join(videoDir, '144p/'),
-      path.join(videoDir, '240p/'),
-      path.join(videoDir, '480p/'),
-      path.join(videoDir, '720p/'),
-      path.join(videoDir, '1080p/'),
-      path.join(videoDir, '4k/'),
-    ],
-  );
+//   const { path: filePath, filename } = req.file;
 
-  const uniqueId = uuidv4();
+//   if (!fs.existsSync(filePath)) {
+//     // If the file doesn't exist, handle the error
+//     // For example, you can send a response to the client
+//     res.status(404).send('Video file not found');
+//     // Or you can create the file
+//     // fs.writeFileSync(filePath, '');
+//     return;
+//   }
 
-  let bigestResolution: string = '0p';
+//   // Define the output directories for each resolution
+//   function makeResoltuionConfig(
+//     resolution: string[],
+//     bitrate: string[],
+//     width: string[],
+//     outputDir: string[],
+//   ): Record<string, { bitrate: string; width: string; outputDir: string }> {
+//     let dataObject: Record<
+//       string,
+//       { bitrate: string; width: string; outputDir: string }
+//     > = {};
+//     for (let i = 0; i < resolution.length; i++) {
+//       dataObject[resolution[i]] = {
+//         bitrate: bitrate[i],
+//         width: width[i],
+//         outputDir: outputDir[i],
+//       };
+//     }
+//     return dataObject;
+//   }
 
-  try {
-    bigestResolution = await processVideo(
-      filePath,
-      resolutionConfig,
-      VideoQueue,
-      io,
-      uniqueId,
-    );
-  } catch (error) {
-    res.status(500).send('Error processing video');
-    return;
-  }
+//   const videoDir = path.join(__dirname, '../../video/');
+//   const resolutionConfig = makeResoltuionConfig(
+//     ['144p', '240p', '480p', '720p', '1080p', '4k'],
+//     ['1000k', '1500k', '2500k', '5000k', '8000k', '35000k'],
+//     ['256', '426', '854', '1280', '1920', '3840'],
+//     [
+//       path.join(videoDir, '144p/'),
+//       path.join(videoDir, '240p/'),
+//       path.join(videoDir, '480p/'),
+//       path.join(videoDir, '720p/'),
+//       path.join(videoDir, '1080p/'),
+//       path.join(videoDir, '4k/'),
+//     ],
+//   );
 
-  const videoPath = req.file.path;
-  generateThumbnail(videoPath, uniqueId);
+//   const uniqueId = uuidv4();
 
-  if (!req.file) {
-    res.status(400).send('No file uploaded');
-    return;
-  }
-  const file = req.file;
+//   let bigestResolution: string = '0p';
 
-  // GMT+7
-  const currentTime = new Date();
-  const timeGMT7 = 7 * 60 * 60 * 1000; // 7 hours in milliseconds
-  const timeUpload = new Date(currentTime.getTime() + timeGMT7).toISOString();
+//   try {
+//     bigestResolution = await processVideo(
+//       filePath,
+//       resolutionConfig,
+//       VideoQueue,
+//       io,
+//       uniqueId,
+//     );
+//   } catch (error) {
+//     res.status(500).send('Error processing video');
+//     return;
+//   }
 
-  // thumbnail video
-  const thumbnailFilename = `${uniqueId}.png`; // Update thumbnail filename
+//   const videoPath = req.file.path;
+//   generateThumbnail(videoPath, uniqueId);
 
-  // fs.writeFileSync('data.txt', JSON.stringify(data));
+//   if (!req.file) {
+//     res.status(400).send('No file uploaded');
+//     return;
+//   }
+//   const file = req.file;
 
-  let user = await prisma.users.findFirst({
-    where: {
-      email: userEmail,
-    },
-  });
+//   // GMT+7
+//   const currentTime = new Date();
+//   const timeGMT7 = 7 * 60 * 60 * 1000; // 7 hours in milliseconds
+//   const timeUpload = new Date(currentTime.getTime() + timeGMT7).toISOString();
 
-  if (!user) {
-    return res.status(404).json({
-      status: 'error',
-      message: 'User not found',
-    });
-  }
+//   // thumbnail video
+//   const thumbnailFilename = `${uniqueId}.png`; // Update thumbnail filename
 
-  const data = {
-    // id: 0, // You'll need to generate or fetch this
-    title: file.originalname,
-    channel: user.username, // You'll need to generate or fetch this
-    description: '', // You'll need to generate or fetch this
-    img: thumbnailFilename, // You'll need to generate or fetch this
-    slug: uniqueId,
-    quality: bigestResolution, // You'll need to generate or fetch this
-    duration: 100000, // You'll need to generate or fetch this
-    view: 0, // You'll need to generate or fetch this
-    likes: 0, // You'll need to generate or fetch this
-    timeUpload: timeUpload,
-    filename: file.filename,
-    path: file.path,
-    size: file.size,
-  };
+//   // fs.writeFileSync('data.txt', JSON.stringify(data));
 
-  await prisma.videos.create({
-    data: {
-      title_video: data.title,
-      description: data.description,
-      channel: data.channel,
-      thumbnail: data.img,
-      slug: data.slug,
-      quality: data.quality,
-      views: data.view,
-      likes: data.likes,
-      created_at: data.timeUpload,
-      id_user: user.id_user,
-    },
-  });
+//   let user = await prisma.users.findFirst({
+//     where: {
+//       email: userEmail,
+//     },
+//   });
 
-  res.status(200).json({
-    status: 'success',
-    message: 'Video created successfully',
-    data,
-  });
-}
+//   if (!user) {
+//     return res.status(404).json({
+//       status: 'error',
+//       message: 'User not found',
+//     });
+//   }
 
-export async function handleTitleAndDescVideo(
-  req: Request,
-  res: Response,
-  data: any,
-) {
-  const { title, description, slug } = req.body;
+//   const data = {
+//     // id: 0, // You'll need to generate or fetch this
+//     title: file.originalname,
+//     channel: user.username, // You'll need to generate or fetch this
+//     description: '', // You'll need to generate or fetch this
+//     img: thumbnailFilename, // You'll need to generate or fetch this
+//     slug: uniqueId,
+//     quality: bigestResolution, // You'll need to generate or fetch this
+//     duration: 100000, // You'll need to generate or fetch this
+//     view: 0, // You'll need to generate or fetch this
+//     likes: 0, // You'll need to generate or fetch this
+//     timeUpload: timeUpload,
+//     filename: file.filename,
+//     path: file.path,
+//     size: file.size,
+//     id_user: user.id_user, // Ensure id_user is set
+//   };
 
-  console.log('title', title, 'description', description, 'slug');
-  // res.status(200).send('OK');
+//   await prisma.videos.create({
+//     data: {
+//       title_video: data.title,
+//       description: data.description,
+//       channel: data.channel,
+//       thumbnail: data.img,
+//       slug: data.slug,
+//       quality: data.quality,
+//       views: data.view,
+//       likes: data.likes,
+//       created_at: data.timeUpload,
+//       id_user: user.id_user,
+//     },
+//   });
 
-  try {
-    const pushVideo = await prisma.videos.update({
-      where: {
-        slug: slug,
-      },
-      data: {
-        title_video: title,
-        description: description,
-      },
-    });
+//   res.status(200).json({
+//     status: 'success',
+//     message: 'Video created successfully',
+//     data,
+//   });
+// }
 
-    res.status(200).json({
-      status: 'success',
-      message: 'Video created successfully',
-      data: pushVideo,
-    });
-  } catch (error) {
-    res.status(200).json({
-      status: 'error',
-      message: error,
-    });
-  }
-}
+// export async function handleTitleAndDescVideo(
+//   req: Request,
+//   res: Response,
+//   data: any,
+// ) {
+//   const { title, description, slug } = req.body;
+
+//   console.log('title', title, 'description', description, 'slug');
+//   // res.status(200).send('OK');
+
+//   try {
+//     const pushVideo = await prisma.videos.update({
+//       where: {
+//         slug: slug,
+//       },
+//       data: {
+//         title_video: title,
+//         description: description,
+//       },
+//     });
+
+//     res.status(200).json({
+//       status: 'success',
+//       message: 'Video created successfully',
+//       data: pushVideo,
+//     });
+//   } catch (error) {
+//     res.status(200).json({
+//       status: 'error',
+//       message: error,
+//     });
+//   }
+// }

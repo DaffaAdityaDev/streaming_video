@@ -26,8 +26,12 @@ export interface ResolutionConfig {
   outputDir: string;
 }
 
+
 export interface RequestWithUser extends Request {
   user?: {
+    id_user: number;
     email: string;
+    username: string;
+    // Add any other properties that your user object has
   };
 }

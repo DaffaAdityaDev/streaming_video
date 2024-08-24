@@ -1,14 +1,14 @@
 'use client';
-import { AppContext } from '@/app/_components/context/AppContext';
+import { AppContext } from '@/components/context/AppContext';
 /* eslint-disable @next/next/no-img-element */
-import CardVideo from '@/app/_components/video/CardVideo';
-import { PlayerVideo } from '@/app/_components/video/PlayerVideo';
+import CardVideo from '@/components/video/CardVideo';
+import { PlayerVideo } from '@/components/video/PlayerVideo';
 import { VideoDataType } from '@/app/types';
 // import videoData from '@/data/videoData';
 import { useState, useEffect, useContext } from 'react';
 import axios from 'axios';
-import CommentsList from '@/app/_components/comments/commentsList';
-import CommentVideo from '@/app/_components/comments/commentVideo';
+import CommentsList from '@/components/comments/commentsList';
+import CommentVideo from '@/components/comments/commentVideo';
 
 export default function VideoPlayer({
   params,
@@ -21,11 +21,11 @@ export default function VideoPlayer({
   const [comments, setComments] = useState([]);
   const { isFullScreen, setIsFullScreen } = useContext(AppContext);
   const [currentPath, setCurrentPath] = useState('');
-  // console.log(searchParams)
-  // console.log(params)
-
-  // console.log(data)
+  // console.log(params);
   // console.log(comments)
+  console.log(data)
+  // console.log(searchParams)
+
   function getCommentsFromAPI(path: string) {
     return axios.get(path).then((response) => {
       return response.data;
@@ -38,28 +38,20 @@ export default function VideoPlayer({
     });
   }
 
-  useEffect(() => {
-    const fetchData = async () => {
-      const comments = await getCommentsFromAPI(
-        `${process.env.NEXT_PUBLIC_BACKEND_URL}/comments/${searchParams.id_video}`,
-      );
-      // console.log(comments.data);
-      setComments(comments.data);
-    };
-
-    fetchData();
-  }, [searchParams]);
 
   useEffect(() => {
     const fetchData = async () => {
-      const data = await getDataFromAPI(`${process.env.NEXT_PUBLIC_BACKEND_URL}/videos`);
-
-      // console.log(data);
-      setData(data);
+      const videoData = await getDataFromAPI(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/v1/video`);
+      setData(videoData.data);
+      if (searchParams.id_video) {
+        console.log(searchParams.id_video)
+        const commentsData = await getCommentsFromAPI(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/v1/comment/${searchParams.id_video}`);
+        setComments(commentsData.data);
+      }
     };
-
+  
     fetchData();
-  }, [searchParams]);
+  }, [params.slug, searchParams.id_video]);
 
   return (
     <div className="grid grid-cols-12">
@@ -114,7 +106,6 @@ export default function VideoPlayer({
         <div className="mx-10 flex flex-col gap-2">
           <CommentVideo
             id_video={searchParams.id_video ? searchParams.id_video.toString() : ''}
-            comments={comments}
             setComments={setComments}
           />
           <CommentsList comments={comments} />

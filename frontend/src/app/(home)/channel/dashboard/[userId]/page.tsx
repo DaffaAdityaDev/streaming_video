@@ -1,5 +1,5 @@
 'use client';
-import VideoList from '@/app/_components/dashboard/VideoList';
+import VideoList from '@/components/dashboard/VideoList';
 import { UploadProgressItem } from '@/app/types';
 import axios from 'axios';
 import { useEffect, useState } from 'react';
@@ -17,35 +17,25 @@ export default function Page({ params }: { params: { userId: string } }) {
   const [usernames, setUsernames] = useState<string | null>(null);
   const [email, setEmail] = useState<string | null>(null);
 
+  console.log(Token);
+
   useEffect(() => {
     setToken(localStorage.getItem('token'));
     setUsernames(localStorage.getItem('username'));
     setEmail(localStorage.getItem('email'));
   }, []);
 
-  // console.log('Token', Token)
-  // console.log('usernames', usernames)
-  // console.log('email', email)
-
   useEffect(() => {
     const socket = io(`${process.env.NEXT_PUBLIC_BACKEND_WS_URL}`);
-
+  
     socket.on('uploadProgress', (data) => {
-      // console.log("test", data.path);
-      // console.log(`Upload progress for ${data.file}: ${data.progress}% reso${data.resolution}`);
-      setUploadProgress((prevProgress) => {
-        // Find the index of the existing progress object for this file and resolution
-        const index = prevProgress.findIndex(
-          (item) => item.file === data.file && item.reso === data.resolution,
-        );
-        // console.log(data);
-        if (index !== -1) {
-          // If the progress object for this file and resolution already exists, update it
-          const updatedProgress = [...prevProgress];
-          updatedProgress[index] = { ...updatedProgress[index], progress: data.progress };
-          return updatedProgress;
+      setUploadProgress(prevProgress => {
+        const existingIndex = prevProgress.findIndex(item => item.reso === data.resolution);
+        if (existingIndex !== -1) {
+          return prevProgress.map((item, index) => 
+            index === existingIndex ? { ...item, progress: data.progress } : item
+          );
         } else {
-          // If the progress object for this file and resolution does not exist, add a new one
           return [
             ...prevProgress,
             {
@@ -57,9 +47,29 @@ export default function Page({ params }: { params: { userId: string } }) {
           ];
         }
       });
-      // Update your UI with the progress data
     });
-
+  
+    socket.on('processingProgress', (data) => {
+      setUploadProgress(prevProgress => {
+        const existingIndex = prevProgress.findIndex(item => item.reso === data.resolution);
+        if (existingIndex !== -1) {
+          return prevProgress.map((item, index) => 
+            index === existingIndex ? { ...item, progress: data.progress } : item
+          );
+        } else {
+          return [
+            ...prevProgress,
+            {
+              file: data.file,
+              progress: data.progress,
+              reso: data.resolution,
+              path: `${process.env.NEXT_PUBLIC_BACKEND_URL}/video/${data.resolution}/${data.file}.mp4`,
+            },
+          ];
+        }
+      });
+    });
+  
     return () => {
       socket.disconnect();
     };
@@ -70,30 +80,48 @@ export default function Page({ params }: { params: { userId: string } }) {
       setSelectedFile(e.target.files[0]);
     }
   };
-
+  
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    if (!selectedFile) {
-      alert('Please select a file');
+    if (!selectedFile || !Token) {
+      alert(selectedFile ? 'You are not authenticated. Please log in.' : 'Please select a file');
       return;
     }
     const formData = new FormData();
     formData.append('video', selectedFile);
-
+  
     try {
-      const response = await axios.post(`${process.env.NEXT_PUBLIC_BACKEND_URL}/upload`, formData, {
+      setUploadProgress([{
+        file: selectedFile.name,
+        progress: 0,
+        reso: 'upload',
+        path: '',
+      }]);
+  
+      const response = await axios.post(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/v1/video/upload`, formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
           Authorization: `Bearer ${Token}`,
         },
+        onUploadProgress: (progressEvent) => {
+          const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total!);
+          setUploadProgress(prevProgress => [{
+            ...prevProgress[0],
+            progress: percentCompleted,
+          }]);
+        },
       });
-      alert(`Video uploaded successfully! ${response.data}`);
-      // console.log(response.data);
+      console.log('Upload response:', response.data);
     } catch (error) {
-      alert(`Error uploading video. ${(error as Error).message}`);
-      // console.error(error);
+      console.error('Error uploading video:', error);
+      if (axios.isAxiosError(error) && error.response) {
+        alert(`Error uploading video: ${error.response.data.message || error.message}`);
+      } else {
+        alert(`Error uploading video: ${(error as Error).message}`);
+      }
     }
   };
+
   return (
     <div className="flex h-full w-full flex-col items-center justify-center">
       <div role="tablist" className="tabs tabs-bordered mb-20">
@@ -126,7 +154,6 @@ export default function Page({ params }: { params: { userId: string } }) {
           {uploadProgress.length > 0 && (
             <div className="overflow-x-auto">
               <table className="table">
-                {/* head */}
                 <thead>
                   <tr>
                     <th>no</th>

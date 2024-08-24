@@ -1,9 +1,6 @@
 import express, { Request, Response } from 'express';
 import {
-  streamVideoFile,
-  handleFileUpload,
   MakeVideoQueue,
-  handleTitleAndDescVideo,
 } from './utils';
 import checkToken from './utils/checkToken';
 import fs from 'fs';
@@ -21,18 +18,33 @@ import jwt from 'jsonwebtoken';
 import { Server } from 'socket.io';
 import http from 'http';
 import cors from 'cors';
+import { config } from './config/enviroment';
 
-const prisma = new PrismaClient();
+import userRoutes from './routes/v1/userRoutes';
+import commentRoutes from './routes/v1/commentRoutes';
+import videoRoutes from './routes/v1/videoRoutes';
 
-ffmpeg.setFfmpegPath(ffmpegPath.path);
-ffmpeg.setFfprobePath(ffprobePath.path);
 
-dotenv.config();
 
-const PORT = process.env.PORT || 3001;
+import { errorHandler } from './middlewares/errorMiddleware';
+
+
+
+
+
+// const prisma = new PrismaClient();
+
+// ffmpeg.setFfmpegPath(ffmpegPath.path);
+// ffmpeg.setFfprobePath(ffprobePath.path);
+
+// dotenv.config();
+
+// const PORT = process.env.PORT || 3001;
 // console.log(process.env.PORT);
 const APP = express();
 const server = http.createServer(APP);
+
+APP.use(errorHandler);
 
 const io = new Server(server, {
   cors: {
@@ -40,14 +52,17 @@ const io = new Server(server, {
   },
 });
 
-const videoQueue = MakeVideoQueue(4);
+// const videoQueue = MakeVideoQueue(4);
 
 io.on('connection', (socket) => {
-  console.log('a user connected');
+  let user = null;
   socket.on('disconnect', () => {
     console.log('user disconnected');
+    user = null;
   });
 });
+
+APP.set('io', io);
 
 APP.use(express.json());
 APP.use((req: Request, res: Response, next) => {
@@ -68,444 +83,449 @@ APP.use(
 
 APP.use('/api-docs', swaggerUi.serve, swaggerUi.setup(openApiJSON));
 
-const storage = multer.diskStorage({
-  destination: function (
-    req: any,
-    file: any,
-    cb: (arg0: null, arg1: string) => void,
-  ) {
-    const dir = path.join(__dirname, '../video/defaultQuality/');
+// const storage = multer.diskStorage({
+//   destination: function (
+//     req: any,
+//     file: any,
+//     cb: (arg0: null, arg1: string) => void,
+//   ) {
+//     const dir = path.join(__dirname, '../video/defaultQuality/');
 
-    // Create the directory if it doesn't exist
-    fs.mkdirSync(dir, { recursive: true });
+//     // Create the directory if it doesn't exist
+//     fs.mkdirSync(dir, { recursive: true });
 
-    cb(null, dir);
-  },
-  filename: function (
-    req: any,
-    file: { fieldname: string; originalname: string },
-    cb: (arg0: null, arg1: string) => void,
-  ) {
-    cb(
-      null,
-      file.fieldname + '-' + Date.now() + path.extname(file.originalname),
-    );
-  },
-});
+//     cb(null, dir);
+//   },
+//   filename: function (
+//     req: any,
+//     file: { fieldname: string; originalname: string },
+//     cb: (arg0: null, arg1: string) => void,
+//   ) {
+//     cb(
+//       null,
+//       file.fieldname + '-' + Date.now() + path.extname(file.originalname),
+//     );
+//   },
+// });
 
-const imageStorage = multer.diskStorage({
-  destination: function (
-    req: any,
-    file: any,
-    cb: (arg0: null, arg1: string) => void,
-  ) {
-    const dir = path.join(__dirname, '../profileImages/');
+// const imageStorage = multer.diskStorage({
+//   destination: function (
+//     req: any,
+//     file: any,
+//     cb: (arg0: null, arg1: string) => void,
+//   ) {
+//     const dir = path.join(__dirname, '../profileImages/');
 
-    // Create the directory if it doesn't exist
-    fs.mkdirSync(dir, { recursive: true });
+//     // Create the directory if it doesn't exist
+//     fs.mkdirSync(dir, { recursive: true });
 
-    cb(null, dir);
-  },
-  filename: function (
-    req: any,
-    file: { fieldname: string; originalname: string },
-    cb: (arg0: null, arg1: string) => void,
-  ) {
-    cb(null, Date.now() + path.extname(file.originalname));
-  },
-});
+//     cb(null, dir);
+//   },
+//   filename: function (
+//     req: any,
+//     file: { fieldname: string; originalname: string },
+//     cb: (arg0: null, arg1: string) => void,
+//   ) {
+//     cb(null, Date.now() + path.extname(file.originalname));
+//   },
+// });
 
-const upload = multer({ storage: storage });
-const uploadImage = multer({ storage: imageStorage });
-APP.use('/video', express.static('video'));
-APP.use('/thumbnails', express.static('thumbnails'));
-APP.use('/profileimages', express.static('profileImages'));
+// const upload = multer({ storage: storage });
+// const uploadImage = multer({ storage: imageStorage });
+// APP.use('/video', express.static(path.join(__dirname, '../video')));
+// APP.use('/thumbnails', express.static(path.join(__dirname, '../thumbnails')));
+// APP.use('/api/v1/video/thumbnail', express.static(path.join(__dirname, '../thumbnails')));
+APP.use('/profileimages', express.static(path.join(__dirname, '../profileImages')));
 
 APP.get('/', (req: Request, res: Response) => {
   res.send('Hello, Developer! start you CRAFT here');
 });
 
-APP.post('/register', async (req: Request, res: Response) => {
-  const { username, email, password } = req.body;
-  console.log(username);
-  const hashedPassword = await bcrypt.hash(password, 10);
+APP.use('/api', userRoutes);
+APP.use('/api', commentRoutes);
+APP.use('/api', videoRoutes);
 
-  if (!username || !email || !password) {
-    return res.status(200).json({
-      status: 'error',
-      message: 'Please fill in all fields',
-    });
-  }
+// APP.post('/register', async (req: Request, res: Response) => {
+//   const { username, email, password } = req.body;
+//   console.log(username);
+//   const hashedPassword = await bcrypt.hash(password, 10);
 
-  try {
-    const checkUser = await prisma.users.findFirst({
-      where: {
-        OR: [{ username: username }, { email: email }],
-      },
-    });
+//   if (!username || !email || !password) {
+//     return res.status(200).json({
+//       status: 'error',
+//       message: 'Please fill in all fields',
+//     });
+//   }
 
-    if (checkUser) {
-      return res.status(200).json({
-        status: 'error',
-        message: 'User already exists',
-      });
-    }
+//   try {
+//     const checkUser = await prisma.users.findFirst({
+//       where: {
+//         OR: [{ username: username }, { email: email }],
+//       },
+//     });
 
-    const user = await prisma.users.create({
-      data: {
-        username,
-        email,
-        password: hashedPassword,
-        image_url:
-          'https://res.cloudinary.com/dkkgmzpqd/image/upload/v1628074759/default-profile-picture-300x300_y3c5xw.png',
-      },
-    });
+//     if (checkUser) {
+//       return res.status(200).json({
+//         status: 'error',
+//         message: 'User already exists',
+//       });
+//     }
 
-    return res.json({
-      status: 'success',
-      message: 'User created successfully',
-      data: user,
-    });
-  } catch (error) {
-    res.status(200).json({
-      status: 'error',
-      message: error,
-    });
-  }
-});
+//     const user = await prisma.users.create({
+//       data: {
+//         username,
+//         email,
+//         password: hashedPassword,
+//         image_url:
+//           'https://res.cloudinary.com/dkkgmzpqd/image/upload/v1628074759/default-profile-picture-300x300_y3c5xw.png',
+//       },
+//     });
 
-APP.post('/login', async (req: Request, res: Response) => {
-  const { email, password } = req.body;
-  if (!process.env.JWT_SECRET) {
-    return res.status(500).json({
-      status: 'error',
-      message: 'Internal server error no Token Generated',
-    });
-  }
-  const token = jwt.sign({ email }, process.env.JWT_SECRET, {
-    expiresIn: '7d',
-  });
+//     return res.json({
+//       status: 'success',
+//       message: 'User created successfully',
+//       data: user,
+//     });
+//   } catch (error) {
+//     res.status(200).json({
+//       status: 'error',
+//       message: error,
+//     });
+//   }
+// });
 
-  try {
-    const user = await prisma.users.findUnique({
-      where: {
-        email,
-      },
-    });
+// APP.post('/login', async (req: Request, res: Response) => {
+//   const { email, password } = req.body;
+//   if (!process.env.JWT_SECRET) {
+//     return res.status(500).json({
+//       status: 'error',
+//       message: 'Internal server error no Token Generated',
+//     });
+//   }
+//   const token = jwt.sign({ email }, process.env.JWT_SECRET, {
+//     expiresIn: '7d',
+//   });
 
-    if (!user) {
-      return res.status(203).json({
-        status: 'error',
-        message: 'User not found',
-      });
-    }
+//   try {
+//     const user = await prisma.users.findUnique({
+//       where: {
+//         email,
+//       },
+//     });
 
-    const passwordValid = await bcrypt.compare(password, user.password);
+//     if (!user) {
+//       return res.status(203).json({
+//         status: 'error',
+//         message: 'User not found',
+//       });
+//     }
 
-    if (!passwordValid) {
-      return res.status(203).json({
-        status: 'error',
-        message: 'Invalid password',
-      });
-    }
+//     const passwordValid = await bcrypt.compare(password, user.password);
 
-    await prisma.users.update({
-      where: {
-        email,
-      },
-      data: {
-        token,
-      },
-    });
+//     if (!passwordValid) {
+//       return res.status(203).json({
+//         status: 'error',
+//         message: 'Invalid password',
+//       });
+//     }
 
-    return res.json({
-      status: 'success',
-      message: 'User logged in successfully',
-      token,
-      username: user.username,
-      email: user.email,
-      image_url: user.image_url,
-    });
-  } catch (error) {
-    res.status(400).json({
-      status: 'error',
-      message: error,
-    });
-  }
-});
+//     await prisma.users.update({
+//       where: {
+//         email,
+//       },
+//       data: {
+//         token,
+//       },
+//     });
+
+//     return res.json({
+//       status: 'success',
+//       message: 'User logged in successfully',
+//       token,
+//       username: user.username,
+//       email: user.email,
+//       image_url: user.image_url,
+//     });
+//   } catch (error) {
+//     res.status(400).json({
+//       status: 'error',
+//       message: error,
+//     });
+//   }
+// });
 
 // experimental not working
-APP.get('/video/:quality/:slug/:segment', (req: Request, res: Response) => {
-  const { quality, slug, segment } = req.params;
+// APP.get('/video/:quality/:slug/:segment', (req: Request, res: Response) => {
+//   const { quality, slug, segment } = req.params;
 
-  // Validate quality and segment
-  if (!['1080p', '720p', '480p', '360p', '240p'].includes(quality)) {
-    return res.status(400).send('Invalid quality parameter');
-  }
-  if (isNaN(Number(segment))) {
-    return res.status(400).send('Invalid segment parameter');
-  }
+//   // Validate quality and segment
+//   if (!['1080p', '720p', '480p', '360p', '240p'].includes(quality)) {
+//     return res.status(400).send('Invalid quality parameter');
+//   }
+//   if (isNaN(Number(segment))) {
+//     return res.status(400).send('Invalid segment parameter');
+//   }
 
-  const videoPath = `video/${quality}/${slug}.mp4`;
+//   const videoPath = `video/${quality}/${slug}.mp4`;
 
-  if (!fs.existsSync(videoPath)) {
-    return res.status(404).send('Video file not found');
-  }
+//   if (!fs.existsSync(videoPath)) {
+//     return res.status(404).send('Video file not found');
+//   }
 
-  const start = +segment * 10; // assuming each segment is 10 seconds long
-  const duration = 10;
+//   const start = +segment * 10; // assuming each segment is 10 seconds long
+//   const duration = 10;
 
-  ffmpeg(videoPath)
-    .seekInput(start)
-    .duration(duration)
-    .outputOptions('-f segment')
-    .outputOptions('-segment_time 10')
-    .output('pipe:1')
-    .pipe(res);
+//   ffmpeg(videoPath)
+//     .seekInput(start)
+//     .duration(duration)
+//     .outputOptions('-f segment')
+//     .outputOptions('-segment_time 10')
+//     .output('pipe:1')
+//     .pipe(res);
+// });
+
+// // direct video streaming
+// APP.get('/video/*', async (req: Request, res: Response) => {
+//   const slug = req.query.slug || req.params[0];
+//   await streamVideoFile(req, res, slug);
+// });
+
+// // get all videos
+// APP.get('/videos', async (req: Request, res: Response) => {
+//   const videos = await prisma.videos.findMany({
+//     orderBy: {
+//       created_at: 'desc',
+//     },
+//   });
+
+//   res.json(videos);
+// });
+
+// // get specific user video
+// APP.post('/videos', async (req, res) => {
+//   const { email } = req.body;
+//   try {
+//     // Find the user by email to get their id_user
+//     const user = await prisma.users.findUnique({
+//       where: {
+//         email: email,
+//       },
+//     });
+//     console.log(user);
+
+//     if (!user) {
+//       return res.status(404).json({
+//         status: 'error',
+//         message: 'User not found',
+//       });
+//     }
+
+//     // Fetch videos for the specific user using their id_user
+//     const videos = await prisma.videos.findMany({
+//       where: {
+//         id_user: user.id_user,
+//       },
+//       include: {
+//         user: true, // Include user details in the response
+//       },
+//     });
+
+//     res.status(200).json({
+//       status: 'success',
+//       data: videos,
+//     });
+//   } catch (error) {
+//     res.status(500).json({
+//       status: 'error',
+//       message: (error as Error).message,
+//     });
+//   }
+// });
+
+// APP.get('/thumbnail/:slug', (req: Request, res: Response) => {
+//   const { slug } = req.params;
+//   const thumbnailPath = path.join(__dirname, `../thumbnails/${slug}.png`);
+//   console.log(thumbnailPath);
+
+//   if (!fs.existsSync(thumbnailPath)) {
+//     return res.status(404).send('Thumbnail not found');
+//   }
+
+//   res.sendFile(thumbnailPath);
+// });
+
+// // upload video
+// APP.post(
+//   '/upload',
+//   checkToken,
+//   upload.single('video'),
+//   async (req: Request, res: Response) => {
+//     await handleFileUpload(req, res, videoQueue, io);
+//   },
+// );
+
+// APP.post(
+//   '/upload',
+//   checkToken,
+//   upload.single('video'),
+//   async (req: Request, res: Response) => {
+//     await handleFileUpload(req, res, videoQueue, io);
+//   },
+// );
+
+// // upload title and description
+// APP.post('/upload/title', async (req: Request, res: Response) => {
+//   await handleTitleAndDescVideo(req, res, videoQueue);
+// });
+
+// // for comments CRUD
+// APP.post('/comments', checkToken, async (req: Request, res: Response) => {
+//   const { body, id_video, email } = req.body;
+//   try {
+//     // Find the user by email to get their id_user
+//     const user = await prisma.users.findUnique({
+//       where: {
+//         email: email,
+//       },
+//     });
+
+//     if (!user) {
+//       return res.status(404).json({
+//         status: 'error',
+//         message: 'User not found',
+//       });
+//     }
+
+//     // Use the id_user from the found user to create the comment
+//     const comment = await prisma.comments.create({
+//       data: {
+//         body,
+//         id_video,
+//         id_user: user.id_user,
+//       },
+//     });
+
+//     res.status(201).json({
+//       status: 'success',
+//       data: comment,
+//     });
+//   } catch (error) {
+//     res.status(500).json({ error: 'Error creating comment' });
+//   }
+// });
+
+// APP.get('/comments/:id_video', async (req: Request, res: Response) => {
+//   const { id_video } = req.params;
+//   try {
+//     const comments = await prisma.comments.findMany({
+//       where: { id_video: parseInt(id_video) },
+//       include: { user: true },
+//     });
+//     res.status(200).json({
+//       status: 'success',
+//       data: comments,
+//     });
+//   } catch (error) {
+//     res.status(500).json({ error: 'Error fetching comments' });
+//   }
+// });
+
+// APP.put(
+//   '/comments/:id_comment',
+//   checkToken,
+//   async (req: Request, res: Response) => {
+//     const { id_comment } = req.params;
+//     const { body } = req.body;
+//     try {
+//       const comment = await prisma.comments.update({
+//         where: { id_comment: parseInt(id_comment) },
+//         data: { body },
+//       });
+//       res.status(200).json({
+//         status: 'success',
+//         data: comment,
+//       });
+//     } catch (error) {
+//       res.status(500).json({ error: 'Error updating comment' });
+//     }
+//   },
+// );
+
+// APP.delete(
+//   '/comments/:id_comment',
+//   checkToken,
+//   async (req: Request, res: Response) => {
+//     const { id_comment } = req.params;
+//     try {
+//       const comment = await prisma.comments.delete({
+//         where: { id_comment: parseInt(id_comment) },
+//       });
+//       res.status(200).json({
+//         status: 'success',
+//         data: comment,
+//       });
+//     } catch (error) {
+//       res.status(500).json({ error: 'Error deleting comment' });
+//     }
+//   },
+// );
+
+// APP.post(
+//   '/uploadProfile',
+//   // checkToken,
+//   uploadImage.single('image'),
+//   async (req: Request, res: Response) => {
+//     const { username } = req.body;
+//     console.log(req.file);
+//     console.log(req.body);
+
+//     // Check if req.file is defined
+//     if (!req.file) {
+//       return res.status(400).json({
+//         status: 'error',
+//         message: 'No file uploaded',
+//       });
+//     }
+
+//     // Extract the numeric part of the filename
+//     const imageName = path.basename(req.file.path);
+//     const imageId = imageName.replace(/image-/, '');
+
+//     // const userId = parseInt(id_user, 10);
+
+//     try {
+//       const user = await prisma.users.update({
+//         where: { username: username }, // Use the parsed integer value
+//         data: { image_url: imageId }, // Update the image_url with the new path
+//       });
+
+//       return res.json({
+//         status: 'success',
+//         message: 'Image uploaded successfully',
+//         data: user,
+//       });
+//     } catch (error) {
+//       // Check if error is an instance of Error
+//       if (error instanceof Error) {
+//         return res.status(500).json({
+//           status: 'error',
+//           message: 'Failed to upload image',
+//           error: error.message,
+//         });
+//       } else {
+//         return res.status(500).json({
+//           status: 'error',
+//           message: 'An unknown error occurred',
+//         });
+//       }
+//     }
+//   },
+// );
+
+APP.listen(config.port, () => {
+  console.log(`Server listening on ${config.url}:${config.port}`);
 });
 
-// direct video streaming
-APP.get('/video/*', async (req: Request, res: Response) => {
-  const slug = req.query.slug || req.params[0];
-  await streamVideoFile(req, res, slug);
-});
-
-// get all videos
-APP.get('/videos', async (req: Request, res: Response) => {
-  const videos = await prisma.videos.findMany({
-    orderBy: {
-      created_at: 'desc',
-    },
-  });
-
-  res.json(videos);
-});
-
-// get specific user video
-APP.post('/videos', async (req, res) => {
-  const { email } = req.body;
-  try {
-    // Find the user by email to get their id_user
-    const user = await prisma.users.findUnique({
-      where: {
-        email: email,
-      },
-    });
-    console.log(user);
-
-    if (!user) {
-      return res.status(404).json({
-        status: 'error',
-        message: 'User not found',
-      });
-    }
-
-    // Fetch videos for the specific user using their id_user
-    const videos = await prisma.videos.findMany({
-      where: {
-        id_user: user.id_user,
-      },
-      include: {
-        user: true, // Include user details in the response
-      },
-    });
-
-    res.status(200).json({
-      status: 'success',
-      data: videos,
-    });
-  } catch (error) {
-    res.status(500).json({
-      status: 'error',
-      message: (error as Error).message,
-    });
-  }
-});
-
-APP.get('/thumbnail/:slug', (req: Request, res: Response) => {
-  const { slug } = req.params;
-  const thumbnailPath = path.join(__dirname, `../thumbnails/${slug}.png`);
-  console.log(thumbnailPath);
-
-  if (!fs.existsSync(thumbnailPath)) {
-    return res.status(404).send('Thumbnail not found');
-  }
-
-  res.sendFile(thumbnailPath);
-});
-
-// upload video
-APP.post(
-  '/upload',
-  checkToken,
-  upload.single('video'),
-  async (req: Request, res: Response) => {
-    await handleFileUpload(req, res, videoQueue, io);
-  },
-);
-
-APP.post(
-  '/upload',
-  checkToken,
-  upload.single('video'),
-  async (req: Request, res: Response) => {
-    await handleFileUpload(req, res, videoQueue, io);
-  },
-);
-
-// upload title and description
-APP.post('/upload/title', async (req: Request, res: Response) => {
-  await handleTitleAndDescVideo(req, res, videoQueue);
-});
-
-// for comments CRUD
-APP.post('/comments', checkToken, async (req: Request, res: Response) => {
-  const { body, id_video, email } = req.body;
-  try {
-    // Find the user by email to get their id_user
-    const user = await prisma.users.findUnique({
-      where: {
-        email: email,
-      },
-    });
-
-    if (!user) {
-      return res.status(404).json({
-        status: 'error',
-        message: 'User not found',
-      });
-    }
-
-    // Use the id_user from the found user to create the comment
-    const comment = await prisma.comments.create({
-      data: {
-        body,
-        id_video,
-        id_user: user.id_user,
-      },
-    });
-
-    res.status(201).json({
-      status: 'success',
-      data: comment,
-    });
-  } catch (error) {
-    res.status(500).json({ error: 'Error creating comment' });
-  }
-});
-
-APP.get('/comments/:id_video', async (req: Request, res: Response) => {
-  const { id_video } = req.params;
-  try {
-    const comments = await prisma.comments.findMany({
-      where: { id_video: parseInt(id_video) },
-      include: { user: true },
-    });
-    res.status(200).json({
-      status: 'success',
-      data: comments,
-    });
-  } catch (error) {
-    res.status(500).json({ error: 'Error fetching comments' });
-  }
-});
-
-APP.put(
-  '/comments/:id_comment',
-  checkToken,
-  async (req: Request, res: Response) => {
-    const { id_comment } = req.params;
-    const { body } = req.body;
-    try {
-      const comment = await prisma.comments.update({
-        where: { id_comment: parseInt(id_comment) },
-        data: { body },
-      });
-      res.status(200).json({
-        status: 'success',
-        data: comment,
-      });
-    } catch (error) {
-      res.status(500).json({ error: 'Error updating comment' });
-    }
-  },
-);
-
-APP.delete(
-  '/comments/:id_comment',
-  checkToken,
-  async (req: Request, res: Response) => {
-    const { id_comment } = req.params;
-    try {
-      const comment = await prisma.comments.delete({
-        where: { id_comment: parseInt(id_comment) },
-      });
-      res.status(200).json({
-        status: 'success',
-        data: comment,
-      });
-    } catch (error) {
-      res.status(500).json({ error: 'Error deleting comment' });
-    }
-  },
-);
-
-APP.post(
-  '/uploadProfile',
-  // checkToken,
-  uploadImage.single('image'),
-  async (req: Request, res: Response) => {
-    const { username } = req.body;
-    console.log(req.file);
-    console.log(req.body);
-
-    // Check if req.file is defined
-    if (!req.file) {
-      return res.status(400).json({
-        status: 'error',
-        message: 'No file uploaded',
-      });
-    }
-
-    // Extract the numeric part of the filename
-    const imageName = path.basename(req.file.path);
-    const imageId = imageName.replace(/image-/, '');
-
-    // const userId = parseInt(id_user, 10);
-
-    try {
-      const user = await prisma.users.update({
-        where: { username: username }, // Use the parsed integer value
-        data: { image_url: imageId }, // Update the image_url with the new path
-      });
-
-      return res.json({
-        status: 'success',
-        message: 'Image uploaded successfully',
-        data: user,
-      });
-    } catch (error) {
-      // Check if error is an instance of Error
-      if (error instanceof Error) {
-        return res.status(500).json({
-          status: 'error',
-          message: 'Failed to upload image',
-          error: error.message,
-        });
-      } else {
-        return res.status(500).json({
-          status: 'error',
-          message: 'An unknown error occurred',
-        });
-      }
-    }
-  },
-);
-
-APP.listen(PORT, () => {
-  console.log(`http://localhost:${PORT}`);
-});
-
-server.listen(8001, () => {
-  console.log('listening on *:8001');
+server.listen(config.webSocketPort, () => {
+  console.log(`Web Socket IO listening on ${config.url}:${config.webSocketPort}`);
 });
