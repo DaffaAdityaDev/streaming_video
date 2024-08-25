@@ -1,92 +1,174 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { FormGeneratorTemplateItem, ListVideo } from '@/app/types';
+import { fetcher } from '@/utils/api';
+import useSWR from 'swr';
 
 export default function VideoList({ email }: any) {
-  const [videos, setVideos] = useState<ListVideo[]>([]);
+  // const [videos, setVideos] = useState<ListVideo[]>([]);
+  // const [editingVideoId, setEditingVideoId] = useState<number>(0);
+  // const [FormSelected, setFormSelected] = useState(0);
+  // const [formGeneratorTemplate, setFormGeneratorTemplate] = useState<FormGeneratorTemplateItem[]>(
+  //   [],
+  // );
+  // const [showToast, setShowToast] = useState(false);
+
+  // console.log(videos)
+
+  // useEffect(() => {
+  //   // console.log("editingVideoId", videos.findIndex(video => video.id_video === editingVideoId));
+  //   let newFormGeneratorTemplate: FormGeneratorTemplateItem[] = [];
+  //   videos.forEach((video, index) => {
+  //     if (index === videos.findIndex((video) => video.id_video === editingVideoId)) {
+  //       newFormGeneratorTemplate.push(
+  //         {
+  //           id: 0,
+  //           title: 'Tilte',
+  //           description: 'Change and edit you title',
+  //           icon: 'cardtext',
+  //           form: [
+  //             {
+  //               type: 'text',
+  //               name: 'title',
+  //               placeholder: 'Title',
+  //               value: video.title_video,
+  //               onChange: (event: React.ChangeEvent<HTMLInputElement>) => {
+  //                 console.log(event.target.value);
+  //               },
+  //             },
+  //           ],
+  //         },
+  //         {
+  //           id: 1,
+  //           title: 'Description',
+  //           description: 'Change and edit you description',
+  //           icon: 'bodytext',
+  //           form: [
+  //             {
+  //               type: 'text',
+  //               name: 'Description',
+  //               placeholder: 'Description',
+  //               value: video.description,
+  //               onChange: (event: React.ChangeEvent<HTMLInputElement>) => {
+  //                 console.log(event.target.value);
+  //               },
+  //             },
+  //           ],
+  //         },
+  //       );
+  //     }
+  //   });
+  //   setFormGeneratorTemplate(newFormGeneratorTemplate);
+  // }, [editingVideoId]);
+
   const [editingVideoId, setEditingVideoId] = useState<number>(0);
   const [FormSelected, setFormSelected] = useState(0);
-  const [formGeneratorTemplate, setFormGeneratorTemplate] = useState<FormGeneratorTemplateItem[]>(
-    [],
-  );
+  const [formGeneratorTemplate, setFormGeneratorTemplate] = useState<FormGeneratorTemplateItem[]>([]);
   const [showToast, setShowToast] = useState(false);
 
-  console.log(videos)
+  const encodedEmail = btoa(email);
+  const { data, error, mutate } = useSWR<{ status: string; data: ListVideo[] }>(
+    `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/v1/video/user/${encodedEmail}`,
+    fetcher
+  );
+
+  const videos = data?.data || [];
 
   useEffect(() => {
-    // console.log("editingVideoId", videos.findIndex(video => video.id_video === editingVideoId));
-    let newFormGeneratorTemplate: FormGeneratorTemplateItem[] = [];
-    videos.forEach((video, index) => {
-      if (index === videos.findIndex((video) => video.id_video === editingVideoId)) {
-        newFormGeneratorTemplate.push(
-          {
-            id: 0,
-            title: 'Tilte',
-            description: 'Change and edit you title',
-            icon: 'cardtext',
-            form: [
-              {
-                type: 'text',
-                name: 'title',
-                placeholder: 'Title',
-                value: video.title_video,
-                onChange: (event: React.ChangeEvent<HTMLInputElement>) => {
-                  console.log(event.target.value);
+    if (videos) {
+      let newFormGeneratorTemplate: FormGeneratorTemplateItem[] = [];
+      videos.forEach((video, index) => {
+        if (index === videos.findIndex((v) => v.id_video === editingVideoId)) {
+          newFormGeneratorTemplate.push(
+            {
+              id: 0,
+              title: 'Title',
+              description: 'Change and edit your title',
+              icon: 'cardtext',
+              form: [
+                {
+                  type: 'text',
+                  name: 'title',
+                  placeholder: 'Title',
+                  value: video.title_video,
+                  onChange: (event: React.ChangeEvent<HTMLInputElement>) => {
+                    console.log(event.target.value);
+                  },
                 },
-              },
-            ],
-          },
-          {
-            id: 1,
-            title: 'Description',
-            description: 'Change and edit you description',
-            icon: 'bodytext',
-            form: [
-              {
-                type: 'text',
-                name: 'Description',
-                placeholder: 'Description',
-                value: video.description,
-                onChange: (event: React.ChangeEvent<HTMLInputElement>) => {
-                  console.log(event.target.value);
+              ],
+            },
+            {
+              id: 1,
+              title: 'Description',
+              description: 'Change and edit your description',
+              icon: 'bodytext',
+              form: [
+                {
+                  type: 'text',
+                  name: 'Description',
+                  placeholder: 'Description',
+                  value: video.description,
+                  onChange: (event: React.ChangeEvent<HTMLInputElement>) => {
+                    console.log(event.target.value);
+                  },
                 },
-              },
-            ],
-          },
-        );
-      }
-    });
-    setFormGeneratorTemplate(newFormGeneratorTemplate);
-  }, [editingVideoId]);
-
-  const fetchVideos = async () => {
-    try {
-      if (!email) {
-        console.error('Email not found');
-        return;
-      }
-      const encodedEmail = btoa(email); // Base64 encode the email
-      console.log(email, encodedEmail);
-      const response = await axios.get(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/v1/video/user/${encodedEmail}`);
-      setVideos(response.data.data);
-    } catch (error) {
-      console.error('Error fetching videos:', error);
+              ],
+            }
+          );
+        }
+      });
+      setFormGeneratorTemplate(newFormGeneratorTemplate);
     }
-  };
+  }, [editingVideoId, videos]);
+
+  // const fetchVideos = async () => {
+  //   if (!email) {
+  //     console.error('Email not found');
+  //     return;
+  //   }
+  //   const encodedEmail = btoa(email);
+  //   const { data } = await fetcher(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/v1/video/user/${encodedEmail}`);
+  //   setVideos(data.data);
+  // };
+
+  // const updateVideoData = async (newTitle: string, newDescription: string, slug: string) => {
+  //   // console.log('newTitle', newTitle)
+  //   // console.log('newDescription', newDescription)
+  //   // console.log('slug', slug)
+  //   try {
+  //     const response = await axios.post(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/v1/video/${slug}`, {
+  //       title: newTitle,
+  //       description: newDescription,
+  //     });
+  //     console.log(response.data);
+  //     if (response.data.status === 'success') {
+  //       // alert('Video data updated successfully')
+  //       fetchVideos();
+  //       setShowToast(true);
+  //       setTimeout(() => {
+  //         setShowToast(false);
+  //       }, 3000);
+  //       const modalElement = document.getElementById('my_modal_3') as HTMLDialogElement;
+  //       if (modalElement) {
+  //         modalElement.close();
+  //       }
+  //     } else {
+  //       alert('Failed to update video data');
+  //     }
+  //     // setVideoData(response.data);
+  //   } catch (error) {
+  //     console.error('Failed to update video data:', error);
+  //   }
+  // };
 
   const updateVideoData = async (newTitle: string, newDescription: string, slug: string) => {
-    // console.log('newTitle', newTitle)
-    // console.log('newDescription', newDescription)
-    // console.log('slug', slug)
     try {
-      const response = await axios.post(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/v1/video/${slug}`, {
+      const response = await axios.put(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/v1/video/${slug}`, {
         title: newTitle,
         description: newDescription,
       });
-      console.log(response.data);
       if (response.data.status === 'success') {
-        // alert('Video data updated successfully')
-        fetchVideos();
+        mutate();
         setShowToast(true);
         setTimeout(() => {
           setShowToast(false);
@@ -98,15 +180,14 @@ export default function VideoList({ email }: any) {
       } else {
         alert('Failed to update video data');
       }
-      // setVideoData(response.data);
     } catch (error) {
       console.error('Failed to update video data:', error);
     }
   };
 
-  useEffect(() => {
-    fetchVideos();
-  }, [email]);
+  // useEffect(() => {
+  //   setVideos(videos);
+  // }, [videos]);
 
   const handleInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     // Find the index of the form that contains the input field being updated
@@ -126,6 +207,9 @@ export default function VideoList({ email }: any) {
       }
     }
   };
+
+  if (error) return <div>Failed to load videos</div>;
+  if (!videos) return <div>Loading...</div>;  
 
   console.log(videos);
   return (
@@ -264,12 +348,12 @@ export default function VideoList({ email }: any) {
                     <div className="flex items-center gap-3">
                       <div className="avatar">
                         <div className="mask mask-squircle h-12 w-12">
-                        <img src={`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/v1/video/thumbnail/${video.slug}`} alt="Video Thumbnail" />
+                        <img src={`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/v1/video/thumbnail/${video.thumbnail}`} alt="Video Thumbnail" />
                         </div>
                       </div>
                       <h4>{video.title_video}</h4>
                       <p>{video.description}</p>
-                      <a href={`${process.env.NEXT_PUBLIC_BACKEND_URL}/video/stream/${video.quality}/${video.slug}`} target="_blank" rel="noreferrer">Watch</a>
+                      <a href={`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/v1/video/stream/defaultQuality/${video.slug}`} target="_blank" rel="noreferrer">Watch</a>
                     </div>
                   </td>
                   <td>

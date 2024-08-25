@@ -88,9 +88,11 @@
     "dev": "nodemon",
     "build": "tsc",
     "start": "node build/server.js",
+    "start:prod": "node dist/server.js",
     "generate": "npx prisma generate",
     "deploy": "prisma deploy",
-    "format": "prettier --write ."
+    "format": "prettier --write .",
+    "migrate": "prisma migrate deploy"
   },
   "prisma": {
     "schema": "prisma/schema.prisma"

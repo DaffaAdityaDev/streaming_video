@@ -4,6 +4,8 @@ import { UploadProgressItem } from '@/app/types';
 import axios from 'axios';
 import { useEffect, useState } from 'react';
 import io from 'socket.io-client';
+import useSWR, { mutate } from 'swr';
+import { fetcher } from '@/utils/api';
 
 export default function Page({ params }: { params: { userId: string } }) {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -12,11 +14,17 @@ export default function Page({ params }: { params: { userId: string } }) {
     { name: 'My Video', isActive: false },
     { name: 'Tab 3', isActive: false },
   ]);
+  
   const [uploadProgress, setUploadProgress] = useState<UploadProgressItem[]>([]);
-  const [Token, setToken] = useState<string | null>(null);
+  const [conversionProgress, setConversionProgress] = useState<number>(0);
+  const [conversionStep, setConversionStep] = useState<string | null>(null);
+  const [Token, setToken] = useState<string | null>(null)
   const [usernames, setUsernames] = useState<string | null>(null);
   const [email, setEmail] = useState<string | null>(null);
-
+  const { data: userVideos, error: userVideosError } = useSWR(
+    email ? `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/v1/video/user/${btoa(email)}` : null,
+    fetcher
+  );
   console.log(Token);
 
   useEffect(() => {
@@ -42,7 +50,7 @@ export default function Page({ params }: { params: { userId: string } }) {
               file: data.file,
               progress: data.progress,
               reso: data.resolution,
-              path: `${process.env.NEXT_PUBLIC_BACKEND_URL}/video/${data.resolution}/${data.file}.mp4`,
+              path: `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/v1/video/stream/${data.resolution}/${data.file}`,
             },
           ];
         }
@@ -63,11 +71,19 @@ export default function Page({ params }: { params: { userId: string } }) {
               file: data.file,
               progress: data.progress,
               reso: data.resolution,
-              path: `${process.env.NEXT_PUBLIC_BACKEND_URL}/video/${data.resolution}/${data.file}.mp4`,
+              path: `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/v1/video/stream/${data.resolution}/${data.file}`,
             },
           ];
         }
       });
+    });
+
+    socket.on('conversionProgress', (data) => {
+      if (data.step === 'progress') {
+        setConversionProgress(data.progress);
+      } else {
+        setConversionStep(data.message);
+      }
     });
   
     return () => {
@@ -112,6 +128,7 @@ export default function Page({ params }: { params: { userId: string } }) {
         },
       });
       console.log('Upload response:', response.data);
+      mutate(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/v1/video/user/${email}`);
     } catch (error) {
       console.error('Error uploading video:', error);
       if (axios.isAxiosError(error) && error.response) {
@@ -121,6 +138,8 @@ export default function Page({ params }: { params: { userId: string } }) {
       }
     }
   };
+
+
 
   return (
     <div className="flex h-full w-full flex-col items-center justify-center">
@@ -152,46 +171,61 @@ export default function Page({ params }: { params: { userId: string } }) {
             </button>
           </form>
           {uploadProgress.length > 0 && (
-            <div className="overflow-x-auto">
-              <table className="table">
-                <thead>
-                  <tr>
-                    <th>no</th>
-                    <th>slug</th>
-                    <th>File</th>
-                    <th>Progress</th>
-                    <th>Path</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {uploadProgress.map((progressItem, index) => (
-                    <tr key={index}>
-                      <th>{index + 1}</th>
-                      <td>{progressItem.file}</td>
-                      <td>{progressItem.reso}</td>
-                      <td>
-                        <progress
-                          className="progress progress-primary w-56"
-                          value={progressItem.progress}
-                          max="100"
-                        ></progress>
-                      </td>
-                      <td>
-                        <a href={progressItem.path} target="_blank" rel="noreferrer">
-                          View
-                        </a>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
+  <div className="overflow-x-auto">
+    <table className="table">
+      <thead>
+        <tr>
+          <th>no</th>
+          <th>slug</th>
+          <th>File</th>
+          <th>Progress</th>
+          <th>Path</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <th>1</th>
+          <td>Conversion</td>
+          <td>{conversionStep}</td>
+          <td>
+            <progress
+              className="progress progress-primary w-56"
+              value={conversionProgress}
+              max="100"
+            ></progress>
+          </td>
+          <td>-</td>
+        </tr>
+        {uploadProgress.map((progressItem, index) => (
+          <tr key={index}>
+            <th>{index + 2}</th>
+            <td>{progressItem.file}</td>
+            <td>{progressItem.reso}</td>
+            <td>
+              <progress
+                className="progress progress-primary w-56"
+                value={progressItem.progress}
+                max="100"
+              ></progress>
+            </td>
+            <td>
+              <a href={progressItem.path} target="_blank" rel="noreferrer">
+                View
+              </a>
+            </td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  </div>
+)}
         </div>
       )}
       {currTab[1].isActive && (
         <div>
-          <VideoList email={email} />
+          {userVideosError && <div>Failed to load videos</div>}
+          {!userVideos && <div>Loading...</div>}
+          {userVideos && email && <VideoList videos={userVideos} email={email} />}
         </div>
       )}
       {currTab[2].isActive && (

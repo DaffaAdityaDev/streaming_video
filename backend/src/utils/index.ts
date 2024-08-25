@@ -153,31 +153,76 @@ interface CustomQueue extends async.QueueObject<Task> {
 }
 
 export const MakeVideoQueue = (concurrency: number): CustomQueue => {
+  // const queue = async.queue((task: Task, callback) => {
+  //   // const command = ffmpeg(task.filePath)
+  //   //   .outputOptions('-c:v libx264') // Use libx264 for software encoding
+  //   //   .format('mp4')
+  //   //   .outputOptions('-vf', `scale=${task.resolutionConfig.width}:-1`)
+  //   //   .outputOptions('-b:v', task.resolutionConfig.bitrate)
+  //   //   .output(task.outputPath);
+
+  //   const command = ffmpeg(task.filePath)
+  //   .videoCodec('libx264')
+  //   .outputOptions('-preset', 'medium')
+  //   .outputOptions('-crf', '23')
+  //   .size(task.resolutionConfig.width + 'x?')
+  //   .audioBitrate('128k')
+  //   .audioCodec('aac')
+  //   .outputOptions('-movflags', '+faststart')
+
+  //   // Try hardware acceleration first
+  //   // command.outputOptions('-c:v h264_nvenc');
+  //   command.outputOptions('-c:v libx264');
+
+  //   command
+  //     .on('start', function () {
+  //       console.log(`Start converting video ${task.uniqueId} to ${task.res}...`);
+  //     })
+  //     .on('error', function (err, stdout, stderr) {
+  //       if (err.message.includes('No NVENC capable devices found')) {
+  //         console.log(`Hardware acceleration not available for ${task.res}, falling back to software encoding...`);
+  //         // Remove hardware acceleration option and try again with software encoding
+  //         command.outputOptions('-c:v libx264');
+  //         command.run();
+  //       } else {
+  //         console.error(`Error processing video for ${task.res}:`, err);
+  //         callback(err);
+  //       }
+  //     })
+  //     .on('progress', function (progress) {
+  //       if (progress.percent) {
+  //         task.io.emit('uploadProgress', {
+  //           file: task.uniqueId,
+  //           resolution: task.res,
+  //           progress: progress.percent,
+  //         });
+  //       }
+  //     })
+  //     .on('end', function () {
+  //       console.log(`Finished converting video ${task.uniqueId} to ${task.res}`);
+  //       callback();
+  //     })
+  //     .run();
+  // }, concurrency) as CustomQueue;
+
   const queue = async.queue((task: Task, callback) => {
     const command = ffmpeg(task.filePath)
-      .outputOptions('-c:v libx264') // Use libx264 for software encoding
-      .format('mp4')
-      .outputOptions('-vf', `scale=${task.resolutionConfig.width}:-1`)
-      .outputOptions('-b:v', task.resolutionConfig.bitrate)
+      .videoCodec('libx264')
+      .outputOptions('-preset', 'medium')
+      .outputOptions('-crf', '23')
+      .size(task.resolutionConfig.width + 'x?')
+      .audioBitrate('128k')
+      .audioCodec('aac')
+      .outputOptions('-movflags', '+faststart')
       .output(task.outputPath);
-
-    // Try hardware acceleration first
-    command.outputOptions('-c:v h264_nvenc');
 
     command
       .on('start', function () {
         console.log(`Start converting video ${task.uniqueId} to ${task.res}...`);
       })
-      .on('error', function (err, stdout, stderr) {
-        if (err.message.includes('No NVENC capable devices found')) {
-          console.log(`Hardware acceleration not available for ${task.res}, falling back to software encoding...`);
-          // Remove hardware acceleration option and try again with software encoding
-          command.outputOptions('-c:v libx264');
-          command.run();
-        } else {
-          console.error(`Error processing video for ${task.res}:`, err);
-          callback(err);
-        }
+      .on('error', function (err) {
+        console.error(`Error processing video for ${task.res}:`, err);
+        callback(err);
       })
       .on('progress', function (progress) {
         if (progress.percent) {

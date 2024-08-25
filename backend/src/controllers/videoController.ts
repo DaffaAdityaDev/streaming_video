@@ -8,7 +8,10 @@ import fs from 'fs';
 export const streamVideo = async (req: Request, res: Response) => {
   try {
     const { quality, slug } = req.params;
-    const videoDir = path.join(__dirname, '../../../backend/video/');
+    // const videoDir = path.join(__dirname, '../../../backend/video/');
+    // const videoPath = path.join(videoDir, quality, `${slug}.mp4`);
+
+    const videoDir = path.join(__dirname, '../../video');
     const videoPath = path.join(videoDir, quality, `${slug}.mp4`);
 
     console.log('Video Directory:', videoDir);
@@ -71,6 +74,7 @@ export const uploadVideo = async (req: RequestWithUser, res: Response) => {
 
     const io = req.app.get('io');
     const video = await videoService.uploadVideo(req.file, req.user.id_user, io);
+    // console.log(video)
     res.status(201).json({
       status: 'success',
       data: video,
@@ -174,6 +178,8 @@ export const getVideosByUserEmail = async (req: Request, res: Response) => {
     const userEmail = atob(encodedEmail); // Base64 decode the email
     const videos = await videoService.getVideosByUserEmail(userEmail);
     console.log('getVideosByUserEmail called with email:', encodedEmail);
+    console.log('email:', userEmail);
+    // console.log('videos:', videos);
     res.status(200).json({
       status: 'success',
       data: videos,
@@ -183,7 +189,7 @@ export const getVideosByUserEmail = async (req: Request, res: Response) => {
     res.status(500).json({
       status: 'error',
       message: error instanceof Error ? error.message : 'An unknown error occurred',
-    });
+    }); 
   }
 };
 
@@ -191,7 +197,7 @@ export const getThumbnail = async (req: Request, res: Response) => {
   try {
     const { videoId } = req.params;
     const thumbnail = await videoService.getThumbnail(videoId);
-    const thumbnailPath = path.join(__dirname, '../../../thumbnails', thumbnail);
+    const thumbnailPath = path.join(__dirname, '../../thumbnails', thumbnail);
 
     console.log('Thumbnail path:', thumbnailPath);
     console.log('File exists:', fs.existsSync(thumbnailPath));

@@ -44,7 +44,7 @@ export const PlayerVideo = ({ src, quality }: { src: string; quality: string }) 
 
   const checkIfVideoResoNotBigerThanCurr = (quality: string) => {
     return suportedQualities.splice(0, suportedQualities.indexOf(quality) + 1);
-};
+  };
 
   const supportedQualities = checkIfVideoResoNotBigerThanCurr(quality);
   const videoRef = useRef<HTMLVideoElement | null>(null);

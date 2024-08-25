@@ -38,7 +38,7 @@ const checkToken = async (req: RequestWithUser, res: any, next: any) => {
 
     if (user) {
       // Attach the user's email to the request object
-      req.user = { email: userEmail };
+      req.user = { email: userEmail, id_user: user.id_user, username: user.username };
       next();
       console.log('User found:', user);
     } else {

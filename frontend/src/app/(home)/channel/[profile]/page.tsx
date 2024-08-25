@@ -15,14 +15,15 @@ function Page() {
     setUsername(localStorage.getItem('username') || '');
   }, []);
 
-  async function handleChangeImage(e) {
+  async function handleChangeImage(e: React.ChangeEvent<HTMLInputElement>) {
     const path = `${BACKENDURL}/uploadProfile`
+    if (!e.target.files || e.target.files.length === 0) return
     console.log(e.target.files)
-    const file = e.target.files[0] 
+    const file = e.target.files[0]
     if (!file) return
 
     const formData = new FormData();
-    formData.append('image', file); // Assuming 'file' is the File object you want to upload
+    formData.append('image', file);
     formData.append('username', username); // Include the username in the request body
 
     try {

@@ -9,6 +9,8 @@ import { useState, useEffect, useContext } from 'react';
 import axios from 'axios';
 import CommentsList from '@/components/comments/commentsList';
 import CommentVideo from '@/components/comments/commentVideo';
+import useSWR from 'swr';
+import { fetcher } from '@/utils/api';
 
 export default function VideoPlayer({
   params,
@@ -17,41 +19,56 @@ export default function VideoPlayer({
   params: { slug: string };
   searchParams: { [key: string]: string | string[] | undefined };
 }) {
-  const [data, setData] = useState<VideoDataType[]>([]);
-  const [comments, setComments] = useState([]);
-  const { isFullScreen, setIsFullScreen } = useContext(AppContext);
-  const [currentPath, setCurrentPath] = useState('');
-  // console.log(params);
-  // console.log(comments)
-  console.log(data)
-  // console.log(searchParams)
+  // const [data, setData] = useState<VideoDataType[]>([]);
+  // const [comments, setComments] = useState([]);
+  // const { isFullScreen, setIsFullScreen } = useContext(AppContext);
+  // const [currentPath, setCurrentPath] = useState('');
+  // console.log(data)
 
-  function getCommentsFromAPI(path: string) {
-    return axios.get(path).then((response) => {
-      return response.data;
-    });
-  }
+  // function getCommentsFromAPI(path: string) {
+  //   return axios.get(path).then((response) => {
+  //     return response.data;
+  //   });
+  // }
 
-  function getDataFromAPI(path: string) {
-    return axios.get(path).then((response) => {
-      return response.data;
-    });
-  }
+  // function getDataFromAPI(path: string) {
+  //   return axios.get(path).then((response) => {
+  //     return response.data;
+  //   });
+  // }
 
 
-  useEffect(() => {
-    const fetchData = async () => {
-      const videoData = await getDataFromAPI(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/v1/video`);
-      setData(videoData.data);
-      if (searchParams.id_video) {
-        console.log(searchParams.id_video)
-        const commentsData = await getCommentsFromAPI(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/v1/comment/${searchParams.id_video}`);
-        setComments(commentsData.data);
-      }
-    };
+  // useEffect(() => {
+  //   const fetchData = async () => {
+  //     const videoData = await getDataFromAPI(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/v1/video`);
+  //     setData(videoData.data);
+  //     if (searchParams.id_video) {
+  //       console.log(searchParams.id_video)
+  //       const commentsData = await getCommentsFromAPI(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/v1/comment/${searchParams.id_video}`);
+  //       setComments(commentsData.data);
+  //     }
+  //   };
   
-    fetchData();
-  }, [params.slug, searchParams.id_video]);
+  //   fetchData();
+  // }, [params.slug, searchParams.id_video]);
+
+  const { isFullScreen } = useContext(AppContext);
+  const videoId = searchParams.id_video?.toString() || '';
+  const url = `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/v1`;
+
+  const { data: videoData, error: videoError } = useSWR<{ status: string; data: VideoDataType[] }>(
+    `${url}/video`,
+    fetcher
+  );
+
+  const { data: commentsData, error: commentsError } = useSWR<{ status: string; data: any[] }>(
+    videoId ? `${url}/comment/${videoId}` : null,
+    fetcher
+  );
+
+  if (videoError || commentsError) return <div>Failed to load data</div>;
+  if (!videoData || !commentsData) return <div>Loading...</div>;
+
 
   return (
     <div className="grid grid-cols-12">
@@ -104,15 +121,22 @@ export default function VideoPlayer({
           </div>
         </div>
         <div className="mx-10 flex flex-col gap-2">
-          <CommentVideo
+          {/* <CommentVideo
             id_video={searchParams.id_video ? searchParams.id_video.toString() : ''}
             setComments={setComments}
           />
           <CommentsList comments={comments} />
+           */}
+          <CommentVideo
+            id_video={videoId}
+            setComments={() => {}} // This will be handled by SWR revalidation
+          />
+          <CommentsList comments={commentsData.data} />
         </div>
       </div>
       <div className="col-span-3 m-4 grid ">
-        {data?.map((item, index) => <CardVideo key={index} {...item} />)}
+        {/* {data?.map((item, index) => <CardVideo key={index} {...item} />)} */}
+        {videoData.data?.map((item) => <CardVideo key={item.id_video} {...item} />)}
       </div>
     </div>
   );

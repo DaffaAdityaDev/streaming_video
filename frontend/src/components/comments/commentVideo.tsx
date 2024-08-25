@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import { UserData } from '@/app/types';
+import { postData } from '@/utils/api';
 
 export default function CommentVideo({
   id_video,
@@ -34,35 +35,28 @@ export default function CommentVideo({
     setComment(event.target.value);
   }
 
-  function handleComment() {
+  async function handleComment() {
     let data = { 
       body: comment,
       id_video: parseInt(id_video),
       email: userData.email,
     };
 
-    let postComment = axios.post(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/v1/comment`, data, {
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${userData.token}`,
-      },
-    });
-    postComment
-      .then((response) => {
-        console.log(response.data);
-        if (response.data) {
-          setComment('');
-        }
+    try {
+      const response = await postData('/api/v1/comment', data, userData.token);
+      console.log(response.data);
+      if (response.data) {
+        setComment('');
+      }
 
         getCommentsFromAPI(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/v1/comment/${id_video}`).then(
           (response) => {
             setComments(response.data);
           },
         );
-      })
-      .catch((error) => {
-        console.log(error);
-      });
+    } catch (error) {
+      console.error('Error fetching comments:', error);
+    }
   }
 
   return (

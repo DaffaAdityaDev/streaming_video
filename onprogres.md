@@ -43,4 +43,4 @@ We are planning to refactor the thumbnail retrieval process to improve efficienc
    - Update API documentation with the new endpoint details
    - Update frontend documentation if any changes affect the component usage
 
-This refactoring will centralize the thumbnail retrieval process and make it more efficient and easier to maintain.
+

@@ -6,7 +6,10 @@ services:
       dockerfile: Dockerfile
     image: younonton-frontend:latest
     ports:
-      - "3000:3000" # Adjust the port mapping as needed
+      - "3000:3000"
+    environment:
+      - NEXT_PUBLIC_BACKEND_URL=http://backend:8000
+      - NEXT_PUBLIC_BACKEND_WS_URL=ws://backend:8001
 
   backend:
     build:
@@ -14,9 +17,43 @@ services:
       dockerfile: Dockerfile
     image: younonton-backend:latest
     ports:
-      - "8000:8000" # Adjust the port mapping as needed
+      - "8000:8000"
+      - "8001:8001"
     volumes:
-      - mydata:/usr
+      - ./backend:/usr/src/backend
+      - /usr/src/backend/node_modules
+      - /usr/src/backend/build
+      - ./backend/video:/usr/src/backend/video
+      - ./backend/thumbnails:/usr/src/backend/thumbnails
+      - ./backend/profileImages:/usr/src/backend/profileImages
+    environment:
+      - DATABASE_URL=postgresql://postgres:root@db:5432/videoStream?schema=public
+      - JWT_SECRET=yukSecret
+      - URL=http://backend
+      - PORT=8000
+      - WEBSOCKET_PORT=8001
+      - NODE_ENV=development
+    depends_on:
+      db:
+        condition: service_healthy
+    command: sh -c "npm run migrate && npm run start"
+    tty: true
+
+  db:
+    image: postgres:13
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=root
+      - POSTGRES_DB=videoStream
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
 volumes:
-  mydata:
+  backend_build:
     driver: local
+  postgres_data:
