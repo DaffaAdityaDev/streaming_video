@@ -8,8 +8,6 @@ import fs from 'fs';
 export const streamVideo = async (req: Request, res: Response) => {
   try {
     const { quality, slug } = req.params;
-    // const videoDir = path.join(__dirname, '../../../backend/video/');
-    // const videoPath = path.join(videoDir, quality, `${slug}.mp4`);
 
     const videoDir = path.join(__dirname, '../../video');
     const videoPath = path.join(videoDir, quality, `${slug}.mp4`);
@@ -42,7 +40,7 @@ export const streamVideo = async (req: Request, res: Response) => {
       };
       res.writeHead(206, head);
       file.pipe(res);
-    } else {
+    } else { 
       const head = {
         'Content-Length': fileSize,
         'Content-Type': 'video/mp4',
@@ -210,5 +208,30 @@ export const getThumbnail = async (req: Request, res: Response) => {
   } catch (error) {
     console.error('Error retrieving thumbnail:', error);
     res.status(500).json({ message: 'Error retrieving thumbnail' });
+  }
+}; 
+
+
+export const deleteVideo = async (req: Request, res: Response) => {
+  try {
+    const { identifier } = req.params;
+    let video;
+
+    if (isNaN(Number(identifier))) {
+      // If identifier is not a number, treat it as a slug
+      video = await videoService.deleteVideoBySlug(identifier);
+    } else {
+      // If identifier is a number, treat it as an ID
+      video = await videoService.deleteVideoById(Number(identifier));
+    }
+
+    if (!video) {
+      return res.status(404).json({ status: 'error', message: 'Video not found' });
+    }
+
+    res.status(200).json({ status: 'success', message: 'Video deleted successfully' });
+  } catch (error) {
+    console.error('Error deleting video:', error);
+    res.status(500).json({ status: 'error', message: 'Failed to delete video' });
   }
 };

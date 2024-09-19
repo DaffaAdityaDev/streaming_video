@@ -2,9 +2,9 @@ import { PrismaClient } from '@prisma/client';
 import jwt, { JwtPayload } from 'jsonwebtoken';
 import dotenv from 'dotenv';
 import { RequestWithUser } from '../types';
+import prisma from '../config/database';
 
 dotenv.config();
-const prisma = new PrismaClient();
 
 const checkToken = async (req: RequestWithUser, res: any, next: any) => {
   const authHeader = req.headers['authorization'];

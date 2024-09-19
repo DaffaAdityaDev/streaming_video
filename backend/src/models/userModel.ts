@@ -1,7 +1,5 @@
-import { PrismaClient } from '@prisma/client';
-import { Users } from '@prisma/client';
-
-const prisma = new PrismaClient();
+import prisma from "../config/database";
+import { Users } from "@prisma/client";
 
 export type User = Users;
 

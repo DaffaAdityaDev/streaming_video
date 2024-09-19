@@ -1,40 +1,117 @@
-'use client';
-import { useState, useEffect, useContext } from 'react';
-import useSWR from 'swr';
-import { AppContext } from '@/components/context/AppContext';
+// 'use client';
+// import useSWR from 'swr';
+// import dynamic from 'next/dynamic';
+// import { useState, useEffect, useContext } from 'react';
+// import { AppContext } from '@/components/context/AppContext';
+// import { VideoDataType } from '@/app/types';
+// import { fetcher } from '@/utils/api';
+// import CardVideoSkeleton from '@/components/skeletons/CardVideoSkeleton';
+// import CategorySkeleton from '@/components/skeletons/CategorySkeleton';
+// // import Category from '@/components/navigation/Category';
+
+// const CardVideo = dynamic(() => import('@/components/video/CardVideo'), {
+//   loading: () => <CardVideoSkeleton />,
+// });
+
+// const Category = dynamic(() => import('@/components/navigation/Category'), {
+//   loading: () => <CategorySkeleton />,
+// });
+
+// export default function Home() {
+//   const url = `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/v1/video`;
+//   const { search } = useContext(AppContext);
+//   const { data, error } = useSWR<{ status: string; data: VideoDataType[] }>(url, fetcher);
+
+//   const [filteredData, setFilteredData] = useState<VideoDataType[]>([]);
+
+//   useEffect(() => {
+//     if (data?.status === 'success') {
+//       if (search) {
+//         setFilteredData(
+//           data.data.filter((item) => item.title_video.toLowerCase().includes(search.toLowerCase())),
+//         );
+//       } else {
+//         setFilteredData(data.data);
+//       }
+//     }
+//   }, [data, search]);
+
+//   if (error) return <div>Failed to load videos</div>;
+//   if (!data)
+//     return (
+//       <div className="m-4">
+//         <CategorySkeleton />
+//         <div className="col-span-12 grid grid-cols-[repeat(auto-fill,minmax(calc(400px),1fr))] gap-4">
+//             <CardVideoSkeleton />
+//             <CardVideoSkeleton />
+//             <CardVideoSkeleton />
+//             <CardVideoSkeleton />
+//             <CardVideoSkeleton />
+//             <CardVideoSkeleton />
+//         </div>
+//       </div>
+//     );
+
+//   return (
+//     <div className="m-4">
+//       <Category />
+//       <div className="col-span-12 grid grid-cols-[repeat(auto-fill,minmax(calc(400px),1fr))] gap-4">
+//         {filteredData.map((item) => (
+//           <CardVideo key={item.id_video} {...item} />
+//         ))}
+//       </div>
+//     </div>
+//   );
+// }
+
 import { VideoDataType } from '@/app/types';
-import CardVideo from '@/components/video/CardVideo';
-import { fetcher } from '@/utils/api';
+import dynamic from 'next/dynamic';
+import CategorySkeleton from '@/components/skeletons/CategorySkeleton';
+import CardVideoSkeleton from '@/components/skeletons/CardVideoSkeleton';
 
-export default function Home() {
+const CardVideo = dynamic(() => import('@/components/video/CardVideo'), {
+  loading: () => <CardVideoSkeleton />,
+});
+
+const Category = dynamic(() => import('@/components/navigation/Category'), {
+  loading: () => <CategorySkeleton />,
+});
+
+const HomeClientWrapper = dynamic(() => import('@/components/wrapper/HomeClientWrapper'), {
+  loading: () => <CardVideoSkeleton />,
+});
+
+export const revalidate = 60; // Revalidate every 60 seconds
+
+async function getVideos(retries = 3) {
   const url = `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/v1/video`;
-  const { search } = useContext(AppContext);
-  const { data, error } = useSWR<{ status: string; data: VideoDataType[] }>(url, fetcher);
-
-  const [filteredData, setFilteredData] = useState<VideoDataType[]>([]);
-
-  useEffect(() => {
-    if (data?.status === 'success') {
-      if (search) {
-        setFilteredData(
-          data.data.filter((item) =>
-            item.title_video.toLowerCase().includes(search.toLowerCase())
-          )
-        );
-      } else {
-        setFilteredData(data.data);
-      }
+  console.log('Attempting to fetch videos from:', url);
+  try {
+    const res = await fetch(url, { next: { revalidate: 10 } });
+    if (!res.ok) {
+      throw new Error(`Failed to fetch videos: ${res.status} ${res.statusText}`);
     }
-  }, [data, search]);
+    const data = await res.json();
+    console.log('Fetched videos successfully');
+    return data;
+  } catch (error) {
+    console.error('Error fetching videos:', error);
+    if (retries > 0) {
+      console.log(`Retrying... (${retries} attempts left)`);
+      await new Promise(resolve => setTimeout(resolve, 2000)); // Wait 2 seconds before retrying
+      return getVideos(retries - 1);
+    }
+    return { data: [] };
+  }
+}
 
-  if (error) return <div>Failed to load videos</div>;
-  if (!data) return <div>Loading...</div>;
+export default async function Home() {
+  const { data: videos = [] } = await getVideos();
 
   return (
-    <div className="col-span-12 m-4 grid grid-cols-[repeat(auto-fill,minmax(calc(400px),1fr))] gap-4">
-      {filteredData.map((item) => (
-        <CardVideo key={item.id_video} {...item} />
-      ))}
+    <div className="m-4">
+      <Category />
+      <HomeClientWrapper initialData={videos} />
     </div>
   );
 }

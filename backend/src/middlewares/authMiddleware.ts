@@ -2,9 +2,7 @@ import { User } from './../models/userModel';
 import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
 import userRepository from '../repository/userRepository';
-import { PrismaClient } from '@prisma/client';
-
-const prisma = new PrismaClient();
+import prisma from '../config/database';
 
 interface RequestWithUser extends Request {
   user?: { email: string };

@@ -155,3 +155,6 @@ dist
 backend/video/**/*
 backend/thumbnails/**/*
 backend/profileImages/**/*
+
+.cursorrules
+onprogres.md

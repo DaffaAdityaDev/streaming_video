@@ -21,4 +21,11 @@ const deleteComment = async (id_comment: number) => {
   return commentRepository.deleteComment(id_comment);
 };
 
-export default { createComment, getComments, updateComment, deleteComment };
+const getLastestComments = async (email: string) => {
+  const user = await userRepository.findByEmail(email);
+  if (!user) {
+    throw new Error('User not found');
+  }
+  return commentRepository.getLastestComments(user.id_user);
+};
+export default { createComment, getComments, updateComment, deleteComment, getLastestComments };

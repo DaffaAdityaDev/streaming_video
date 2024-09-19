@@ -25,7 +25,7 @@ export default function CommentsList({ comments }: { comments: Comment[] }) {
                 <p className="text-sm text-gray-400">{formatedDate}</p>
               </div>
             </div>
-            <div> 
+            <div>
               <p>{comment.body}</p>
             </div>
           </div>

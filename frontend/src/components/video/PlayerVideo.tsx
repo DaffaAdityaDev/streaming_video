@@ -2,45 +2,16 @@
 import React, { useRef, useState, useEffect, useContext } from 'react';
 import { AppContext } from '../context/AppContext';
 
-// export const PlayerVideo = ({ src, quality }: { src: string; quality: string }) => {
-//   console.log(src);
-//   console.log(quality);
-//   const [qualities, setQualities] = useState(quality);
-//   const suportedQualities = ['144p', '240p', '480p', '720p', '1080p', '4k'];
-//   const getUrl = (src: string, quality: string) => {
-//     const BACKENDURL = process.env.NEXT_PUBLIC_BACKEND_URL;
-//     let url;
-//     if (quality === 'defaultQuality') {
-//       url = `${BACKENDURL}/video/${quality ? `${quality}` : ''}/${src}.mp4`;
-//     } else {
-//       url = `${BACKENDURL}/video/${quality ? `${quality}` : ''}/${src}`;
-//     }
-//     console.log(url)
-//     console.log("quality", quality)
-//     console.log("src", src)
-//     // console.log(`${BACKENDURL}/video/${quality}` + src.split('-').slice(0, -1).join('-') + '-' + quality + '.mp4');
-//     return url;
-//   };
-//   console.log('initial', qualities);
-
-//   const checkIfVideoResoNotBigerThanCurr = (quality: string) => {
-//     return suportedQualities.splice(0, suportedQualities.indexOf(quality) + 1);
-//   };
 
 export const PlayerVideo = ({ src, quality }: { src: string; quality: string }) => {
-  // console.log(src);
-  // console.log(quality);
   const [qualities, setQualities] = useState(quality);
   const suportedQualities = ['144p', '240p', '480p', '720p', '1080p', '4k'];
   const getUrl = (src: string, quality: string) => {
     const BACKENDURL = process.env.NEXT_PUBLIC_BACKEND_URL;
     const url = `${BACKENDURL}/api/v1/video/stream/${quality}/${src}`;
-    // console.log(url);
-    // console.log("quality", quality);
-    // console.log("src", src);
     return url;
   };
-  // console.log('initial', qualities);
+
 
   const checkIfVideoResoNotBigerThanCurr = (quality: string) => {
     return suportedQualities.splice(0, suportedQualities.indexOf(quality) + 1);
@@ -60,9 +31,8 @@ export const PlayerVideo = ({ src, quality }: { src: string; quality: string }) 
   const [currentStatusPlaying, setCurrentStatusPlaying] = useState('Pause');
   const [clickedShowInfo, setClickedShowInfo] = useState(false);
   const { isFullScreen, setIsFullScreen } = useContext(AppContext);
-  // console.log(isFullScreen)
 
-  // console.log(urlToVideo)
+
 
   useEffect(() => {
     initVideoGlowBg();
@@ -70,13 +40,12 @@ export const PlayerVideo = ({ src, quality }: { src: string; quality: string }) 
     if (videoRef.current) {
       videoRef.current.pause();
       setUrlToVideo(getUrl(src, qualities));
-      // console.log(videoRef.current);
-      // console.log("important", urlToVideo)
+    
       videoRef.current.load();
     }
     if (videoRef.current) {
       const currentVideoRef = videoRef.current;
-      // console.log(currentTime)
+   
       const onWaiting = () => setIsBuffered(true);
       const onPlaying = () => setIsBuffered(false);
 
@@ -85,7 +54,7 @@ export const PlayerVideo = ({ src, quality }: { src: string; quality: string }) 
       };
 
       const onLoadedMetadata = () => {
-        // console.log('onLoadedMetadata', currentTime)
+     
         if (currentTime !== undefined) {
           currentVideoRef.currentTime = currentTime;
         }
@@ -285,19 +254,13 @@ export const PlayerVideo = ({ src, quality }: { src: string; quality: string }) 
     }
   };
 
-  // if (document.fullscreenElement) {
-  //   console.log('The browser is in fullscreen mode.');
-  // } else {
-  //   console.log('The browser is not in fullscreen mode.');
-  // }
-
   const handleScrollIfFullScreen = () => {
     if (isFullScreen) {
       document.body.style.cssText = 'overflow: hidden; position:fixed;';
-      // console.log('hidden')
+  
     } else {
       document.body.style.cssText = 'overflow: auto; position:static;';
-      // console.log('auto')
+     
     }
   };
 

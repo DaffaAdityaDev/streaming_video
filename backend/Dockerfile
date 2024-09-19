@@ -33,4 +33,5 @@ RUN mkdir -p /usr/src/backend/profileImages
 EXPOSE 8000
 EXPOSE 8001
 
-CMD ["npm", "run", "start"]
+CMD ["npm", "run", "start"] 
+

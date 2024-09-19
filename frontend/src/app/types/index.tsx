@@ -1,19 +1,39 @@
 // src/types/index.ts
-
 export interface VideoDataType {
   id_video: number;
   title_video: string;
-  description: string;
-  channel: string;
+  description?: string;
+  channel?: string;
   thumbnail: string;
   slug: string;
-  quality: string;
-  views: number;
-  likes: number;
+  quality?: string;
+  views?: number;
+  likes?: number;
+  created_at?: string; 
+  id_user?: number;
+}
+export interface CommentResponse {
+  data: CommentDataType[];
+}
+
+export interface CommentDataType {
+  id_comment: number;
+  body: string;
+  username: string;
   created_at: string;
+  id_video: number;
   id_user: number;
 }
 
+export type VideoResponse = {
+  data: {
+    id_video: number;
+    title_video: string;
+    thumbnail: string;
+    slug: string;
+    // Add other video properties as needed
+  }[];
+};
 export interface ListVideo {
   channel: string;
   created_at: string;

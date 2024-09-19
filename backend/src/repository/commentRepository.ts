@@ -1,6 +1,5 @@
-import { PrismaClient, Comments } from '@prisma/client';
-
-const prisma = new PrismaClient();
+import prisma from "../config/database";
+import { Comments } from "@prisma/client";
 
 const create = async (body: string, id_video: number, id_user: number): Promise<Comments> => {
   return prisma.comments.create({
@@ -28,4 +27,12 @@ const deleteComment = async (id_comment: number): Promise<Comments> => {
   });
 };
 
-export default { create, findByVideoId, update, deleteComment }; 
+const getLastestComments = async (id_user: number): Promise<Comments[]> => {
+  return prisma.comments.findMany({
+    where: { id_user },
+    orderBy: { created_at: 'desc' },
+    take: 5,
+  });
+};
+
+export default { create, findByVideoId, update, deleteComment, getLastestComments }; 

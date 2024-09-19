@@ -3,13 +3,49 @@ import { useRouter } from 'next/navigation';
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import Auth from '@/components/auth';
-import Lamp from '@/components/animation/lamp';
+import dynamic from 'next/dynamic';
+import { useAuth } from '@/hooks/useAuth';
+
+const Lamp = dynamic(() => import('@/components/animation/lamp'), {
+  loading: () => <p>Loading...</p>,
+});
 
 export default function Login() {
   const router = useRouter();
-  const [email, setEmail] = React.useState('');
-  const [password, setPassword] = React.useState('');
+  const { login, user, loading, error } = useAuth();
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [alertMessage, setAlertMessage] = useState({ text: '', type: 'none' });
+
+  useEffect(() => {
+    if (error) {
+      setAlertMessage({ text: error.message || 'An error occurred', type: 'error' });
+    }
+  }, [error]);
+
+  async function handleLogin(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (!email || !password) {
+      setAlertMessage({ text: 'Please fill in all fields', type: 'error' });
+      return;
+    }
+
+    try {
+      const response = await login(email, password);
+      if (response.status === 'success') {
+        setAlertMessage({ text: 'Login successful', type: 'success' });
+        router.push('/');
+      } else {
+        setAlertMessage({ text: response.message || 'Login failed', type: 'error' });
+      }
+    } catch (error) {
+      if (error instanceof Error) {
+        setAlertMessage({ text: error.message || 'Internal server error', type: 'error' });
+      } else {
+        setAlertMessage({ text: 'An unexpected error occurred', type: 'error' });
+      }
+    }
+  }
 
   const formMaker = [
     {
@@ -29,53 +65,6 @@ export default function Login() {
       icon: 'key',
     },
   ];
-
-  async function handleLogin(event: React.FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    const target = event.target as HTMLFormElement;
-    const emailInput = target.elements.namedItem('email') as HTMLInputElement;
-    const passwordInput = target.elements.namedItem('password') as HTMLInputElement;
-    if (!emailInput || !passwordInput) {
-      setAlertMessage({ text: 'Please fill in all fields', type: 'error' });
-      return;
-    }
-
-    axios
-      .post(
-        `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/v1/user/login`,
-        {
-          email: email,
-          password: password,
-        },
-        {
-          headers: {
-            'Content-Type': 'application/json',
-          },
-        },
-      )
-      .then((response) => {
-        console.log(response.data);
-        // setAlertMessage(response.data.message)
-        if (response.data.status === 'success') {
-          setAlertMessage({ text: 'Login successful', type: 'success' });
-          // console.log('Login successful')
-          localStorage.setItem('token', response.data.token);
-          localStorage.setItem('username', response.data.username);
-          localStorage.setItem('email', email);
-          localStorage.setItem('imageUrl', response.data.image_url);
-          // console.log('Token saved', localStorage.getItem('token'))
-          router.push('/');
-        }
-        if (response.data.status === 'error') {
-          // console.log(response.data.message)
-          setAlertMessage({ text: response.data.message, type: 'error' });
-        }
-      })
-      .catch((error) => {
-        // console.log(error)
-        setAlertMessage({ text: 'Internal server error', type: 'error' });
-      });
-  }
 
   return (
     <>

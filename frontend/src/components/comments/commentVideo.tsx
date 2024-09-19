@@ -36,7 +36,7 @@ export default function CommentVideo({
   }
 
   async function handleComment() {
-    let data = { 
+    let data = {
       body: comment,
       id_video: parseInt(id_video),
       email: userData.email,
@@ -49,11 +49,11 @@ export default function CommentVideo({
         setComment('');
       }
 
-        getCommentsFromAPI(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/v1/comment/${id_video}`).then(
-          (response) => {
-            setComments(response.data);
-          },
-        );
+      getCommentsFromAPI(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/v1/comment/${id_video}`).then(
+        (response) => {
+          setComments(response.data);
+        },
+      );
     } catch (error) {
       console.error('Error fetching comments:', error);
     }

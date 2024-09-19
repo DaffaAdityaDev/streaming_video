@@ -39,4 +39,22 @@ export const postData = async (url: string, data: any, token?: string) => {
   }
 };
 
+export const getCurrentUser = async () => {
+  const token = localStorage.getItem('token');
+  if (!token) {
+    return null;
+  }
+  try {
+    const response = await axios.get(`${baseURL}/api/v1/user/me`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Failed to fetch current user:', error);
+    return null;
+  }
+};
+
 export default api;

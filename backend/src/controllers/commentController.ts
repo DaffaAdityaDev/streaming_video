@@ -67,3 +67,21 @@ export const deleteComment = async (req: Request, res: Response) => {
     });
   }
 };
+
+export const getLastestComments = async (req: Request, res: Response) => {
+  try {
+    const { email } = req.params;
+    const decodedEmail = Buffer.from(email, 'base64').toString('utf-8');
+    const comments = await commentService.getLastestComments(decodedEmail);
+    res.status(200).json({
+      status: 'success',
+      data: comments,
+    });
+  } catch (error) {
+    console.error('Error fetching latest comments:', error);
+    res.status(500).json({
+      status: 'error',
+      message: 'Error fetching latest comments',
+    });
+  }
+};

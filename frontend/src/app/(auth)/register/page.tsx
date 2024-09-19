@@ -4,9 +4,11 @@ import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import Auth from '@/components/auth';
 import Lamp from '@/components/animation/lamp';
+import { useAuth } from '@/hooks/useAuth';
 
 export default function Register() {
   const router = useRouter();
+  const { register } = useAuth();
   const [username, setUsername] = React.useState('');
   const [email, setEmail] = React.useState('');
   const [password, setPassword] = React.useState('');
@@ -41,47 +43,28 @@ export default function Register() {
 
   async function handleRegister(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    const target = event.target as HTMLFormElement;
-    const usernameInput = target.elements.namedItem('username') as HTMLInputElement;
-    const emailInput = target.elements.namedItem('email') as HTMLInputElement;
-    const passwordInput = target.elements.namedItem('password') as HTMLInputElement;
-
-    if (!emailInput || !passwordInput || !usernameInput) {
+    if (!username || !email || !password) {
       setAlertMessage({ text: 'Please fill in all fields', type: 'error' });
       return;
     }
 
-    axios
-      .post(
-        `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/v1/user/register`,
-        {
-          username: username,
-          email: email,
-          password: password,
-        },
-        {
-          headers: {
-            'Content-Type': 'application/json',
-          },
-        },
-      )
-      .then((response) => {
-        // console.log(response.data)
-        if (response.data.status === 'success') {
-          setAlertMessage({ text: response.data.message, type: 'success' });
-          setTimeout(() => {
-            router.push('/login'); // Redirect to the home page or any other page
-          }, 2000);
-        }
-        if (response.data.status === 'error') {
-          // console.log("error", response.data.message)
-          setAlertMessage({ text: response.data.message, type: 'error' });
-        }
-      })
-      .catch((error) => {
-        console.log('catch', error);
-        setAlertMessage({ text: 'An error occurred', type: 'error' });
-      });
+    try {
+      const response = await register(username, email, password);
+      if (response.status === 'success') {
+        setAlertMessage({ text: response.message, type: 'success' });
+        setTimeout(() => {
+          router.push('/login');
+        }, 2000);
+      } else {
+        setAlertMessage({ text: response.message || 'Registration failed', type: 'error' });
+      }
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        setAlertMessage({ text: error.message || 'An error occurred', type: 'error' });
+      } else {
+        setAlertMessage({ text: 'An unknown error occurred', type: 'error' });
+      }
+    }
   }
 
   return (

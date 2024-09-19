@@ -16,7 +16,7 @@
     "@tailwindcss/aspect-ratio": "^0.4.2",
     "axios": "^1.6.2",
     "clsx": "^2.1.0",
-    "framer-motion": "^11.0.5",
+    "framer-motion": "^11.3.30",
     "next": "^14.0.2",
     "next-auth": "^4.24.5",
     "react": "^18",

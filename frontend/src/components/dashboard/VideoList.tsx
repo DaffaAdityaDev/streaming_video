@@ -1,3 +1,4 @@
+"use client"
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { FormGeneratorTemplateItem, ListVideo } from '@/app/types';
@@ -63,13 +64,15 @@ export default function VideoList({ email }: any) {
 
   const [editingVideoId, setEditingVideoId] = useState<number>(0);
   const [FormSelected, setFormSelected] = useState(0);
-  const [formGeneratorTemplate, setFormGeneratorTemplate] = useState<FormGeneratorTemplateItem[]>([]);
+  const [formGeneratorTemplate, setFormGeneratorTemplate] = useState<FormGeneratorTemplateItem[]>(
+    [],
+  );
   const [showToast, setShowToast] = useState(false);
 
   const encodedEmail = btoa(email);
   const { data, error, mutate } = useSWR<{ status: string; data: ListVideo[] }>(
     `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/v1/video/user/${encodedEmail}`,
-    fetcher
+    fetcher,
   );
 
   const videos = data?.data || [];
@@ -113,7 +116,7 @@ export default function VideoList({ email }: any) {
                   },
                 },
               ],
-            }
+            },
           );
         }
       });
@@ -163,10 +166,13 @@ export default function VideoList({ email }: any) {
 
   const updateVideoData = async (newTitle: string, newDescription: string, slug: string) => {
     try {
-      const response = await axios.put(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/v1/video/${slug}`, {
-        title: newTitle,
-        description: newDescription,
-      });
+      const response = await axios.put(
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/v1/video/${slug}`,
+        {
+          title: newTitle,
+          description: newDescription,
+        },
+      );
       if (response.data.status === 'success') {
         mutate();
         setShowToast(true);
@@ -209,7 +215,7 @@ export default function VideoList({ email }: any) {
   };
 
   if (error) return <div>Failed to load videos</div>;
-  if (!videos) return <div>Loading...</div>;  
+  if (!videos) return <div>Loading...</div>;
 
   console.log(videos);
   return (
@@ -348,12 +354,21 @@ export default function VideoList({ email }: any) {
                     <div className="flex items-center gap-3">
                       <div className="avatar">
                         <div className="mask mask-squircle h-12 w-12">
-                        <img src={`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/v1/video/thumbnail/${video.thumbnail}`} alt="Video Thumbnail" />
+                          <img
+                            src={`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/v1/video/thumbnail/${video.thumbnail}`}
+                            alt="Video Thumbnail"
+                          />
                         </div>
                       </div>
                       <h4>{video.title_video}</h4>
                       <p>{video.description}</p>
-                      <a href={`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/v1/video/stream/defaultQuality/${video.slug}`} target="_blank" rel="noreferrer">Watch</a>
+                      <a
+                        href={`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/v1/video/stream/defaultQuality/${video.slug}`}
+                        target="_blank"
+                        rel="noreferrer"
+                      >
+                        Watch
+                      </a>
                     </div>
                   </td>
                   <td>

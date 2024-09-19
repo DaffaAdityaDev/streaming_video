@@ -1,6 +1,5 @@
-import { PrismaClient, Videos } from '@prisma/client';
-
-const prisma = new PrismaClient();
+import prisma from "../config/database";
+import { Videos } from "@prisma/client";
 
 export type Video = Videos;
 
@@ -19,4 +18,4 @@ export const updateVideo = async (slug: string, data: Partial<Omit<Video, 'id_vi
 export const getThumbnailByVideoId = async (videoId: string): Promise<string | null> => {
   const video = await prisma.videos.findUnique({ where: { slug: videoId } });
   return video ? video.thumbnail : null; 
-};
+};  

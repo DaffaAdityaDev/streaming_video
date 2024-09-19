@@ -75,7 +75,6 @@ export default function Navbar() {
     router.push('/login');
   }
 
-
   return (
     <div
       className={`navbar sticky top-0 z-30 col-span-12 row-span-1 transition-transform duration-200 ease-in-out ${navbarClass} ${bgClass} ${
@@ -137,7 +136,7 @@ export default function Navbar() {
               <img
                 alt="Profile"
                 src={`${process.env.NEXT_PUBLIC_BACKEND_URL}/profileimages/${imageUrl}`}
-                className="h-full w-full rounded-full object-cover bg-white"
+                className="h-full w-full rounded-full bg-white object-cover"
                 onError={(e) => {
                   e.currentTarget.src = '/default-profile.jpg';
                 }}

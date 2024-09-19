@@ -1,16 +1,25 @@
 'use client';
 import { AppContext } from '@/components/context/AppContext';
 /* eslint-disable @next/next/no-img-element */
-import CardVideo from '@/components/video/CardVideo';
-import { PlayerVideo } from '@/components/video/PlayerVideo';
+import dynamic from 'next/dynamic';
 import { VideoDataType } from '@/app/types';
 // import videoData from '@/data/videoData';
 import { useState, useEffect, useContext } from 'react';
-import axios from 'axios';
-import CommentsList from '@/components/comments/commentsList';
-import CommentVideo from '@/components/comments/commentVideo';
 import useSWR from 'swr';
 import { fetcher } from '@/utils/api';
+import { PlayerVideo } from '@/components/video/PlayerVideo';
+
+const CardVideo = dynamic(() => import('@/components/video/CardVideo'), {
+  loading: () => <p>Loading related video...</p>,
+});
+
+const CommentsList = dynamic(() => import('@/components/comments/commentsList'), {
+  loading: () => <p>Loading comments...</p>,
+});
+
+const CommentVideo = dynamic(() => import('@/components/comments/commentVideo'), {
+  loading: () => <p>Loading comment form...</p>,
+});
 
 export default function VideoPlayer({
   params,
@@ -19,61 +28,29 @@ export default function VideoPlayer({
   params: { slug: string };
   searchParams: { [key: string]: string | string[] | undefined };
 }) {
-  // const [data, setData] = useState<VideoDataType[]>([]);
-  // const [comments, setComments] = useState([]);
-  // const { isFullScreen, setIsFullScreen } = useContext(AppContext);
-  // const [currentPath, setCurrentPath] = useState('');
-  // console.log(data)
-
-  // function getCommentsFromAPI(path: string) {
-  //   return axios.get(path).then((response) => {
-  //     return response.data;
-  //   });
-  // }
-
-  // function getDataFromAPI(path: string) {
-  //   return axios.get(path).then((response) => {
-  //     return response.data;
-  //   });
-  // }
-
-
-  // useEffect(() => {
-  //   const fetchData = async () => {
-  //     const videoData = await getDataFromAPI(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/v1/video`);
-  //     setData(videoData.data);
-  //     if (searchParams.id_video) {
-  //       console.log(searchParams.id_video)
-  //       const commentsData = await getCommentsFromAPI(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/v1/comment/${searchParams.id_video}`);
-  //       setComments(commentsData.data);
-  //     }
-  //   };
-  
-  //   fetchData();
-  // }, [params.slug, searchParams.id_video]);
-
   const { isFullScreen } = useContext(AppContext);
   const videoId = searchParams.id_video?.toString() || '';
   const url = `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/v1`;
 
   const { data: videoData, error: videoError } = useSWR<{ status: string; data: VideoDataType[] }>(
     `${url}/video`,
-    fetcher
+    fetcher,
   );
 
   const { data: commentsData, error: commentsError } = useSWR<{ status: string; data: any[] }>(
     videoId ? `${url}/comment/${videoId}` : null,
-    fetcher
+    fetcher,
   );
 
   if (videoError || commentsError) return <div>Failed to load data</div>;
   if (!videoData || !commentsData) return <div>Loading...</div>;
 
-
   return (
     <div className="grid grid-cols-12">
       <div className={`${isFullScreen ? 'col-span-12' : 'col-span-9'}`}>
         <PlayerVideo
+          //  src={videoData.data[0].slug}
+          //  quality={searchParams.quality?.toString() || 'defaultQuality'}
           src={
             Array.isArray(searchParams.video)
               ? searchParams.video[0]
@@ -91,7 +68,10 @@ export default function VideoPlayer({
           <div className="flex gap-4">
             <div className="avatar">
               <div className="w-16 rounded-full">
-                <img src="https://media.istockphoto.com/id/1495088043/vector/user-profile-icon-avatar-or-person-icon-profile-picture-portrait-symbol-default-portrait.jpg?s=612x612&w=0&k=20&c=dhV2p1JwmloBTOaGAtaA3AW1KSnjsdMt7-U_3EZElZ0=" alt="foto" />
+                <img
+                  src="https://media.istockphoto.com/id/1495088043/vector/user-profile-icon-avatar-or-person-icon-profile-picture-portrait-symbol-default-portrait.jpg?s=612x612&w=0&k=20&c=dhV2p1JwmloBTOaGAtaA3AW1KSnjsdMt7-U_3EZElZ0="
+                  alt="foto"
+                />
               </div>
             </div>
             <div className="flex w-full justify-between">
