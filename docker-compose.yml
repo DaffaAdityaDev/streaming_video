@@ -60,24 +60,21 @@
 
 version: '3.8'
 services:
-  # frontend:
-  #   build:
-  #     context: ./frontend
-  #     dockerfile: Dockerfile
-  #   image: younonton-frontend:latest
-  #   ports:
-  #     - "7000:7000"
-  #   environment:
-  #     - NODE_ENV=production
-  #     - NEXT_PUBLIC_BACKEND_URL=http://backend:8000
-  #     - NEXT_PUBLIC_BACKEND_WS_URL=ws://backend:8001
-  #   volumes:
-  #     - ./frontend:/app
-  #     - /app/node_modules
-  #     - /app/.next
-  #   depends_on:
-  #     - backend
-  #   restart: unless-stopped
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    image: younonton-frontend:latest
+    ports:
+      - "7000:7000"
+    environment:
+      - NODE_ENV=production
+      - PORT=7000
+      - NEXT_PUBLIC_BACKEND_URL=http://backend:8000
+      - NEXT_PUBLIC_BACKEND_WS_URL=ws://backend:8001
+    depends_on:
+      - backend
+    restart: unless-stopped
 
   backend:
     build:
