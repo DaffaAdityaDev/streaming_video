@@ -8,6 +8,7 @@ import ffprobePath from '@ffprobe-installer/ffprobe';
 import dotenv from 'dotenv';
 import { processVideo, generateThumbnail } from '../utils/videoProcessing';
 import prisma from '../config/database';
+import fs from 'fs/promises';
 
 ffmpeg.setFfmpegPath(ffmpegPath.path);
 ffmpeg.setFfprobePath(ffprobePath.path);

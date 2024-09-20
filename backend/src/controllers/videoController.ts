@@ -219,17 +219,21 @@ export const deleteVideo = async (req: Request, res: Response) => {
 
     if (isNaN(Number(identifier))) {
       // If identifier is not a number, treat it as a slug
-      video = await videoService.deleteVideoBySlug(identifier);
+      const videoData = await videoService.getVideoBySlug(identifier);
+      if (!videoData) {
+        return res.status(404).json({ status: 'error', message: 'Video not found' });
+      }
+      video = await videoService.deleteVideo(videoData.id_video);
     } else {
       // If identifier is a number, treat it as an ID
-      video = await videoService.deleteVideoById(Number(identifier));
+      video = await videoService.deleteVideo(Number(identifier));
     }
 
     if (!video) {
       return res.status(404).json({ status: 'error', message: 'Video not found' });
     }
 
-    res.status(200).json({ status: 'success', message: 'Video deleted successfully' });
+    res.status(200).json({ status: 'success', message: 'Video and associated files deleted successfully' });
   } catch (error) {
     console.error('Error deleting video:', error);
     res.status(500).json({ status: 'error', message: 'Failed to delete video' });
