@@ -101,14 +101,6 @@ const getThumbnail = async (videoId: string): Promise<string> => {
   return thumbnail;
 };
 
-const deleteVideo = async (id: number) => {
-  const video = await videoRepository.findById(id);
-  if (!video) {
-    throw new Error('Video not found');
-  }
-  await videoRepository.deleteById(id);
-};
-
 const deleteVideoById = async (id: number) => {
   const video = await videoRepository.findById(id);
   if (!video) {
@@ -118,6 +110,55 @@ const deleteVideoById = async (id: number) => {
   return video;
 };
 
+const deleteVideo = async (id: number) => {
+  return prisma.$transaction(async (prismaClient) => {
+    // 1. Get the video details
+    const video = await prismaClient.videos.findUnique({
+      where: { id_video: id },
+      include: { comments: true }
+    });
+
+    if (!video) {
+      throw new Error('Video not found');
+    }
+
+    // 2. Delete associated comments
+    await prismaClient.comments.deleteMany({
+      where: { id_video: id }
+    });
+
+    // 3. Delete the video entry from the database
+    await prismaClient.videos.delete({
+      where: { id_video: id }
+    });
+
+    // 4. Delete video files
+    const videoDir = path.join(__dirname, '../../video');
+    const qualities = ['defaultQuality', '144p', '240p', '480p', '720p', '1080p', '4k'];
+
+    for (const quality of qualities) {
+      const filePath = path.join(videoDir, quality, `${video.slug}.mp4`);
+      try {
+        await fs.unlink(filePath);
+      } catch (error) {
+        console.error(`Failed to delete file: ${filePath}`, error);
+        // Continue with other deletions even if one fails
+      }
+    }
+
+    // 5. Delete thumbnail
+    const thumbnailPath = path.join(__dirname, '../../thumbnails', video.thumbnail);
+    try {
+      await fs.unlink(thumbnailPath);
+    } catch (error) {
+      console.error(`Failed to delete thumbnail: ${thumbnailPath}`, error);
+    }
+
+    return video;
+  });
+};
+
+
 const deleteVideoBySlug = async (slug: string) => {
   const video = await videoRepository.findBySlug(slug);
   if (!video) {
@@ -126,5 +167,6 @@ const deleteVideoBySlug = async (slug: string) => {
   await videoRepository.deleteBySlug(slug);
   return video;
 };
+
 
 export default { uploadVideo, getVideoBySlug, updateVideoDetails, getAllVideos, getVideosByUserEmail, getThumbnail, deleteVideo, deleteVideoBySlug, deleteVideoById }; 
