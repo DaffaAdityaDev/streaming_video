@@ -42,6 +42,7 @@ v1Router.get('/thumbnail/:videoId', getThumbnail);
 v1Router.get('/stream/:quality/:slug', streamVideo);  // Changed to include '/stream' prefix
 v1Router.delete('/:identifier', authMiddleware, deleteVideo);
 v1Router.put('/:id', updateVideo);
+
 v1Router.get('/list-files', (req, res) => {
   const videoDir = path.join(__dirname, '../../../video/');
 
