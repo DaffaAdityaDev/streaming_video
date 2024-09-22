@@ -1,6 +1,8 @@
 "use client"
 import React, { useState } from 'react';
 import { VideoDataType, UploadProgressItem, VideoResponse, CommentDataType, CommentResponse } from '@/app/types';
+import axios from 'axios';
+import { mutate } from 'swr';
 
 interface DashboardProps {
   latestUploads: VideoResponse;
@@ -54,11 +56,6 @@ const VideoDashboard: React.FC<DashboardProps> = ({
         <StatCard title="Revenue" value="$4834.50" change={15.64} />
       </div>
 
-      <div className="grid grid-cols-2 gap-8 mb-8">
-        <LatestUploads videos={latestUploads} />
-        {/* <LatestComments comments={latestComments} /> */}
-      </div>
-
       <UploadNewVideo
         onFileChange={onFileChange}
         onSubmit={onSubmit}
@@ -66,6 +63,11 @@ const VideoDashboard: React.FC<DashboardProps> = ({
         conversionProgress={conversionProgress}
         conversionStep={conversionStep}
       />
+      <div className="grid grid-cols-2 gap-8 my-8">
+        <LatestUploads videos={latestUploads} />
+        {/* <LatestComments comments={latestComments} /> */}
+      </div>
+
     </div>
   );
 };
@@ -116,34 +118,32 @@ const LatestUploads: React.FC<LatestUploadsProps> = ({ videos }) => {
     }
   }
   const handleSave = async (updatedVideo: VideoDataType) => {
-    console.log(updatedVideo);
-    console.log(updatedVideo.slug);
+    const email = localStorage.getItem('email');
+    console.log(email);
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/v1/video/${updatedVideo.slug}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
+      const response = await axios.put(
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/v1/video/${updatedVideo.id_video}`,
+        {
+          title_video: updatedVideo.title_video,
         },
-        body: JSON.stringify({
-          title: updatedVideo.title_video,
-          description: updatedVideo.description,
-        }),
-      });
-      if (response.ok) {
-        // Update the video in the list
-        const updatedVideoList = videoList.map(v => v.slug === updatedVideo.slug ? updatedVideo : v);
-        // You'll need to implement a way to update the parent component's state here
-        // For now, we'll just log a message
-        console.log('Video updated successfully');
-        setIsEditing(false);
-        setEditingVideo(null);
-      } else {
-        console.error('Failed to update video');
-      }
+        {
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          },
+        }
+      );
+      
+      mutate(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/v1/video/user/${btoa(email!)}`);
+      setIsEditing(false);
     } catch (error) {
-      console.error('Error updating video:', error);
+
+      console.error('Error updating video title:', error);
     }
   };
+
+
+
 
   return (
     <div className="bg-gray-800 p-6 rounded-lg">

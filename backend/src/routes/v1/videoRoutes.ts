@@ -1,6 +1,6 @@
 import { deleteVideo, getThumbnail, getVideosByUserEmail } from '../../controllers/videoController';
 import { Router } from 'express';
-import { uploadVideo, getVideo, updateVideo, getAllVideos, streamVideo } from '../../controllers/videoController';
+import { uploadVideo, getVideo, getAllVideos, streamVideo, updateVideo } from '../../controllers/videoController';
 import authMiddleware from '../../middlewares/authMiddleware';
 import multer from 'multer';
 import path from 'path';
@@ -37,13 +37,15 @@ const v1Router = Router();
 v1Router.get('/', getAllVideos);
 v1Router.use('/thumbnail', express.static(path.join(__dirname, '../../../thumbnails')));
 v1Router.post('/upload', authMiddleware, upload.single('video'), validateVideoUpload, validate, uploadVideo);
-v1Router.put('/:slug', authMiddleware, validateVideoUpdate, validate, updateVideo);
 v1Router.get('/user/:email', getVideosByUserEmail);
 v1Router.get('/thumbnail/:videoId', getThumbnail);
 v1Router.get('/stream/:quality/:slug', streamVideo);  // Changed to include '/stream' prefix
 v1Router.delete('/:identifier', authMiddleware, deleteVideo);
+v1Router.put('/:id', updateVideo);
 v1Router.get('/list-files', (req, res) => {
   const videoDir = path.join(__dirname, '../../../video/');
+
+
   const files = fs.readdirSync(videoDir, { withFileTypes: true });
   const fileStructure = files.map(file => {
     if (file.isDirectory()) {

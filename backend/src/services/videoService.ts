@@ -66,11 +66,9 @@ const getVideoBySlug = async (slug: string) => {
   return video;
 };
 
-const updateVideoDetails = async (slug: string, title: string, description: string) => {
-  const video = await videoRepository.update(slug, { title_video: title, description });
-  if (!video) {
-    console.log('Video not found');
-  }
+const updateVideoTitle = async (id: number, title_video: string) => {
+  const video = await videoRepository.updateVideoTitle(id, title_video);
+  if (!video) throw new Error('Video not found');
   return video;
 };
 
@@ -170,4 +168,4 @@ const deleteVideoBySlug = async (slug: string) => {
 };
 
 
-export default { uploadVideo, getVideoBySlug, updateVideoDetails, getAllVideos, getVideosByUserEmail, getThumbnail, deleteVideo, deleteVideoBySlug, deleteVideoById }; 
+export default { uploadVideo, getVideoBySlug, getAllVideos, getVideosByUserEmail, getThumbnail, deleteVideo, deleteVideoBySlug, deleteVideoById, updateVideoTitle }; 

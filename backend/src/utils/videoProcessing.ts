@@ -94,6 +94,7 @@ export const processVideo = async (file: Express.Multer.File, slug: string, io: 
     return addVideoProcessingJob(inputPath, slug, resolutionConfig, socketId);
   } catch (error) {
     console.error('Error in processVideo:', error);
+    io.emit('processingError', { file: slug, error: (error as Error).message });
     throw error;
   }
 };

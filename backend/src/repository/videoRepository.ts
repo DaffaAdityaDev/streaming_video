@@ -23,7 +23,12 @@ const update = async (slug: string, data: Partial<Omit<Videos, 'id_video' | 'cre
   return prisma.videos.update({ where: { slug }, data });
 };
 
+const updateVideoTitle = async (id: number, title_video: string): Promise<Videos> => {
+  return prisma.videos.update({ where: { id_video: id }, data: { title_video } });
+};
+
 const findAll = async (options?: { orderBy?: { [key: string]: 'asc' | 'desc' } }): Promise<Videos[]> => {
+
   return prisma.videos.findMany(options);
 };
 
@@ -56,4 +61,4 @@ const findById = async (id_video: number): Promise<Videos | null> => {
   return prisma.videos.findUnique({ where: { id_video } });
 };
 
-export default { findBySlug, create, update, findAll, findByUserEmail, getThumbnailByVideoId, deleteById, findById, deleteBySlug }; 
+export default { findBySlug, create, update, findAll, findByUserEmail, getThumbnailByVideoId, deleteById, findById, deleteBySlug, updateVideoTitle }; 

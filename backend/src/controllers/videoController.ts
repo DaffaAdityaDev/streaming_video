@@ -70,6 +70,7 @@ export const uploadVideo = async (req: RequestWithUser, res: Response) => {
       });
     }
 
+
     const io = req.app.get('io');
     const video = await videoService.uploadVideo(req.file, req.user.id_user, io);
     // console.log(video)
@@ -137,23 +138,40 @@ export const getVideo = async (req: Request, res: Response) => {
 
 export const updateVideo = async (req: Request, res: Response) => {
   try {
-    const { slug } = req.params;
-    const { title, description } = req.body;
-    const video = await videoService.updateVideoDetails(slug, title, description);
+    const { id } = req.params;
+    const { title_video } = req.body;
+    
+    console.log('Received update request:', { id, title_video });
+
+    if (!id || !title_video) {
+      return res.status(400).json({
+        status: 'error',
+        message: 'Missing required fields: id or title_video',
+      });
+    }
+
+    const video = await videoService.updateVideoTitle(Number(id), title_video);
     res.status(200).json({
       status: 'success',
-      message: 'Video updated successfully',
+      message: 'Video title updated successfully',
       data: video,
     });
   } catch (error) {
+    console.error('Error updating video:', error);
     if (error instanceof Error) {
       res.status(error.message === 'Video not found' ? 404 : 500).json({
         status: 'error',
         message: error.message,
       });
+    } else {
+      res.status(500).json({
+        status: 'error',
+        message: 'An unexpected error occurred',
+      });
     }
   }
 };
+
 
 export const getAllVideos = async (req: Request, res: Response) => {
   try {

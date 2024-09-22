@@ -4,10 +4,6 @@ import { AppContext } from '@/components/context/AppContext';
 export default function SideBar() {
   const { sidebar, setSidebar } = useContext(AppContext);
 
-  // function toggleSidebar() {
-  //   setSidebar(!sidebar);
-  // }
-
   return (
     <ul
       className={`menu fixed bottom-0   top-0 z-10 col-span-1 row-span-6 rounded-box bg-primary-content text-white ${
