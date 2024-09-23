@@ -23,6 +23,9 @@ const authMiddleware = async (req: RequestWithUser, res: Response, next: NextFun
     req.user = user;
     next();
   } catch (ex) {
+    if (ex instanceof jwt.TokenExpiredError) {
+      return res.status(401).json({ message: 'Token expired', code: 'TOKEN_EXPIRED' });
+    }
     res.status(400).send('Invalid token.');
   }
 };

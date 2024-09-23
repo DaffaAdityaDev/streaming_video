@@ -257,6 +257,8 @@ import { useEffect, useState } from 'react';
 import io from 'socket.io-client';
 import useSWR, { mutate } from 'swr';
 import { fetcher } from '@/utils/api';
+import { toast } from 'react-toastify';
+import { handleApiError } from '@/utils/errorHandler';
 
 const VideoDashboard = dynamic(() => import('@/components/dashboard/VideoDashboard'), {
   loading: () => <p>Loading dashboard...</p>,
@@ -280,7 +282,7 @@ export default function Page({ params }: { params: { userId: string } }) {
     fetcher
   );
 
-  console.log(latestComments);
+  // console.log(latestComments);
  
 
   useEffect(() => {
@@ -353,12 +355,12 @@ export default function Page({ params }: { params: { userId: string } }) {
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (!selectedFile || !token) {
-      alert(selectedFile ? 'You are not authenticated. Please log in.' : 'Please select a file');
+      toast.error(selectedFile ? 'You are not authenticated. Please log in.' : 'Please select a file');
       return;
     }
     const formData = new FormData();
     formData.append('video', selectedFile);
-
+  
     try {
       setUploadProgress([
         {
@@ -368,7 +370,7 @@ export default function Page({ params }: { params: { userId: string } }) {
           path: '',
         },
       ]);
-
+  
       const response = await axios.post(
         `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/v1/video/upload`,
         formData,
@@ -391,14 +393,10 @@ export default function Page({ params }: { params: { userId: string } }) {
         },
       );
       console.log('Upload response:', response.data);
+      toast.success('Video uploaded successfully!');
       mutate(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/v1/video/user/${email}`);
     } catch (error) {
-      console.error('Error uploading video:', error);
-      if (axios.isAxiosError(error) && error.response) {
-        alert(`Error uploading video: ${error.response.data.message || error.message}`);
-      } else {
-        alert(`Error uploading video: ${(error as Error).message}`);
-      }
+      handleApiError(error);
     }
   };
 

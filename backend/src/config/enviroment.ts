@@ -8,4 +8,5 @@ export const config = {
   webSocketPort: process.env.WEBSOCKET_PORT || 3002,
   jwtSecret: process.env.JWT_SECRET || 'defaultSecret',
   databaseUrl: process.env.DATABASE_URL,
+  refreshTokenSecret: process.env.REFRESH_TOKEN_SECRET || 'defaultRefreshSecret',
 };

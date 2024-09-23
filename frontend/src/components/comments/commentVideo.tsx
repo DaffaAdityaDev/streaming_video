@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import { UserData } from '@/app/types';
 import { postData } from '@/utils/api';
+import { toast } from 'react-toastify';
 
 export default function CommentVideo({
   id_video,
@@ -44,9 +45,10 @@ export default function CommentVideo({
 
     try {
       const response = await postData('/api/v1/comment', data, userData.token);
-      console.log(response.data);
+      console.log('Comment posted:', response.data);
       if (response.data) {
         setComment('');
+        toast.success('Comment posted successfully');
       }
 
       getCommentsFromAPI(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/v1/comment/${id_video}`).then(
@@ -55,7 +57,12 @@ export default function CommentVideo({
         },
       );
     } catch (error) {
-      console.error('Error fetching comments:', error);
+      console.error('Error posting comment:', error);
+      if (axios.isAxiosError(error) && error.response) {
+        toast.error(`Error posting comment: ${error.response.data.message || error.message}`);
+      } else {
+        toast.error(`Error posting comment: ${(error as Error).message}`);
+      }
     }
   }
 

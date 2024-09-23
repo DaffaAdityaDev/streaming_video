@@ -10,6 +10,33 @@ const api = axios.create({
   },
 });
 
+api.interceptors.response.use(
+  (response) => response,
+  async (error) => {
+    const originalRequest = error.config;
+    if (error.response.status === 401 && !originalRequest._retry) {
+      originalRequest._retry = true;
+      try {
+        const storedRefreshToken = localStorage.getItem('refreshToken');
+        if (!storedRefreshToken) {
+          throw new Error('No refresh token available');
+        }
+        const response = await refreshTokenRequest(storedRefreshToken);
+        localStorage.setItem('token', response.token);
+        api.defaults.headers.common['Authorization'] = `Bearer ${response.token}`;
+        return api(originalRequest);
+      } catch (refreshError) {
+        // If refresh token fails, logout the user
+        localStorage.removeItem('token');
+        localStorage.removeItem('refreshToken');
+        window.location.href = '/login';
+        return Promise.reject(refreshError);
+      }
+    }
+    return Promise.reject(error);
+  }
+);
+
 export const fetcher = async (url: string) => {
   const token = localStorage.getItem('token');
   try {
@@ -35,6 +62,18 @@ export const postData = async (url: string, data: any, token?: string) => {
     return response.data;
   } catch (error) {
     console.error('API post request failed:', error);
+    throw error;
+  }
+};
+
+
+
+export const refreshTokenRequest = async (refreshToken: string) => {
+  try {
+    const response = await api.post('/api/v1/user/refresh-token', { refreshToken });
+    return response.data;
+  } catch (error) {
+    console.error('Token refresh failed:', error);
     throw error;
   }
 };

@@ -4,6 +4,7 @@ import React, { useState, useEffect, useCallback, useContext } from 'react';
 import Link from 'next/link';
 import { AppContext } from '../context/AppContext';
 import { useRouter } from 'next/navigation';
+import { toast } from 'react-toastify';
 export default function Navbar() {
   const router = useRouter();
   const {
@@ -68,6 +69,7 @@ export default function Navbar() {
     localStorage.removeItem('username');
     localStorage.removeItem('email');
     localStorage.removeItem('imageUrl');
+    toast.info('You have been logged out successfully');
     router.push('/login');
   }
 

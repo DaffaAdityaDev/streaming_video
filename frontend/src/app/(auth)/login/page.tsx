@@ -5,6 +5,7 @@ import axios from 'axios';
 import Auth from '@/components/auth';
 import dynamic from 'next/dynamic';
 import { useAuth } from '@/hooks/useAuth';
+import { handleApiError } from '@/utils/ErrorResponse';
 
 const Lamp = dynamic(() => import('@/components/animation/lamp'), {
   loading: () => <p>Loading...</p>,
@@ -29,7 +30,7 @@ export default function Login() {
       setAlertMessage({ text: 'Please fill in all fields', type: 'error' });
       return;
     }
-
+  
     try {
       const response = await login(email, password);
       if (response.status === 'success') {
@@ -39,8 +40,17 @@ export default function Login() {
         setAlertMessage({ text: response.message || 'Login failed', type: 'error' });
       }
     } catch (error) {
-      if (error instanceof Error) {
-        setAlertMessage({ text: error.message || 'Internal server error', type: 'error' });
+      if (axios.isAxiosError(error)) {
+        if (error.response) {
+          // Server responded with an error
+          setAlertMessage({ text: error.response.data.message || 'Login failed', type: 'error' });
+        } else if (error.request) {
+          // Request was made but no response was received
+          setAlertMessage({ text: 'Unable to reach the server. Please try again later.', type: 'error' });
+        } else {
+          // Something happened in setting up the request
+          setAlertMessage({ text: 'An unexpected error occurred', type: 'error' });
+        }
       } else {
         setAlertMessage({ text: 'An unexpected error occurred', type: 'error' });
       }

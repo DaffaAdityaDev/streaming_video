@@ -2,15 +2,16 @@ import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import userRepository from '../repository/userRepository';
 import { config } from '../config/enviroment';
+import { AppError, errorTypes } from '../utils/AppError';
 
 const registerUser = async (username: string, email: string, password: string) => {
   if (!username || !email || !password) {
-    throw new Error('Please fill in all fields');
+    throw new AppError('Please fill in all fields', errorTypes.BAD_REQUEST);
   }
 
   const existingUser = await userRepository.findByEmail(email);
   if (existingUser) {
-    throw new Error('User already exists');
+    throw new AppError('User already exists', errorTypes.CONFLICT);
   }
 
   const hashedPassword = await bcrypt.hash(password, 10);
@@ -19,6 +20,7 @@ const registerUser = async (username: string, email: string, password: string) =
     email,
     password: hashedPassword,
     image_url: 'https://res.cloudinary.com/dkkgmzpqd/image/upload/v1628074759/default-profile-picture-300x300_y3c5xw.png',
+    refreshToken: null,
   });
 
   return { username: user.username, email: user.email };
@@ -27,12 +29,12 @@ const registerUser = async (username: string, email: string, password: string) =
 const loginUser = async (email: string, password: string) => {
   const user = await userRepository.findByEmail(email);
   if (!user) {
-    throw new Error('Invalid credentials');
+    throw new AppError('Invalid email or password', errorTypes.UNAUTHORIZED);
   }
 
   const passwordValid = await bcrypt.compare(password, user.password);
   if (!passwordValid) {
-    throw new Error('Invalid credentials');
+    throw new AppError('Invalid email or password', errorTypes.UNAUTHORIZED);
   }
 
   const token = jwt.sign({ email }, config.jwtSecret, { expiresIn: '7d' });

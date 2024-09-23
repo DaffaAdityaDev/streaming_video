@@ -1,5 +1,7 @@
 import { Request, Response } from 'express';
 import commentService from '../services/commentService';
+import { CommentError } from '../utils/CommentError';
+import { logger } from '../utils/logger';
 
 export const createComment = async (req: Request, res: Response) => {
   try {
@@ -10,12 +12,7 @@ export const createComment = async (req: Request, res: Response) => {
       data: comment,
     });
   } catch (error) {
-    if (error instanceof Error) {
-      res.status(error.message === 'User not found' ? 404 : 500).json({
-        status: 'error',
-        message: error.message,
-      });
-    }
+    handleCommentError(error, res);
   }
 };
 
@@ -28,10 +25,7 @@ export const getComments = async (req: Request, res: Response) => {
       data: comments,
     });
   } catch (error) {
-    res.status(500).json({
-      status: 'error',
-      message: 'Error fetching comments',
-    });
+    handleCommentError(error, res);
   }
 }; 
 
@@ -45,10 +39,7 @@ export const updateComment = async (req: Request, res: Response) => {
       data: comment,
     });
   } catch (error) {
-    res.status(500).json({
-      status: 'error',
-      message: 'Error updating comment',
-    });
+    handleCommentError(error, res);
   }
 };
 
@@ -61,10 +52,7 @@ export const deleteComment = async (req: Request, res: Response) => {
       data: comment,
     });
   } catch (error) {
-    res.status(500).json({
-      status: 'error',
-      message: 'Error deleting comment',
-    });
+    handleCommentError(error, res);
   }
 };
 
@@ -78,10 +66,21 @@ export const getLastestComments = async (req: Request, res: Response) => {
       data: comments,
     });
   } catch (error) {
-    console.error('Error fetching latest comments:', error);
+    handleCommentError(error, res);
+  }
+};
+
+const handleCommentError = (error: unknown, res: Response) => {
+  logger.error('Error in comment operation:', error);
+  if (error instanceof CommentError) {
+    res.status(error.statusCode).json({
+      status: 'error',
+      message: error.message,
+    });
+  } else {
     res.status(500).json({
       status: 'error',
-      message: 'Error fetching latest comments',
+      message: 'An unexpected error occurred',
     });
   }
 };

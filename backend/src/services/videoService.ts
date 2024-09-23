@@ -31,6 +31,7 @@ const uploadVideo = async (file: Express.Multer.File, userId: number, io: Server
       views: 0,
       likes: 0,
       id_user: userId,
+      status: 'processing'
     };
 
     const video = await videoRepository.create(videoData);
@@ -81,7 +82,9 @@ const getAllVideos = async () => {
 };
 
 const getVideosByUserEmail = async (email: string) => {
+  console.log('Fetching videos for email:', email);
   const videos = await videoRepository.findByUserEmail(email);
+  console.log('Videos found:', videos);
   return videos.map(video => ({
     id_video: video.id_video,
     title_video: video.title_video,

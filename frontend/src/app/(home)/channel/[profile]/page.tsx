@@ -1,6 +1,7 @@
 'use client';
 import { useState, useEffect } from 'react';
 import axios from 'axios';
+import { toast } from 'react-toastify';
 
 function Page() {
   const [token, setToken] = useState('');
@@ -21,28 +22,26 @@ function Page() {
     console.log(e.target.files);
     const file = e.target.files[0];
     if (!file) return;
-
+  
     const formData = new FormData();
     formData.append('image', file);
-    formData.append('username', username); // Include the username in the request body
-
+    formData.append('username', username);
+  
     try {
-      axios
-        .post(path, formData, {
-          headers: {
-            'Content-Type': 'multipart/form-data',
-            Authorization: `Bearer ${token}`,
-          },
-        })
-        .then((res) => {
-          setImageUrl(res.data.data.image_url);
-          localStorage.setItem('imageUrl', res.data.data.image_url);
-        });
+      const res = await axios.post(path, formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      setImageUrl(res.data.data.image_url);
+      localStorage.setItem('imageUrl', res.data.data.image_url);
+      toast.success('Profile image updated successfully!');
     } catch (error) {
       console.log(error);
+      toast.error('Failed to update profile image. Please try again.');
     }
   }
-
   return (
     <div className="flex w-full justify-center gap-4">
       <div className="relative h-20 w-20">

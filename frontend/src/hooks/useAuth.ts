@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
-import { postData, getCurrentUser } from '@/utils/api';
-
+import { postData, getCurrentUser, refreshTokenRequest } from '@/utils/api';
+import axios from 'axios';
+import { jwtDecode } from 'jwt-decode';
 interface AuthError extends Error {
   status?: number;
   info?: any;
@@ -11,11 +12,48 @@ export function useAuth() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<AuthError | null>(null);
 
+  const isTokenExpired = (token: string): boolean => {
+    try {
+      const decoded: any = jwtDecode(token);
+      if (decoded.exp < Date.now() / 1000) {
+        return true;
+      }
+      return false;
+    } catch (error) {
+      return true;
+    }
+  };
+
+  const refreshToken = async () => {
+    const storedRefreshToken = localStorage.getItem('refreshToken');
+    if (!storedRefreshToken) {
+      throw new Error('No refresh token available');
+    }
+    try {
+      const response = await refreshTokenRequest(storedRefreshToken);
+      if (response.status === 'success') {
+        localStorage.setItem('token', response.token);
+        localStorage.setItem('refreshToken', response.refreshToken);
+        setUser(response.user);
+        setError(null);
+      }
+      return response.token;
+    } catch (err) {
+      logout();
+      throw err;
+    }
+  };
+  
   useEffect(() => {
     async function loadUser() {
       try {
-        const currentUser = await getCurrentUser();
-        setUser(currentUser);
+        const token = localStorage.getItem('token');
+        if (token && !isTokenExpired(token)) {
+          const currentUser = await getCurrentUser();
+          setUser(currentUser);
+        } else {
+          logout();
+        }
       } catch (err: unknown) {
         const authError: AuthError = new Error('Failed to load user');
         if (err instanceof Error) {
@@ -38,8 +76,9 @@ export function useAuth() {
       const response = await postData('/api/v1/user/login', { email, password });
       if (response.status === 'success') {
         localStorage.setItem('token', response.token);
+        localStorage.setItem('refreshToken', response.refreshToken);
         localStorage.setItem('username', response.username);
-        localStorage.setItem('email', email);
+        localStorage.setItem('email', response.email);
         localStorage.setItem('imageUrl', response.image_url);
         setUser(response);
         setError(null);
@@ -50,9 +89,10 @@ export function useAuth() {
       if (err instanceof Error) {
         authError.message = err.message;
       }
-      if (typeof err === 'object' && err !== null && 'response' in err) {
-        authError.status = (err as any).response?.status;
-        authError.info = (err as any).response?.data;
+      if (axios.isAxiosError(err) && err.response) {
+        authError.status = err.response.status;
+        authError.info = err.response.data;
+        authError.message = err.response.data.message || 'Login failed';
       }
       setError(authError);
       throw authError;
@@ -79,17 +119,12 @@ export function useAuth() {
   };
 
   const logout = () => {
-    try {
-      localStorage.removeItem('token');
-      localStorage.removeItem('username');
-      localStorage.removeItem('email');
-      localStorage.removeItem('imageUrl');
-      setUser(null);
-      setError(null);
-    } catch (err) {
-      const authError: AuthError = new Error('Logout failed');
-      setError(authError);
-    }
+    localStorage.removeItem('token');
+    localStorage.removeItem('refreshToken');
+    localStorage.removeItem('username');
+    localStorage.removeItem('email');
+    localStorage.removeItem('imageUrl');
+    setUser(null);
   };
 
   return {

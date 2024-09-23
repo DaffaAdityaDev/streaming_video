@@ -33,10 +33,13 @@ const findAll = async (options?: { orderBy?: { [key: string]: 'asc' | 'desc' } }
 };
 
 const findByUserEmail = async (email: string) => {
+  console.log('Finding user with email:', email);
   const user = await prisma.users.findUnique({ where: { email } });
   if (!user) { 
+    console.log('User not found');
     throw new Error('User not found');
   }
+  console.log('User found, fetching videos');
   return prisma.videos.findMany({ 
     where: { id_user: user.id_user },
     orderBy: { created_at: 'desc' },
@@ -61,4 +64,10 @@ const findById = async (id_video: number): Promise<Videos | null> => {
   return prisma.videos.findUnique({ where: { id_video } });
 };
 
-export default { findBySlug, create, update, findAll, findByUserEmail, getThumbnailByVideoId, deleteById, findById, deleteBySlug, updateVideoTitle }; 
+const updateVideoStatus = async (slug: string, status: string): Promise<Videos | null> => {
+  return prisma.videos.update({
+    where: { slug },
+    data: { status },
+  });
+};
+export default { findBySlug, create, update, findAll, findByUserEmail, getThumbnailByVideoId, deleteById, findById, deleteBySlug, updateVideoTitle, updateVideoStatus }; 

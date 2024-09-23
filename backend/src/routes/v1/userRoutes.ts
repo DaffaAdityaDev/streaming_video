@@ -1,9 +1,8 @@
 import { Router } from 'express';
-import { registerUser, loginUser, uploadProfileImage } from '../../controllers/userController';
+import { registerUser, loginUser, uploadProfileImage, refreshToken } from '../../controllers/userController';
 import multer from 'multer';
 import path from 'path';
 import { validateRegistration, validateLogin, validate } from '../../middlewares/validationMiddleware';
-
 const router = Router();
 
 const storage = multer.diskStorage({
@@ -23,6 +22,7 @@ const v1Router = Router();
 v1Router.post('/register', validateRegistration, validate, registerUser);
 v1Router.post('/login', validateLogin, validate, loginUser);
 v1Router.post('/upload-profile', upload.single('image'), uploadProfileImage);
+v1Router.post('/refresh-token', refreshToken); 
 
 // Apply v1 routes to the main router
 router.use('/v1/user', v1Router);

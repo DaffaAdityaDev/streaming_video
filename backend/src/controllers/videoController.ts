@@ -1,9 +1,22 @@
-import { Request, Response } from 'express';
+import { NextFunction, Request, Response } from 'express';
 import videoService from '../services/videoService';
 import { RequestWithUser } from '../types';
 import path from 'path';
 import fs from 'fs';
+import videoRepository from '../repository/videoRepository';
 
+async function syncVideoStatus(slug: string, videoExists: boolean, thumbnailExists: boolean) {
+  if (!videoExists && !thumbnailExists) {
+    await videoRepository.deleteBySlug(slug);
+    console.log(`Deleted database entry for non-existent video and thumbnail: ${slug}`);
+  } else if (!videoExists) {
+    await videoRepository.updateVideoStatus(slug, 'FILE_MISSING');
+    console.log(`Updated status to FILE_MISSING for video: ${slug}`);
+  } else if (!thumbnailExists) {
+    console.log(`Thumbnail missing for video: ${slug}`);
+    // You might want to regenerate the thumbnail here
+  }
+}
 
 export const streamVideo = async (req: Request, res: Response) => {
   try {
@@ -11,15 +24,16 @@ export const streamVideo = async (req: Request, res: Response) => {
 
     const videoDir = path.join(__dirname, '../../video');
     const videoPath = path.join(videoDir, quality, `${slug}.mp4`);
+    const thumbnailPath = path.join(__dirname, '../../thumbnails', `${slug}.jpg`);
 
-    console.log('Video Directory:', videoDir);
-    console.log('Video Path:', videoPath);
+    const videoExists = fs.existsSync(videoPath);
+    const thumbnailExists = fs.existsSync(thumbnailPath);
 
-    if (!fs.existsSync(videoPath)) {
-      console.log('File does not exist:', videoPath);
-      console.log('Contents of video directory:', fs.readdirSync(videoDir));
-      console.log('Contents of quality directory:', fs.readdirSync(path.join(videoDir, quality)));
-      return res.status(404).json({ message: 'Video file not found' });
+    if (!videoExists || !thumbnailExists) {
+      await syncVideoStatus(slug, videoExists, thumbnailExists);
+      if (!videoExists) {
+        return res.status(404).json({ message: 'Video file not found' });
+      }
     }
 
     const stat = fs.statSync(videoPath);
@@ -188,24 +202,22 @@ export const getAllVideos = async (req: Request, res: Response) => {
   }
 };
 
-export const getVideosByUserEmail = async (req: Request, res: Response) => {
+export const getVideosByUserEmail = async (req: Request, res: Response, next: NextFunction) => {
   try {
+    console.log('getVideosByUserEmail route hit');
     const encodedEmail = req.params.email;
     const userEmail = atob(encodedEmail); // Base64 decode the email
+    console.log('Decoded email:', userEmail);
     const videos = await videoService.getVideosByUserEmail(userEmail);
-    console.log('getVideosByUserEmail called with email:', encodedEmail);
-    console.log('email:', userEmail);
-    // console.log('videos:', videos);
+    console.log('Videos fetched:', videos);
+    
     res.status(200).json({
       status: 'success',
       data: videos,
     });
   } catch (error) {
-    console.error('Error fetching videos:', error);
-    res.status(500).json({
-      status: 'error',
-      message: error instanceof Error ? error.message : 'An unknown error occurred',
-    }); 
+    console.error('Error in getVideosByUserEmail:', error);
+    next(error);
   }
 };
 

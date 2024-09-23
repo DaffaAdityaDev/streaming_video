@@ -8,15 +8,16 @@ datasource db {
 }
 
 model Users {
-  id_user    Int        @id @default(autoincrement())
-  username   String     @unique
-  email      String     @unique
-  password   String
-  token      String?    @unique
-  created_at DateTime   @default(now())
-  image_url  String
-  comment    Comments[]
-  video      Videos[]
+  id_user      Int        @id @default(autoincrement())
+  username     String     @unique
+  email        String     @unique
+  password     String
+  token        String?    @unique
+  refreshToken String?
+  created_at   DateTime   @default(now())
+  image_url    String
+  comment      Comments[]
+  video        Videos[]
 }
 
 model Videos {
@@ -33,6 +34,7 @@ model Videos {
   id_user     Int
   comments    Comments[]
   user        Users      @relation(fields: [id_user], references: [id_user])
+  status      String?    @default("AVAILABLE")
 }
 
 model Comments {
