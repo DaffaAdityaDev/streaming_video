@@ -1,8 +1,13 @@
 import { Server } from 'socket.io';
 import { Request } from 'express';
+import { Users } from '@prisma/client';
 
 interface filePath {
   filePath: string;
+}
+
+export interface AuthenticatedRequest extends Request {
+  user?: Users;
 }
 
 export interface Task {

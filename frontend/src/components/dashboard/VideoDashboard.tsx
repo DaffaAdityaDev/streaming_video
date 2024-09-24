@@ -1,8 +1,9 @@
 "use client"
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { VideoDataType, UploadProgressItem, VideoResponse, CommentDataType, CommentResponse } from '@/app/types';
 import axios from 'axios';
 import { mutate } from 'swr';
+import io from 'socket.io-client';
 
 interface DashboardProps {
   latestUploads: VideoResponse;
@@ -270,9 +271,31 @@ const UploadNewVideo: React.FC<UploadNewVideoProps> = ({
   onFileChange,
   onSubmit,
   uploadProgress,
-  conversionProgress,
-  conversionStep,
 }) => {
+  const [resolutionProgress, setResolutionProgress] = useState<Record<string, number>>({});
+
+  useEffect(() => {
+    const socket = io(`${process.env.NEXT_PUBLIC_BACKEND_WS_URL}`);
+
+    socket.on('conversionProgress', (data) => {
+      if (data.step === 'progress') {
+        setResolutionProgress(prev => ({
+          ...prev,
+          [data.resolution]: data.progress
+        }));
+      }
+    });
+
+    return () => {
+      socket.disconnect();
+    };
+  }, []);
+
+  const sortedProgress = [...uploadProgress].sort((a, b) => {
+    const order = ['upload', 'overall', '144p', '240p', '480p', '720p', '1080p', '4k'];
+    return order.indexOf(a.reso) - order.indexOf(b.reso);
+  });
+
   return (
     <div className="bg-gray-800 p-6 rounded-lg">
       <h2 className="text-xl font-bold mb-4">Upload New Video</h2>
@@ -288,7 +311,7 @@ const UploadNewVideo: React.FC<UploadNewVideoProps> = ({
           Upload
         </button>
       </form>
-      {uploadProgress.length > 0 && (
+      {sortedProgress.length > 0 && (
         <div className="mt-4">
           <h3 className="text-lg font-semibold mb-2">Upload Progress</h3>
           <div className="overflow-x-auto">
@@ -302,19 +325,7 @@ const UploadNewVideo: React.FC<UploadNewVideoProps> = ({
                 </tr>
               </thead>
               <tbody>
-                <tr>
-                  <td>Conversion</td>
-                  <td>{conversionStep}</td>
-                  <td>
-                    <progress
-                      className="progress progress-primary w-full"
-                      value={conversionProgress}
-                      max="100"
-                    ></progress>
-                  </td>
-                  <td>-</td>
-                </tr>
-                {uploadProgress.map((progressItem, index) => (
+                {sortedProgress.map((progressItem, index) => (
                   <tr key={index}>
                     <td>{progressItem.file}</td>
                     <td>{progressItem.reso}</td>
@@ -339,6 +350,33 @@ const UploadNewVideo: React.FC<UploadNewVideoProps> = ({
           </div>
         </div>
       )}
+      <div className="mt-4">
+        <h3 className="text-lg font-semibold mb-2">Conversion Progress</h3>
+        <div className="overflow-x-auto">
+          <table className="table w-full">
+            <thead>
+              <tr>
+                <th>Resolution</th>
+                <th>Progress</th>
+              </tr>
+            </thead>
+            <tbody>
+              {Object.entries(resolutionProgress).map(([resolution, progress]) => (
+                <tr key={resolution}>
+                  <td>{resolution}</td>
+                  <td>
+                    <progress
+                      className="progress progress-primary w-full"
+                      value={progress}
+                      max="100"
+                    ></progress>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
     </div>
   );
 };

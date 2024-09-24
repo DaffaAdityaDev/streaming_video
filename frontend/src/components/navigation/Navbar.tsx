@@ -20,7 +20,7 @@ export default function Navbar() {
   const [token, setToken] = useState('');
   const [username, setUsername] = useState('');
   const [imageUrl, setImageUrl] = useState('');
-  // console.log(imageUrl);
+  console.log(username);
   // Function to handle scroll events
   const handleScroll = useCallback(() => {
     const currentScrollPos = window.pageYOffset;
@@ -79,7 +79,7 @@ export default function Navbar() {
 
   return (
     <div
-      className={`navbar sticky top-0 z-30 col-span-12 row-span-1 transition-transform duration-200 ease-in-out ${navbarClass} ${bgClass} ${
+      className={`navbar bg-primary-content sticky top-0 z-30 col-span-12 row-span-1 transition-transform duration-200 ease-in-out ${navbarClass} ${bgClass} ${
         screenMode ? 'hidden' : ''
       }`}
     >

@@ -1,32 +1,28 @@
-import { User } from './../models/userModel';
-import { Request, Response, NextFunction } from 'express';
+import { Response, NextFunction } from 'express';
+import { AuthenticatedRequest } from '../types';
 import jwt from 'jsonwebtoken';
-import userRepository from '../repository/userRepository';
+import { config } from '../config/enviroment';
 import prisma from '../config/database';
 
-interface RequestWithUser extends Request {
-  user?: { email: string };
-}
-
-const authMiddleware = async (req: RequestWithUser, res: Response, next: NextFunction) => {
-  const token = req.header('Authorization')?.replace('Bearer ', '');
-  if (!token) {
-    return res.status(401).send('Access denied. No token provided.');
-  }
-
+const authMiddleware = async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
   try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET as string) as { email: string };
-    const user = await prisma.users.findUnique({ where: { email: decoded.email } });
-    if (!user) {
-      return res.status(401).send('User not found.');
+    const token = req.headers.authorization?.split(' ')[1];
+
+    if (!token) {
+      return res.status(401).json({ message: 'No token provided' });
     }
+
+    const decoded = jwt.verify(token, config.jwtSecret) as { email: string };
+    const user = await prisma.users.findUnique({ where: { email: decoded.email } });
+
+    if (!user) {
+      return res.status(401).json({ message: 'User not found' });
+    }
+
     req.user = user;
     next();
-  } catch (ex) {
-    if (ex instanceof jwt.TokenExpiredError) {
-      return res.status(401).json({ message: 'Token expired', code: 'TOKEN_EXPIRED' });
-    }
-    res.status(400).send('Invalid token.');
+  } catch (error) {
+    return res.status(401).json({ message: 'Invalid token' });
   }
 };
 

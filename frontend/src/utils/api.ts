@@ -1,9 +1,11 @@
 import axios from 'axios';
 
-const baseURL = process.env.NEXT_PUBLIC_BACKEND_URL;
+const APIVERSION = process.env.NEXT_PUBLIC_BACKEND_API_VERSION;
+const BACKENDURL = process.env.NEXT_PUBLIC_BACKEND_URL;
+const BASE_API_URL = `${BACKENDURL}/api/${APIVERSION}`;
 
 const api = axios.create({
-  baseURL,
+  baseURL: BASE_API_URL,
   timeout: 10000,
   headers: {
     'Content-Type': 'application/json',
@@ -66,11 +68,9 @@ export const postData = async (url: string, data: any, token?: string) => {
   }
 };
 
-
-
 export const refreshTokenRequest = async (refreshToken: string) => {
   try {
-    const response = await api.post('/api/v1/user/refresh-token', { refreshToken });
+    const response = await api.post('/user/refresh-token', { refreshToken });
     return response.data;
   } catch (error) {
     console.error('Token refresh failed:', error);
@@ -80,11 +80,12 @@ export const refreshTokenRequest = async (refreshToken: string) => {
 
 export const getCurrentUser = async () => {
   const token = localStorage.getItem('token');
+  const email = localStorage.getItem('email');
   if (!token) {
     return null;
   }
   try {
-    const response = await axios.get(`${baseURL}/api/v1/user/me`, {
+    const response = await axios.get(`${BASE_API_URL}/user/user-profile`, {
       headers: {
         Authorization: `Bearer ${token}`,
       },
@@ -92,6 +93,35 @@ export const getCurrentUser = async () => {
     return response.data;
   } catch (error) {
     console.error('Failed to fetch current user:', error);
+    return null;
+  }
+};
+
+export const getCurrentUserProfile = async () => {
+  const token = localStorage.getItem('token');
+  if (!token) {
+    console.log('No token found in localStorage');
+    return null;
+  }
+  try {
+    const userEmail = await getCurrentUser();
+    const response = await api.get(`${BASE_API_URL}/user/user-profile`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+    return response.data.data;
+  } catch (error) {
+    if (axios.isAxiosError(error)) {
+      if (error.response?.status === 401) {
+        console.error('Unauthorized: Token may be invalid or expired');
+        // Optionally, you can trigger a logout or token refresh here
+      } else {
+        console.error(`Failed to fetch user profile: ${error.response?.data?.message || error.message}`);
+      }
+    } else {
+      console.error('An unexpected error occurred while fetching user profile');
+    }
     return null;
   }
 };

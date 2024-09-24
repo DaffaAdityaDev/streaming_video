@@ -62,12 +62,21 @@ export const processVideo = async (file: Express.Multer.File, slug: string, io: 
   try {
     await fs.promises.mkdir(defaultQualityDir, { recursive: true });
 
+    // Emit initial conversion event
+    io.emit('conversionProgress', { file: slug, step: 'start', message: 'Starting conversion' });
+
     if (file.mimetype !== 'video/mp4') {
       await convertToMp4(file.path, inputPath, slug, io);
     } else {
       await fs.promises.copyFile(file.path, inputPath);
       io.emit('conversionProgress', { file: slug, step: 'skip', message: 'File is already MP4, skipping conversion' });
     }
+
+    // Emit upload name event
+    io.emit('uploadProgress', { file: slug, resolution: 'upload', progress: 100 });
+
+    // Emit initial overall progress event
+    io.emit('uploadProgress', { file: slug, resolution: 'overall', progress: 0 });
 
     // Delete the original uploaded file
     if (fs.existsSync(file.path)) {
