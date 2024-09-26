@@ -1,7 +1,10 @@
 import { Request, Response, NextFunction } from 'express';
+import { createLogger } from '../utils/logger';
+
+const logger = createLogger('errorMiddleware');
 
 export const errorHandler = (err: Error, req: Request, res: Response, next: NextFunction) => {
-  console.error(err.stack);
+  logger.error('Unhandled error:', err);
   res.status(500).json({
     status: 'error',
     message: 'An unexpected error occurred',

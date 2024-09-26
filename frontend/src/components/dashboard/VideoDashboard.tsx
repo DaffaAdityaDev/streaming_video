@@ -4,6 +4,7 @@ import { VideoDataType, UploadProgressItem, VideoResponse, CommentDataType, Comm
 import axios from 'axios';
 import { mutate } from 'swr';
 import io from 'socket.io-client';
+import { toast } from 'react-toastify';
 
 interface DashboardProps {
   latestUploads: VideoResponse;
@@ -13,9 +14,11 @@ interface DashboardProps {
   conversionStep: string | null;
   onFileChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   onSubmit: (event: React.FormEvent<HTMLFormElement>) => void;
+  refreshVideos: () => void;
 }
 interface LatestUploadsProps {
   videos: VideoResponse;
+  refreshVideos: () => void;
 }
 
 interface LatestCommentsProps {
@@ -28,6 +31,7 @@ interface UploadNewVideoProps {
   uploadProgress: UploadProgressItem[];
   conversionProgress: number;
   conversionStep: string | null;
+  refreshVideos: () => void;
 }
 
 
@@ -39,6 +43,7 @@ const VideoDashboard: React.FC<DashboardProps> = ({
   conversionStep,
   onFileChange,
   onSubmit,
+  refreshVideos,
 }) => {
   return (
     <div className="bg-gray-900 text-white p-6">
@@ -63,9 +68,10 @@ const VideoDashboard: React.FC<DashboardProps> = ({
         uploadProgress={uploadProgress}
         conversionProgress={conversionProgress}
         conversionStep={conversionStep}
+        refreshVideos={refreshVideos}
       />
       <div className="grid grid-cols-2 gap-8 my-8">
-        <LatestUploads videos={latestUploads} />
+        <LatestUploads videos={latestUploads} refreshVideos={refreshVideos} />
         {/* <LatestComments comments={latestComments} /> */}
       </div>
 
@@ -73,12 +79,11 @@ const VideoDashboard: React.FC<DashboardProps> = ({
   );
 };
 
-const LatestUploads: React.FC<LatestUploadsProps> = ({ videos }) => {
-  const videoList = videos.data;
+const LatestUploads: React.FC<LatestUploadsProps> = ({ videos, refreshVideos }) => {
+  const [videoList, setVideoList] = useState<VideoDataType[]>(videos.data);
   const [editingVideo, setEditingVideo] = useState<VideoDataType | null>(null);
   const [isEditing, setIsEditing] = useState(false);
 
-  console.log(videoList);
 
   if (!Array.isArray(videoList)) {
     console.error('Videos is not an array:', videoList);
@@ -102,19 +107,19 @@ const LatestUploads: React.FC<LatestUploadsProps> = ({ videos }) => {
             'Content-Type': 'application/json',
           },
         });
-        
         if (response.ok) {
+          toast.success(`Video with ID ${id_video} deleted successfully`);
+          refreshVideos();
           console.log(`Video with ID ${id_video} deleted successfully`);
           // Update UI logic here (e.g., remove the video from the list)
         } else {
           const errorData = await response.json();
           console.error(`Failed to delete video with ID ${id_video}:`, errorData.message);
-          // Provide user feedback
-          alert(`Failed to delete video: ${errorData.message}`);
+          toast.error(`Failed to delete video with ID ${id_video}:`, errorData.message);
         }
       } catch (error) {
         console.error(`Error deleting video with ID ${id_video}:`, error);
-        alert('An error occurred while deleting the video. Please try again.');
+        toast.error('An error occurred while deleting the video. Please try again.');
       }
     }
   }
@@ -135,15 +140,14 @@ const LatestUploads: React.FC<LatestUploadsProps> = ({ videos }) => {
         }
       );
       
-      mutate(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/v1/video/user/${btoa(email!)}`);
+      refreshVideos();
       setIsEditing(false);
+      toast.success(`Video with ID ${updatedVideo.id_video} updated successfully`);
     } catch (error) {
-
+      toast.error('Error updating video title');
       console.error('Error updating video title:', error);
     }
   };
-
-
 
 
   return (
@@ -271,6 +275,7 @@ const UploadNewVideo: React.FC<UploadNewVideoProps> = ({
   onFileChange,
   onSubmit,
   uploadProgress,
+  refreshVideos,
 }) => {
   const [resolutionProgress, setResolutionProgress] = useState<Record<string, number>>({});
 

@@ -9,4 +9,6 @@ export const config = {
   jwtSecret: process.env.JWT_SECRET || 'defaultSecret',
   databaseUrl: process.env.DATABASE_URL,
   refreshTokenSecret: process.env.REFRESH_TOKEN_SECRET || 'defaultRefreshSecret',
+  maxVideoProcessingQueue: process.env.MAX_VIDEO_PROCESSING_QUEUE || '2',
+  timezone: process.env.TIMEZONE || 'Asia/Jakarta',
 };

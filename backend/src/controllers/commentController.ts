@@ -1,7 +1,9 @@
 import { Request, Response } from 'express';
 import commentService from '../services/commentService';
 import { CommentError } from '../utils/CommentError';
-import { logger } from '../utils/logger';
+import { createLogger } from '../utils/logger';
+
+const logger = createLogger('commentController');
 
 export const createComment = async (req: Request, res: Response) => {
   try {

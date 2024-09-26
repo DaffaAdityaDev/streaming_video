@@ -26,6 +26,8 @@ export default function Page({ params }: { params: { userId: string } }) {
     fetcher
   );
 
+  // console.log(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/v1/video/user/${btoa(email)}`);
+
   const { data: latestComments, error: latestCommentsError } = useSWR<CommentResponse>(
     email ? `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/v1/comment/latest/${btoa(email)}` : null,
     fetcher
@@ -130,18 +132,32 @@ export default function Page({ params }: { params: { userId: string } }) {
           },
         },
       );
+
       console.log('Upload response:', response.data);
       toast.success('Video uploaded successfully!');
-      mutate(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/v1/video/user/${email}`);
+      refreshVideos();
     } catch (error) {
       handleApiError(error);
     }
   };
 
+  const refreshVideos = async () => {
+    if (email) {
+      try {
+        await mutate(
+          `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/v1/video/user/${btoa(email)}`,
+          undefined,
+          { revalidate: true }
+        );
+      } catch (error) {
+        console.error('Error refreshing videos:', error);
+        toast.error('Failed to refresh videos. Please try again.');
+      }
+    }
+  };
+
   if (userVideosError) return <div>Failed to load videos</div>;
   if (!userVideos) return <div>Loading...</div>;
-
-  
 
   return (
     <VideoDashboard
@@ -152,6 +168,7 @@ export default function Page({ params }: { params: { userId: string } }) {
       conversionStep={conversionStep}
       onFileChange={handleFileChange}
       onSubmit={handleSubmit}
+      refreshVideos={refreshVideos}
     />
   );
 }

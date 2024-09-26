@@ -1,5 +1,7 @@
 import { PrismaClient } from '@prisma/client';
+import { createLogger } from '../utils/logger';
 
+const logger = createLogger('database');
 const prisma = new PrismaClient();
 
 export default prisma;
@@ -7,10 +9,10 @@ export default prisma;
 export async function checkDatabaseConnection() {
   try {
     await prisma.$connect();
-    console.log('Successfully connected to the database');
+    logger.info('Successfully connected to the database');
     return true;
   } catch (error) {
-    console.error('Failed to connect to the database:', error);
+    logger.error('Failed to connect to the database:', error);
     return false;
   }
 } 

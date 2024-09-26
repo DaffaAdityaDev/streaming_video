@@ -6,7 +6,7 @@ import path from 'path';
 import fs from 'fs';
 import { v4 as uuidv4 } from 'uuid';
 
-const concurrency = 2; // Adjust based on your server's capacity
+const concurrency = parseInt(process.env.MAX_VIDEO_PROCESSING_QUEUE || '2'); // Adjust based on your server's capacity
 
 interface CustomQueue extends async.QueueObject<Task> {
   ioMap: Map<string, Server>;

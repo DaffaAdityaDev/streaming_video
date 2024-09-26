@@ -8,6 +8,7 @@ import { useState, useEffect, useContext } from 'react';
 import useSWR from 'swr';
 import { fetcher } from '@/utils/api';
 import { PlayerVideo } from '@/components/video/PlayerVideo';
+import axios from 'axios';
 
 const CardVideo = dynamic(() => import('@/components/video/CardVideo'), {
   loading: () => <p>Loading related video...</p>,
@@ -31,16 +32,47 @@ export default function VideoPlayer({
   const { isFullScreen } = useContext(AppContext);
   const videoId = searchParams.id_video?.toString() || '';
   const url = `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/v1`;
+  const [viewCounted, setViewCounted] = useState(false);
 
   const { data: videoData, error: videoError } = useSWR<{ status: string; data: VideoDataType[] }>(
     `${url}/video`,
     fetcher,
   );
 
+  const { data: currentVideoData, error: currentVideoError } = useSWR<{ status: string; data: VideoDataType }>(
+    `${url}/video/${searchParams.video}`,
+    fetcher,
+  );
+
+  console.log('currentVideoData', currentVideoData);
+
   const { data: commentsData, error: commentsError } = useSWR<{ status: string; data: any[] }>(
     videoId ? `${url}/comment/${videoId}` : null,
     fetcher,
   );
+
+  const incrementViewCount = async () => {
+    if (!viewCounted) {
+      try {
+        const videoSlug = Array.isArray(searchParams.video) ? searchParams.video[0] : searchParams.video;
+        if (videoSlug) {
+          const urlViewIncrement = `${url}/video/${videoSlug}/view`;
+          console.log('Incrementing view count:', urlViewIncrement);
+          const token = localStorage.getItem('token'); // Assuming you store the token in localStorage
+          await axios.post(urlViewIncrement, {}, {
+            headers: {
+              Authorization: `Bearer ${token}`
+            }
+          });
+          setViewCounted(true);
+        } else {
+          console.error('Video slug is undefined');
+        }
+      } catch (error) {
+        console.error('Error incrementing view count:', error);
+      }
+    }
+  };
 
   if (videoError || commentsError) return <div>Failed to load data</div>;
   if (!videoData || !commentsData) return <div>Loading...</div>;
@@ -61,10 +93,10 @@ export default function VideoPlayer({
               ? searchParams.quality[0]
               : searchParams.quality || 'defaultQuality'
           }
-          // searchParams={searchParams}
+          onPlayVideoIncrementView={incrementViewCount}
         />
         <div className="px-10">
-          <h1 className="text-2xl">{params.slug}</h1>
+          <p className="text-2xl">{currentVideoData?.data.title_video}</p>
           <div className="flex gap-4">
             <div className="avatar">
               <div className="w-16 rounded-full">
@@ -77,12 +109,10 @@ export default function VideoPlayer({
             <div className="flex w-full justify-between">
               <div className="flex w-fit gap-4 text-white">
                 <div>
-                  <p className="text-lg font-bold">{searchParams.quality}</p>
+                  <p className="text-lg font-bold">{currentVideoData?.data.user?.username}</p>
                   <p>{searchParams.quality}</p>
                 </div>
-                <button className="btn bg-white text-black hover:bg-rose-500 hover:text-white">
-                  Subscribe Lah
-                </button>
+        
               </div>
               <button className="btn">
                 <svg
@@ -98,6 +128,12 @@ export default function VideoPlayer({
                 Share
               </button>
             </div>
+
+          </div>
+          <div className=''>
+            <p>
+              {currentVideoData?.data.description}
+            </p>
           </div>
         </div>
         <div className="mx-10 flex flex-col gap-2">

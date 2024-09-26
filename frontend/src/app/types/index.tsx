@@ -11,7 +11,18 @@ export interface VideoDataType {
   likes?: number;
   created_at?: string; 
   id_user?: number;
+  user?: UserType;
 }
+
+export interface UserType {
+  id_user: number;
+  username: string;
+  email: string;
+  image_url: string;
+  created_at: string;
+  token?: string | null;
+}
+
 export interface CommentResponse {
   data: CommentDataType[];
 }

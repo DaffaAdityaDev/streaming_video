@@ -4,16 +4,19 @@ import { RequestWithUser } from '../types';
 import path from 'path';
 import fs from 'fs';
 import videoRepository from '../repository/videoRepository';
+import { createLogger } from '../utils/logger';
+
+const logger = createLogger('videoController');
 
 async function syncVideoStatus(slug: string, videoExists: boolean, thumbnailExists: boolean) {
   if (!videoExists && !thumbnailExists) {
     await videoRepository.deleteBySlug(slug);
-    console.log(`Deleted database entry for non-existent video and thumbnail: ${slug}`);
+    logger.info(`Deleted database entry for non-existent video and thumbnail: ${slug}`);
   } else if (!videoExists) {
     await videoRepository.updateVideoStatus(slug, 'FILE_MISSING');
-    console.log(`Updated status to FILE_MISSING for video: ${slug}`);
+    logger.info(`Updated status to FILE_MISSING for video: ${slug}`);
   } else if (!thumbnailExists) {
-    console.log(`Thumbnail missing for video: ${slug}`);
+    logger.info(`Thumbnail missing for video: ${slug}`);
     // You might want to regenerate the thumbnail here
   }
 }
@@ -63,7 +66,7 @@ export const streamVideo = async (req: Request, res: Response) => {
       fs.createReadStream(videoPath).pipe(res);
     }
   } catch (error) {
-    console.error('Error streaming video:', error);
+    logger.error('Error streaming video:', error);
     res.status(500).json({ message: 'Error streaming video' });
   }
 };
@@ -93,7 +96,7 @@ export const uploadVideo = async (req: RequestWithUser, res: Response) => {
       data: video,
     });
   } catch (error) {
-    console.error('Error uploading video:', error);
+    logger.error('Error uploading video:', error);
     res.status(500).json({
       status: 'error',
       message: error instanceof Error ? error.message : 'An unknown error occurred',
@@ -104,17 +107,17 @@ export const uploadVideo = async (req: RequestWithUser, res: Response) => {
 export const getVideo = async (req: Request, res: Response) => {
   try {
     const { quality, slug } = req.params;
-    console.log(`Requested video: quality=${quality}, slug=${slug}`);
+    logger.info(`Requested video: quality=${quality}, slug=${slug}`);
 
     const videoDir = path.join(__dirname, '../../../video/');
     const videoPath = path.join(videoDir, quality, `${slug}.mp4`);
     
-    console.log('Full video path:', videoPath);
-    console.log('__dirname:', __dirname);
-    console.log('File exists:', fs.existsSync(videoPath));
+    logger.debug('Full video path:', videoPath);
+    logger.debug('__dirname:', __dirname);
+    logger.debug('File exists:', fs.existsSync(videoPath));
 
     if (!fs.existsSync(videoPath)) {
-      console.log('Parent directory contents:', fs.readdirSync(path.dirname(videoPath)));
+      logger.warn('Parent directory contents:', fs.readdirSync(path.dirname(videoPath)));
       return res.status(404).json({ message: 'Video file not found' });
     }
 
@@ -145,7 +148,7 @@ export const getVideo = async (req: Request, res: Response) => {
       fs.createReadStream(videoPath).pipe(res);
     }
   } catch (error) {
-    console.error('Error streaming video:', error);
+    logger.error('Error streaming video:', error);
     res.status(500).json({ message: 'Error streaming video' });
   }
 };
@@ -204,19 +207,19 @@ export const getAllVideos = async (req: Request, res: Response) => {
 
 export const getVideosByUserEmail = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    console.log('getVideosByUserEmail route hit');
+    logger.info('getVideosByUserEmail route hit');
     const encodedEmail = req.params.email;
     const userEmail = atob(encodedEmail); // Base64 decode the email
-    console.log('Decoded email:', userEmail);
+    logger.debug('Decoded email:', userEmail);
     const videos = await videoService.getVideosByUserEmail(userEmail);
-    console.log('Videos fetched:', videos);
+    logger.debug('Videos fetched:', videos);
     
     res.status(200).json({
       status: 'success',
       data: videos,
     });
   } catch (error) {
-    console.error('Error in getVideosByUserEmail:', error);
+    logger.error('Error in getVideosByUserEmail:', error);
     next(error);
   }
 };
@@ -269,3 +272,35 @@ export const deleteVideo = async (req: Request, res: Response) => {
     res.status(500).json({ status: 'error', message: 'Failed to delete video' });
   }
 };
+
+export const incrementVideoView = async (req: Request, res: Response) => {
+  try {
+    const { slug } = req.params;
+    const video = await videoService.incrementVideoView(slug);
+    res.status(200).json({ 
+      status: 'success', 
+      message: 'Video view incremented successfully', 
+      data: {
+        views: video.views
+      } 
+    });
+  } catch (error) {
+    console.error('Error incrementing video view:', error);
+    res.status(500).json({ status: 'error', message: 'Failed to increment video view' });
+  }
+};
+
+export const getVideoBySlug = async (req: Request, res: Response) => {
+  try {
+    const { slug } = req.params;
+    const video = await videoService.getVideoBySlug(slug);
+    res.status(200).json({
+      status: 'success',
+      data: video,
+    });
+  } catch (error) {
+    console.error('Error fetching video by slug:', error);
+    res.status(500).json({ status: 'error', message: 'Failed to fetch video by slug' });
+  }
+};
+

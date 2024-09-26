@@ -9,14 +9,39 @@ import dotenv from 'dotenv';
 import { processVideo, generateThumbnail } from '../utils/videoProcessing';
 import prisma from '../config/database';
 import fs from 'fs/promises';
+import { createLogger } from '../utils/logger';
+import { AppError, errorTypes } from '../utils/AppError';
+
+const logger = createLogger('videoService');
 
 ffmpeg.setFfmpegPath(ffmpegPath.path);
 ffmpeg.setFfprobePath(ffprobePath.path);
 
-
 dotenv.config();
 
 const uploadVideo = async (file: Express.Multer.File, userId: number, io: Server) => {
+  if (!file || !file.path) {
+    throw new AppError('No file uploaded', errorTypes.BAD_REQUEST);
+  }
+
+  try {
+    await fs.access(file.path);
+  } catch (error) {
+    throw new AppError('File is inaccessible', errorTypes.BAD_REQUEST);
+  }
+
+  const stats = await fs.stat(file.path);
+  if (stats.size === 0) {
+    throw new AppError('File is empty', errorTypes.BAD_REQUEST);
+  }
+
+  // Check if the file is a valid video format
+  const validVideoFormats = ['.mp4', '.avi', '.mov', '.wmv', '.flv'];
+  const fileExtension = path.extname(file.originalname).toLowerCase();
+  if (!validVideoFormats.includes(fileExtension)) {
+    throw new AppError('Invalid video format', errorTypes.BAD_REQUEST);
+  }
+
   const slug = uuidv4();
 
   try {
@@ -43,7 +68,13 @@ const uploadVideo = async (file: Express.Multer.File, userId: number, io: Server
 
       // Generate thumbnail after processing
       const defaultQualityPath = path.join(__dirname, '../../video/defaultQuality', `${slug}.mp4`);
-      await generateThumbnail(defaultQualityPath, slug);
+      try {
+        await fs.access(defaultQualityPath);
+        await generateThumbnail(defaultQualityPath, slug);
+      } catch (error) {
+        logger.error('Error generating thumbnail:', error);
+        io.emit('thumbnailError', { file: slug, error: 'Failed to generate thumbnail' });
+      }
     }).catch(async (error) => {
       console.error('Error processing video:', error);
       io.emit('processingError', { file: slug, error: error.message });
@@ -60,9 +91,10 @@ const uploadVideo = async (file: Express.Multer.File, userId: number, io: Server
 };
 
 const getVideoBySlug = async (slug: string) => {
-  const video = await videoRepository.findBySlug(slug);
+  const video = await videoRepository.findBySlugWithUser(slug);
   if (!video) {
-    console.log('Video not found');
+    logger.warn('Video not found');
+    throw new AppError('Video not found', errorTypes.NOT_FOUND);
   }
   return video;
 };
@@ -82,9 +114,13 @@ const getAllVideos = async () => {
 };
 
 const getVideosByUserEmail = async (email: string) => {
-  console.log('Fetching videos for email:', email);
+  logger.info('Fetching videos for email:', email);
   const videos = await videoRepository.findByUserEmail(email);
-  console.log('Videos found:', videos);
+  logger.info('Videos found:', videos.length);
+  if (videos.length === 0) {
+    logger.info('No videos found for user');
+    return [];
+  }
   return videos.map(video => ({
     id_video: video.id_video,
     title_video: video.title_video,
@@ -97,8 +133,8 @@ const getVideosByUserEmail = async (email: string) => {
 const getThumbnail = async (videoId: string): Promise<string> => {
   const thumbnail = await videoRepository.getThumbnailByVideoId(videoId);
   if (!thumbnail) {
-    console.log('Thumbnail not found');
-    return ''; // Return an empty string as a default thumbnail
+    logger.warn(`Thumbnail not found for video ID: ${videoId}`);
+    return '';
   }
   return thumbnail;
 };
@@ -141,23 +177,64 @@ const deleteVideo = async (id: number) => {
     for (const quality of qualities) {
       const filePath = path.join(videoDir, quality, `${video.slug}.mp4`);
       try {
+        await fs.access(filePath);
         await fs.unlink(filePath);
+        logger.info(`Deleted video file: ${filePath}`);
       } catch (error) {
-        console.error(`Failed to delete file: ${filePath}`, error);
-        // Continue with other deletions even if one fails
+        if (error instanceof Error) {
+          if ('code' in error) {
+            if (error.code === 'ENOENT') {
+              logger.warn(`File not found: ${filePath}`);
+            } else if (error.code === 'EACCES') {
+              logger.error(`Permission denied: ${filePath}`);
+              throw new AppError('Permission denied when deleting video files', errorTypes.FORBIDDEN);
+            } else {
+              logger.error(`Failed to delete file: ${filePath}`, error);
+            }
+          } else {
+            logger.error(`Unknown error when deleting file: ${filePath}`, error);
+          }
+        } else {
+          logger.error(`Non-Error object thrown when deleting file: ${filePath}`, error);
+        }
       }
     }
 
     // 5. Delete thumbnail
     const thumbnailPath = path.join(__dirname, '../../thumbnails', video.thumbnail);
     try {
+      await fs.access(thumbnailPath);
       await fs.unlink(thumbnailPath);
+      logger.info(`Deleted thumbnail: ${thumbnailPath}`);
     } catch (error) {
-      console.error(`Failed to delete thumbnail: ${thumbnailPath}`, error);
+      if (error instanceof Error) {
+        if ('code' in error) {
+          if (error.code === 'ENOENT') {
+            logger.warn(`Thumbnail not found: ${thumbnailPath}`);
+          } else if (error.code === 'EACCES') {
+            logger.error(`Permission denied: ${thumbnailPath}`);
+            throw new AppError('Permission denied when deleting thumbnail', errorTypes.FORBIDDEN);
+          } else {
+            logger.error(`Failed to delete thumbnail: ${thumbnailPath}`, error);
+          }
+        } else {
+          logger.error(`Unknown error when deleting thumbnail: ${thumbnailPath}`, error);
+        }
+      } else {
+        logger.error(`Non-Error object thrown when deleting thumbnail: ${thumbnailPath}`, error);
+      }
     }
 
     return video;
   });
+};
+
+const incrementVideoView = async (slug: string) => {
+  const video = await videoRepository.incrementViews(slug);
+  if (!video) {
+    throw new AppError('Video not found', errorTypes.NOT_FOUND);
+  }
+  return video;
 };
 
 
@@ -171,4 +248,9 @@ const deleteVideoBySlug = async (slug: string) => {
 };
 
 
-export default { uploadVideo, getVideoBySlug, getAllVideos, getVideosByUserEmail, getThumbnail, deleteVideo, deleteVideoBySlug, deleteVideoById, updateVideoTitle }; 
+export default { 
+  uploadVideo, getVideoBySlug, getAllVideos, 
+  getVideosByUserEmail, getThumbnail, deleteVideo, 
+  deleteVideoBySlug, deleteVideoById, updateVideoTitle,
+  incrementVideoView
+ }; 

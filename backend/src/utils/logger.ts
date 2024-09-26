@@ -1,5 +1,7 @@
 import winston from 'winston';
 import dotenv from 'dotenv';
+import moment from 'moment-timezone';
+import { config } from '../config/enviroment';
 
 dotenv.config();
 
@@ -36,29 +38,33 @@ const customFormat = winston.format.printf(({ level, message, timestamp, namespa
 
 // Function to determine the active log levels based on environment variables
 const getActiveLevels = () => {
-  const env = process.env.NODE_ENV || 'development';
-  const logLevel = process.env.LOG_LEVEL || 'info';
-  
-  const levelIndex = Object.keys(customLevels.levels).indexOf(logLevel);
-  return Object.keys(customLevels.levels).slice(0, levelIndex + 1);
+  const logLevel = process.env.LOG_LEVEL || 'debug';
+  // Remove this line:
+  // console.log('Current LOG_LEVEL:', logLevel);
+  return Object.keys(customLevels.levels);
 };
 
 // Create the base logger
 const createBaseLogger = () => {
-  const activeLevels = getActiveLevels();
-  const env = process.env.NODE_ENV || 'development';
+  const logLevel = process.env.LOG_LEVEL || 'debug';
+  console.log('Creating logger with level:', logLevel);
   
   const transports: winston.transport[] = [
     new winston.transports.Console({
-      level: activeLevels[0],
+      level: logLevel,
       format: winston.format.combine(
         winston.format.colorize(),
+        winston.format.timestamp({
+          format: () => {
+            return moment().tz(config.timezone).format('YYYY-MM-DD HH:mm:ss.SSS Z');
+          }
+        }),
         customFormat
       )
     })
   ];
 
-  // Add file transports for production
+  const env = process.env.NODE_ENV || 'development';
   if (env === 'production') {
     transports.push(
       new winston.transports.File({ 
@@ -67,16 +73,20 @@ const createBaseLogger = () => {
       }),
       new winston.transports.File({ 
         filename: 'combined.log',
-        level: activeLevels[0]
+        level: logLevel
       })
     );
   }
 
   return winston.createLogger({
     levels: customLevels.levels,
-    level: activeLevels[0],
+    level: logLevel,
     format: winston.format.combine(
-      winston.format.timestamp(),
+      winston.format.timestamp({
+        format: () => {
+          return moment().tz(config.timezone).format('YYYY-MM-DD HH:mm:ss.SSS Z');
+        }
+      }),
       winston.format.colorize(),
       customFormat
     ),

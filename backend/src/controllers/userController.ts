@@ -6,6 +6,9 @@ import jwt from 'jsonwebtoken';
 import { config } from '../config/enviroment';
 import { AuthenticatedRequest } from '../types';
 import userRepository from '../repository/userRepository';
+import { createLogger } from '../utils/logger';
+
+const logger = createLogger('userController');
 
 export const registerUser = async (req: Request, res: Response) => {
   try {
@@ -49,6 +52,10 @@ export const refreshToken = async (req: Request, res: Response) => {
     const { refreshToken } = req.body;
     if (!refreshToken) {
       return res.status(400).json({ message: 'Refresh token is required' });
+    }
+
+    if (typeof refreshToken !== 'string' || refreshToken.split('.').length !== 3) {
+      return res.status(400).json({ message: 'Invalid refresh token format' });
     }
 
     const decoded = jwt.verify(refreshToken, config.refreshTokenSecret) as { email: string };
@@ -114,7 +121,7 @@ export const uploadProfileImage = async (req: AuthenticatedRequest, res: Respons
       },
     });
   } catch (error) {
-    console.error('Error uploading profile image:', error);
+    logger.error('Error uploading profile image:', error);
     res.status(500).json({
       status: 'error',
       message: 'An error occurred while uploading the profile image',
@@ -178,7 +185,7 @@ export const updateUserProfile = async (req: Request, res: Response) => {
         message: error.message,
       });
     } else {
-      console.error('Unexpected error:', error);
+      logger.error('Unexpected error:', error);
       res.status(500).json({
         status: 'error',
         message: 'An unexpected error occurred',
@@ -209,7 +216,7 @@ export const getCurrentUserProfile = async (req: AuthenticatedRequest, res: Resp
       },
     });
   } catch (error) {
-    console.error('Error fetching user profile:', error);
+    logger.error('Error fetching user profile:', error);
     res.status(500).json({ message: 'Error fetching user profile' });
   }
 };

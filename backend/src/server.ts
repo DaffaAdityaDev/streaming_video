@@ -11,15 +11,19 @@ import commentRoutes from './routes/v1/commentRoutes';
 import videoRoutes from './routes/v1/videoRoutes';
 import { errorHandler, AppError } from './utils/AppError';
 import { checkDatabaseConnection } from './config/database';
+import { createLogger } from './utils/logger';
+
+const logger = createLogger('server');
+// console.log('Environment variables:', process.env);
 
 // Global error handlers
 process.on('uncaughtException', (error: Error) => {
-  console.error('Uncaught Exception:', error);
+  logger.error('Uncaught Exception:', error);
   process.exit(1);
 });
 
 process.on('unhandledRejection', (reason: any, promise: Promise<any>) => {
-  console.error('Unhandled Rejection at:', promise, 'reason:', reason);
+  logger.error(`Unhandled Rejection at: ${promise} reason: ${reason}`);
   process.exit(1);
 });
 
@@ -36,14 +40,14 @@ const io = new Server(server, {
 
 // Graceful shutdown function
 const gracefulShutdown = (server: http.Server) => {
-  console.log('Received kill signal, shutting down gracefully');
+  logger.info('Received kill signal, shutting down gracefully');
   server.close(() => {
-    console.log('Closed out remaining connections');
+    logger.info('Closed out remaining connections');
     process.exit(0);
   });
 
   setTimeout(() => {
-    console.error('Could not close connections in time, forcefully shutting down');
+    logger.error('Could not close connections in time, forcefully shutting down');
     process.exit(1);
   }, 10000);
 };
@@ -108,9 +112,12 @@ APP.use((req: Request, res: Response, next: NextFunction) => {
 
 // This should be at the end of your middleware chain in server.ts
 APP.use((err: AppError, req: Request, res: Response, next: NextFunction) => {
-  console.error('Error caught in final error handler:', err);
-  console.error('Request method:', req.method);
-  console.error('Request URL:', req.url);
+  logger.error(`Error caught in final error handler: ${err.message}`, {
+    statusCode: err.statusCode,
+    stack: err.stack,
+    method: req.method,
+    url: req.url
+  });
   res.status(err.statusCode || 500).json({
     status: 'error',
     message: err.message,
@@ -121,14 +128,23 @@ APP.use((err: AppError, req: Request, res: Response, next: NextFunction) => {
 
 // Start the server
 const startServer = async () => {
+  logger.debug('Starting server...');
+  logger.info(`Current timezone: ${config.timezone}`);
+  // logger.error('Test error log');
+  // logger.warn('Test warn log');
+  // logger.info('Test info log');
+  // logger.http('Test http log');
+  // logger.verbose('Test verbose log');
+  // logger.debug('Test debug log');
+  // logger.silly('Test silly log');
   try {
     await checkDatabaseConnection();
     server.listen(config.port, () => {
-      console.log(`Server listening on ${config.url}:${config.port}`);
-      console.log(`WebSocket server listening on ${config.url}:${config.webSocketPort}`);
+      logger.info(`Server listening on ${config.url}:${config.port}`);
+      logger.info(`WebSocket server listening on ${config.url}:${config.webSocketPort}`);
     });
   } catch (error) {
-    console.error('Failed to start server:', error);
+    logger.error('Failed to start server:', error);
     process.exit(1);
   }
 };

@@ -1,5 +1,8 @@
 import prisma from "../config/database";
 import { Videos, Prisma } from "@prisma/client";
+import { createLogger } from "../utils/logger";
+
+const logger = createLogger('videoRepository');
 
 const findBySlug = async (slug: string): Promise<Videos | null> => {
   return prisma.videos.findUnique({ where: { slug } });
@@ -33,13 +36,13 @@ const findAll = async (options?: { orderBy?: { [key: string]: 'asc' | 'desc' } }
 };
 
 const findByUserEmail = async (email: string) => {
-  console.log('Finding user with email:', email);
+  logger.info('Finding user with email:', email);
   const user = await prisma.users.findUnique({ where: { email } });
   if (!user) { 
-    console.log('User not found');
+    logger.warn('User not found');
     throw new Error('User not found');
   }
-  console.log('User found, fetching videos');
+  logger.info('User found, fetching videos');
   return prisma.videos.findMany({ 
     where: { id_user: user.id_user },
     orderBy: { created_at: 'desc' },
@@ -70,4 +73,24 @@ const updateVideoStatus = async (slug: string, status: string): Promise<Videos |
     data: { status },
   });
 };
-export default { findBySlug, create, update, findAll, findByUserEmail, getThumbnailByVideoId, deleteById, findById, deleteBySlug, updateVideoTitle, updateVideoStatus }; 
+
+const incrementViews = async (slug: string): Promise<Videos | null> => {
+  return prisma.videos.update({
+    where: { slug },
+    data: { views: { increment: 1 } },
+  });
+};
+
+const findBySlugWithUser = async (slug: string): Promise<Videos | null> => {
+  return prisma.videos.findUnique({
+    where: { slug },
+    include: { user: true }
+  });
+};
+
+export default { 
+  findBySlug, create, update, findAll, 
+  findByUserEmail, getThumbnailByVideoId, 
+  deleteById, findById, deleteBySlug, updateVideoTitle, 
+  updateVideoStatus, incrementViews, findBySlugWithUser
+};

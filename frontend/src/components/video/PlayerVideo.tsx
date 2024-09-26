@@ -3,7 +3,7 @@ import React, { useRef, useState, useEffect, useContext } from 'react';
 import { AppContext } from '../context/AppContext';
 
 
-export const PlayerVideo = ({ src, quality }: { src: string; quality: string }) => {
+export const PlayerVideo = ({ src, quality, onPlayVideoIncrementView }: { src: string; quality: string, onPlayVideoIncrementView: () => void }) => {
   const [qualities, setQualities] = useState(quality);
   const suportedQualities = ['144p', '240p', '480p', '720p', '1080p', '4k'];
   const getUrl = (src: string, quality: string) => {
@@ -30,7 +30,7 @@ export const PlayerVideo = ({ src, quality }: { src: string; quality: string }) 
   const [isBuffered, setIsBuffered] = useState(false);
   const [currentStatusPlaying, setCurrentStatusPlaying] = useState('Pause');
   const [clickedShowInfo, setClickedShowInfo] = useState(false);
-  const { isFullScreen, setIsFullScreen } = useContext(AppContext);
+  const { isFullScreen, setIsFullScreen } = useContext(AppContext); 
 
 
 
@@ -51,6 +51,7 @@ export const PlayerVideo = ({ src, quality }: { src: string; quality: string }) 
 
       const onCanPlay = () => {
         currentVideoRef.play();
+        onPlayVideoIncrementView();
       };
 
       const onLoadedMetadata = () => {
