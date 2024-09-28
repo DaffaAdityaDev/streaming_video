@@ -36,7 +36,7 @@ api.interceptors.response.use(
       }
     }
     return Promise.reject(error);
-  }
+  },
 );
 
 export const fetcher = async (url: string) => {
@@ -54,14 +54,18 @@ export const fetcher = async (url: string) => {
   }
 };
 
-export const postData = async (url: string, data: any, token?: string) => {
+export const postData = async (endpoint: string, data: any, token: string) => {
+  const BASE_URL = process.env.NEXT_PUBLIC_BACKEND_URL;
+  const url = `${BASE_URL}${endpoint}`;
+
   try {
-    const headers: Record<string, string> = {};
-    if (token) {
-      headers['Authorization'] = `Bearer ${token}`;
-    }
-    const response = await api.post(url, data, { headers });
-    return response.data;
+    const response = await axios.post(url, data, {
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+    });
+    return response;
   } catch (error) {
     console.error('API post request failed:', error);
     throw error;
@@ -117,7 +121,9 @@ export const getCurrentUserProfile = async () => {
         console.error('Unauthorized: Token may be invalid or expired');
         // Optionally, you can trigger a logout or token refresh here
       } else {
-        console.error(`Failed to fetch user profile: ${error.response?.data?.message || error.message}`);
+        console.error(
+          `Failed to fetch user profile: ${error.response?.data?.message || error.message}`,
+        );
       }
     } else {
       console.error('An unexpected error occurred while fetching user profile');

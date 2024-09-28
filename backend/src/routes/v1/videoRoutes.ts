@@ -1,4 +1,4 @@
-import { deleteVideo, getThumbnail, getVideosByUserEmail, incrementVideoView, getVideoBySlug } from '../../controllers/videoController';
+import { deleteVideo, getThumbnail, getVideosByUserEmail, incrementVideoView, getVideoBySlug, updateThumbnail } from '../../controllers/videoController';
 import { Router } from 'express';
 import { uploadVideo, getVideo, getAllVideos, streamVideo, updateVideo } from '../../controllers/videoController';
 import authMiddleware from '../../middlewares/authMiddleware';
@@ -30,6 +30,27 @@ const upload = multer({
     }
   }
 });
+
+const thumbnailUpload = multer({
+  storage: multer.diskStorage({
+    destination: (req, file, cb) => {
+      const dir = path.join(__dirname, '../../../thumbnails/');
+      fs.mkdirSync(dir, { recursive: true });
+      cb(null, dir);
+    },
+    filename: (req, file, cb) => {
+      cb(null, Date.now() + path.extname(file.originalname));
+    }
+  }),
+  fileFilter: (req, file, cb) => {
+    const allowedMimes = ['image/jpeg', 'image/png', 'image/gif'];
+    if (allowedMimes.includes(file.mimetype)) {
+      cb(null, true);
+    } else {
+      cb(new Error('Invalid file type. Only image files are allowed.'));
+    }
+  }
+});
  
 // Version 1 routes 
 const v1Router = Router();
@@ -57,6 +78,7 @@ v1Router.get('/list-files', (req, res) => {
 v1Router.post('/upload', authMiddleware, upload.single('video'), validateVideoUpload, validate, uploadVideo);
 v1Router.post('/:slug/view', authMiddleware, incrementVideoView);
 v1Router.put('/:id', updateVideo);
+v1Router.put('/:slug/thumbnail', authMiddleware, thumbnailUpload.single('thumbnail'), updateThumbnail);
 v1Router.delete('/:identifier', authMiddleware, deleteVideo);
 
 // Apply v1 routes to the main router

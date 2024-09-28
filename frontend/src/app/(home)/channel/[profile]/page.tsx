@@ -94,18 +94,18 @@ function Page() {
         setNewPassword(value);
         break;
     }
-    setChangedFields(prev => new Set(prev.add(field)));
+    setChangedFields((prev) => new Set(prev.add(field)));
   };
 
   const handleSave = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const updatedFields: { [key: string]: string } = {
-      currentEmail: email // Always include the current email
+      currentEmail: email, // Always include the current email
     };
 
     let hasValidChanges = false;
 
-    Array.from(changedFields).forEach(field => {
+    Array.from(changedFields).forEach((field) => {
       let value = '';
       switch (field) {
         case 'username':
@@ -115,7 +115,9 @@ function Page() {
               updatedFields.username = value;
               hasValidChanges = true;
             } else {
-              toast.error('Invalid username format (3-20 characters, alphanumeric and underscores allowed)');
+              toast.error(
+                'Invalid username format (3-20 characters, alphanumeric and underscores allowed)',
+              );
               return;
             }
           }
@@ -153,15 +155,11 @@ function Page() {
     }
 
     try {
-      const response = await axios.put(
-        `${BASE_API_URL}/user/update-profile`,
-        updatedFields,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
+      const response = await axios.put(`${BASE_API_URL}/user/update-profile`, updatedFields, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
 
       if (response.data.status === 'success') {
         toast.success('Profile updated successfully');
@@ -190,11 +188,15 @@ function Page() {
 
   return (
     <div className="flex w-full justify-center gap-4 text-black">
-      <div className='absolute top-0 left-0 w-full h-[25%] -z-10'>
-        <img alt="background" src='/background/background-profile.jpg' className='w-full h-full object-cover' />
-      </div> 
-      <div className="flex mt-20 gap-4">
-        <div className="flex flex-col items-center gap-2 bg-white p-10 rounded-xl">
+      <div className="absolute left-0 top-0 -z-10 h-[25%] w-full">
+        <img
+          alt="background"
+          src="/background/background-profile.jpg"
+          className="h-full w-full object-cover"
+        />
+      </div>
+      <div className="mt-20 flex gap-4">
+        <div className="flex flex-col items-center gap-2 rounded-xl bg-white p-10">
           <div className="relative h-20 w-20">
             <img
               alt="Profile"
@@ -212,18 +214,22 @@ function Page() {
           </div>
           <p>{username}</p>
           <p>{email}</p>
-
         </div>
-        <div className='bg-white rounded-xl w-full max-w-2xl'>
-          <div className='border-b-2 border-gray-400 p-4'>
-            <p className='text-xl'>Account Settings</p>
+        <div className="w-full max-w-2xl rounded-xl bg-white">
+          <div className="border-b-2 border-gray-400 p-4">
+            <p className="text-xl">Account Settings</p>
           </div>
-          <form onSubmit={handleSave} className='flex flex-wrap p-4 gap-4'>
-            <div className='flex flex-col gap-4 w-full sm:w-[calc(50%-0.5rem)]'>
-              <div className='flex flex-col gap-2'>
+          <form onSubmit={handleSave} className="flex flex-wrap gap-4 p-4">
+            <div className="flex w-full flex-col gap-4 sm:w-[calc(50%-0.5rem)]">
+              <div className="flex flex-col gap-2">
                 <p>Username</p>
-                <label className="input input-bordered bg-slate-100 flex items-center gap-2 w-full">
-                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="black" className="h-4 w-4 opacity-70">
+                <label className="input input-bordered flex w-full items-center gap-2 bg-slate-100">
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    viewBox="0 0 16 16"
+                    fill="black"
+                    className="h-4 w-4 opacity-70"
+                  >
                     <path d="M8 8a3 3 0 1 0 0-6 3 3 0 0 0 0 6ZM12.735 14c.618 0 1.093-.561.872-1.139a6.002 6.002 0 0 0-11.215 0c-.22.578.254 1.139.872 1.139h9.47Z" />
                   </svg>
                   <input
@@ -235,11 +241,20 @@ function Page() {
                   />
                 </label>
               </div>
-              <div className='flex flex-col gap-2'>
+              <div className="flex flex-col gap-2">
                 <p>Password</p>
-                <label className="input input-bordered bg-slate-100 flex items-center gap-2 w-full">
-                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="black" className="h-4 w-4 opacity-70">
-                    <path fillRule="evenodd" d="M14 6a4 4 0 0 1-4.899 3.899l-1.955 1.955a.5.5 0 0 1-.353.146H5v1.5a.5.5 0 0 1-.5.5h-2a.5.5 0 0 1-.5-.5v-2.293a.5.5 0 0 1 .146-.353l3.955-3.955A4 4 0 1 1 14 6Zm-4-2a.75.75 0 0 0 0 1.5.5.5 0 0 1 .5.5.75.75 0 0 0 1.5 0 2 2 0 0 0-2-2Z" clipRule="evenodd" />
+                <label className="input input-bordered flex w-full items-center gap-2 bg-slate-100">
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    viewBox="0 0 16 16"
+                    fill="black"
+                    className="h-4 w-4 opacity-70"
+                  >
+                    <path
+                      fillRule="evenodd"
+                      d="M14 6a4 4 0 0 1-4.899 3.899l-1.955 1.955a.5.5 0 0 1-.353.146H5v1.5a.5.5 0 0 1-.5.5h-2a.5.5 0 0 1-.5-.5v-2.293a.5.5 0 0 1 .146-.353l3.955-3.955A4 4 0 1 1 14 6Zm-4-2a.75.75 0 0 0 0 1.5.5.5 0 0 1 .5.5.75.75 0 0 0 1.5 0 2 2 0 0 0-2-2Z"
+                      clipRule="evenodd"
+                    />
                   </svg>
                   <input
                     type="password"
@@ -251,19 +266,19 @@ function Page() {
                 </label>
               </div>
             </div>
-            <div className='w-full sm:w-[calc(50%-0.5rem)]'>
-              <div className='flex flex-col gap-2'>
+            <div className="w-full sm:w-[calc(50%-0.5rem)]">
+              <div className="flex flex-col gap-2">
                 <p>Email</p>
-              <label className="input input-bordered bg-slate-100 flex items-center gap-2 w-full">
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  viewBox="0 0 16 16"
-                  fill="black"
-                  className="h-4 w-4 opacity-70"
-                >
-                  <path d="M2.5 3A1.5 1.5 0 0 0 1 4.5v.793c.026.009.051.02.076.032L7.674 8.51c.206.1.446.1.652 0l6.598-3.185A.755.755 0 0 1 15 5.293V4.5A1.5 1.5 0 0 0 13.5 3h-11Z" />
-                  <path d="M15 6.954 8.978 9.86a2.25 2.25 0 0 1-1.956 0L1 6.954V11.5A1.5 1.5 0 0 0 2.5 13h11a1.5 1.5 0 0 0 1.5-1.5V6.954Z" />
-                </svg>
+                <label className="input input-bordered flex w-full items-center gap-2 bg-slate-100">
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    viewBox="0 0 16 16"
+                    fill="black"
+                    className="h-4 w-4 opacity-70"
+                  >
+                    <path d="M2.5 3A1.5 1.5 0 0 0 1 4.5v.793c.026.009.051.02.076.032L7.674 8.51c.206.1.446.1.652 0l6.598-3.185A.755.755 0 0 1 15 5.293V4.5A1.5 1.5 0 0 0 13.5 3h-11Z" />
+                    <path d="M15 6.954 8.978 9.86a2.25 2.25 0 0 1-1.956 0L1 6.954V11.5A1.5 1.5 0 0 0 2.5 13h11a1.5 1.5 0 0 0 1.5-1.5V6.954Z" />
+                  </svg>
                   <input
                     type="email"
                     className="grow bg-slate-100"
@@ -271,13 +286,15 @@ function Page() {
                     value={newEmail}
                     onChange={(e) => handleInputChange('email', e.target.value)}
                   />
-                </label> 
+                </label>
               </div>
             </div>
-            <div className='flex justify-end p-4 w-full'>
+            <div className="flex w-full justify-end p-4">
               <button
                 type="submit"
-                className={`btn ${changedFields.size > 0 ? 'btn-success' : 'btn-disabled'} text-white w-24`}
+                className={`btn ${
+                  changedFields.size > 0 ? 'btn-success' : 'btn-disabled'
+                } w-24 text-white`}
                 disabled={changedFields.size === 0}
               >
                 Save

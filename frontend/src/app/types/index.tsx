@@ -9,7 +9,7 @@ export interface VideoDataType {
   quality?: string;
   views?: number;
   likes?: number;
-  created_at?: string; 
+  created_at?: string;
   id_user?: number;
   user?: UserType;
 }

@@ -23,18 +23,17 @@ export default function Page({ params }: { params: { userId: string } }) {
 
   const { data: userVideos, error: userVideosError } = useSWR<VideoResponse>(
     email ? `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/v1/video/user/${btoa(email)}` : null,
-    fetcher
+    fetcher,
   );
 
   // console.log(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/v1/video/user/${btoa(email)}`);
 
   const { data: latestComments, error: latestCommentsError } = useSWR<CommentResponse>(
     email ? `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/v1/comment/latest/${btoa(email)}` : null,
-    fetcher
+    fetcher,
   );
 
   // console.log(latestComments);
- 
 
   useEffect(() => {
     setToken(localStorage.getItem('token'));
@@ -54,17 +53,19 @@ export default function Page({ params }: { params: { userId: string } }) {
         const existingIndex = prevProgress.findIndex((item) => item.reso === data.resolution);
         if (existingIndex !== -1) {
           return prevProgress.map((item, index) =>
-            index === existingIndex ? { ...item, progress: data.progress } : item
+            index === existingIndex ? { ...item, progress: data.progress } : item,
           );
         } else {
           const newItem = {
             file: data.file,
             progress: data.progress,
             reso: data.resolution,
-            path: data.resolution === 'upload' || data.resolution === 'overall' ? '' :
-              `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/v1/video/stream/${data.resolution}/${data.file}`,
+            path:
+              data.resolution === 'upload' || data.resolution === 'overall'
+                ? ''
+                : `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/v1/video/stream/${data.resolution}/${data.file}`,
           };
-          
+
           // Insert new item in the correct order
           const newProgress = [...prevProgress];
           if (data.resolution === 'upload') {
@@ -73,7 +74,7 @@ export default function Page({ params }: { params: { userId: string } }) {
             newProgress.splice(1, 0, newItem);
           } else {
             // For resolution-specific items, insert them after 'overall'
-            const overallIndex = newProgress.findIndex(item => item.reso === 'overall');
+            const overallIndex = newProgress.findIndex((item) => item.reso === 'overall');
             newProgress.splice(overallIndex + 1, 0, newItem);
           }
           return newProgress;
@@ -95,12 +96,14 @@ export default function Page({ params }: { params: { userId: string } }) {
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (!selectedFile || !token) {
-      toast.error(selectedFile ? 'You are not authenticated. Please log in.' : 'Please select a file');
+      toast.error(
+        selectedFile ? 'You are not authenticated. Please log in.' : 'Please select a file',
+      );
       return;
     }
     const formData = new FormData();
     formData.append('video', selectedFile);
-  
+
     try {
       setUploadProgress([
         {
@@ -110,7 +113,7 @@ export default function Page({ params }: { params: { userId: string } }) {
           path: '',
         },
       ]);
-  
+
       const response = await axios.post(
         `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/v1/video/upload`,
         formData,
@@ -147,7 +150,7 @@ export default function Page({ params }: { params: { userId: string } }) {
         await mutate(
           `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/v1/video/user/${btoa(email)}`,
           undefined,
-          { revalidate: true }
+          { revalidate: true },
         );
       } catch (error) {
         console.error('Error refreshing videos:', error);

@@ -1,10 +1,12 @@
 import { NextFunction, Request, Response } from 'express';
 import videoService from '../services/videoService';
-import { RequestWithUser } from '../types';
+import { AuthenticatedRequest, RequestWithUser } from '../types';
 import path from 'path';
 import fs from 'fs';
 import videoRepository from '../repository/videoRepository';
 import { createLogger } from '../utils/logger';
+import { AppError } from '../utils/AppError';
+import { Video } from '../models/videoModel';
 
 const logger = createLogger('videoController');
 
@@ -156,21 +158,25 @@ export const getVideo = async (req: Request, res: Response) => {
 export const updateVideo = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
-    const { title_video } = req.body;
+    const { title_video, description } = req.body;
     
-    console.log('Received update request:', { id, title_video });
+    console.log('Received update request:', { id, title_video, description });
 
-    if (!id || !title_video) {
+    if (!id || (!title_video && !description)) {
       return res.status(400).json({
         status: 'error',
-        message: 'Missing required fields: id or title_video',
+        message: 'Missing required fields: id and at least one of title_video or description',
       });
     }
 
-    const video = await videoService.updateVideoTitle(Number(id), title_video);
+    const updateData: Partial<Video> = {};
+    if (title_video) updateData.title_video = title_video;
+    if (description) updateData.description = description;
+
+    const video = await videoService.updateVideo(Number(id), updateData);
     res.status(200).json({
       status: 'success',
-      message: 'Video title updated successfully',
+      message: 'Video details updated successfully',
       data: video,
     });
   } catch (error) {
@@ -304,3 +310,53 @@ export const getVideoBySlug = async (req: Request, res: Response) => {
   }
 };
 
+export const updateThumbnail = async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const { slug } = req.params;
+    const file = req.file;
+
+    if (!file) {
+      return res.status(400).json({
+        status: 'error',
+        message: 'No file uploaded',
+      });
+    }
+
+    const video = await videoService.getVideoBySlug(slug);
+    if (!video) {
+      return res.status(404).json({
+        status: 'error',
+        message: 'Video not found',
+      });
+    }
+
+    const oldThumbnailPath = path.join(__dirname, '../../thumbnails', video.thumbnail);
+    const newThumbnailFileName = `${slug}_${Date.now()}${path.extname(file.originalname)}`;
+    const newThumbnailPath = path.join(__dirname, '../../thumbnails', newThumbnailFileName);
+
+    // Check if old thumbnail exists and delete it
+    if (fs.existsSync(oldThumbnailPath)) {
+      fs.unlinkSync(oldThumbnailPath);
+    }
+
+    // Move the new thumbnail to the correct location
+    fs.renameSync(file.path, newThumbnailPath);
+
+    // Update the database
+    const updatedVideo = await videoService.updateThumbnail(slug, newThumbnailFileName);
+
+    res.status(200).json({
+      status: 'success',
+      message: 'Thumbnail updated successfully',
+      data: {
+        thumbnail: updatedVideo.thumbnail,
+      },
+    });
+  } catch (error) {
+    console.error('Error updating thumbnail:', error);
+    res.status(500).json({
+      status: 'error',
+      message: 'An error occurred while updating the thumbnail',
+    });
+  }
+};

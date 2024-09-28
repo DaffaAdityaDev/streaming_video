@@ -2,8 +2,15 @@
 import React, { useRef, useState, useEffect, useContext } from 'react';
 import { AppContext } from '../context/AppContext';
 
-
-export const PlayerVideo = ({ src, quality, onPlayVideoIncrementView }: { src: string; quality: string, onPlayVideoIncrementView: () => void }) => {
+export const PlayerVideo = ({
+  src,
+  quality,
+  onPlayVideoIncrementView,
+}: {
+  src: string;
+  quality: string;
+  onPlayVideoIncrementView: () => void;
+}) => {
   const [qualities, setQualities] = useState(quality);
   const suportedQualities = ['144p', '240p', '480p', '720p', '1080p', '4k'];
   const getUrl = (src: string, quality: string) => {
@@ -11,7 +18,6 @@ export const PlayerVideo = ({ src, quality, onPlayVideoIncrementView }: { src: s
     const url = `${BACKENDURL}/api/v1/video/stream/${quality}/${src}`;
     return url;
   };
-
 
   const checkIfVideoResoNotBigerThanCurr = (quality: string) => {
     return suportedQualities.splice(0, suportedQualities.indexOf(quality) + 1);
@@ -30,9 +36,7 @@ export const PlayerVideo = ({ src, quality, onPlayVideoIncrementView }: { src: s
   const [isBuffered, setIsBuffered] = useState(false);
   const [currentStatusPlaying, setCurrentStatusPlaying] = useState('Pause');
   const [clickedShowInfo, setClickedShowInfo] = useState(false);
-  const { isFullScreen, setIsFullScreen } = useContext(AppContext); 
-
-
+  const { isFullScreen, setIsFullScreen } = useContext(AppContext);
 
   useEffect(() => {
     initVideoGlowBg();
@@ -40,12 +44,12 @@ export const PlayerVideo = ({ src, quality, onPlayVideoIncrementView }: { src: s
     if (videoRef.current) {
       videoRef.current.pause();
       setUrlToVideo(getUrl(src, qualities));
-    
+
       videoRef.current.load();
     }
     if (videoRef.current) {
       const currentVideoRef = videoRef.current;
-   
+
       const onWaiting = () => setIsBuffered(true);
       const onPlaying = () => setIsBuffered(false);
 
@@ -55,7 +59,6 @@ export const PlayerVideo = ({ src, quality, onPlayVideoIncrementView }: { src: s
       };
 
       const onLoadedMetadata = () => {
-     
         if (currentTime !== undefined) {
           currentVideoRef.currentTime = currentTime;
         }
@@ -258,10 +261,8 @@ export const PlayerVideo = ({ src, quality, onPlayVideoIncrementView }: { src: s
   const handleScrollIfFullScreen = () => {
     if (isFullScreen) {
       document.body.style.cssText = 'overflow: hidden; position:fixed;';
-  
     } else {
       document.body.style.cssText = 'overflow: auto; position:static;';
-     
     }
   };
 

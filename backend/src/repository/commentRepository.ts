@@ -11,6 +11,7 @@ const findByVideoId = async (id_video: number): Promise<Comments[]> => {
   return prisma.comments.findMany({
     where: { id_video },
     include: { user: true },
+    orderBy: { created_at: 'desc' },
   });
 };
 

@@ -9,8 +9,10 @@ import dotenv from 'dotenv';
 import { processVideo, generateThumbnail } from '../utils/videoProcessing';
 import prisma from '../config/database';
 import fs from 'fs/promises';
+import fsSync from 'fs';
 import { createLogger } from '../utils/logger';
 import { AppError, errorTypes } from '../utils/AppError';
+import { Video } from '../models/videoModel';
 
 const logger = createLogger('videoService');
 
@@ -91,7 +93,7 @@ const uploadVideo = async (file: Express.Multer.File, userId: number, io: Server
 };
 
 const getVideoBySlug = async (slug: string) => {
-  const video = await videoRepository.findBySlugWithUser(slug);
+  const video = await videoRepository.findBySlug(slug);
   if (!video) {
     logger.warn('Video not found');
     throw new AppError('Video not found', errorTypes.NOT_FOUND);
@@ -99,12 +101,11 @@ const getVideoBySlug = async (slug: string) => {
   return video;
 };
 
-const updateVideoTitle = async (id: number, title_video: string) => {
-  const video = await videoRepository.updateVideoTitle(id, title_video);
-  if (!video) throw new Error('Video not found');
+const updateVideo = async (id: number, updateData: Partial<Video>) => {
+  const video = await videoRepository.updateVideo(id, updateData);
+  if (!video) throw new AppError('Video not found', errorTypes.NOT_FOUND);
   return video;
 };
-
 const getAllVideos = async () => { 
   return videoRepository.findAll({
     orderBy: {
@@ -246,11 +247,17 @@ const deleteVideoBySlug = async (slug: string) => {
   await videoRepository.deleteBySlug(slug);
   return video;
 };
-
+const updateThumbnail = async (slug: string, newThumbnailFileName: string): Promise<Video> => {
+  const updatedVideo = await videoRepository.update(slug, { thumbnail: newThumbnailFileName });
+  if (!updatedVideo) {
+    throw new AppError('Failed to update video thumbnail', errorTypes.INTERNAL_SERVER);
+  }
+  return updatedVideo;
+};
 
 export default { 
   uploadVideo, getVideoBySlug, getAllVideos, 
   getVideosByUserEmail, getThumbnail, deleteVideo, 
-  deleteVideoBySlug, deleteVideoById, updateVideoTitle,
-  incrementVideoView
+  deleteVideoBySlug, deleteVideoById, updateVideo,
+  incrementVideoView, updateThumbnail
  }; 

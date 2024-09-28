@@ -3,13 +3,14 @@ import axios from 'axios';
 import { UserData } from '@/app/types';
 import { postData } from '@/utils/api';
 import { toast } from 'react-toastify';
+import { mutate } from 'swr';
 
 export default function CommentVideo({
   id_video,
-  setComments,
+  mutate,
 }: {
   id_video: string;
-  setComments: any;
+  mutate: (key?: string, data?: any, options?: any) => Promise<any>;
 }) {
   const [userData, setUserData] = useState<UserData>({
     username: '',
@@ -49,13 +50,10 @@ export default function CommentVideo({
       if (response.data) {
         setComment('');
         toast.success('Comment posted successfully');
-      }
 
-      getCommentsFromAPI(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/v1/comment/${id_video}`).then(
-        (response) => {
-          setComments(response.data);
-        },
-      );
+        // Revalidate the comments data
+        await mutate(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/v1/comment/${id_video}`);
+      }
     } catch (error) {
       console.error('Error posting comment:', error);
       if (axios.isAxiosError(error) && error.response) {

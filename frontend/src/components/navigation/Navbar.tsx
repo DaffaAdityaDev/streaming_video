@@ -79,7 +79,7 @@ export default function Navbar() {
 
   return (
     <div
-      className={`navbar bg-primary-content sticky top-0 z-30 col-span-12 row-span-1 transition-transform duration-200 ease-in-out ${navbarClass} ${bgClass} ${
+      className={`navbar sticky top-0 z-30 col-span-12 row-span-1 bg-primary-content transition-transform duration-200 ease-in-out ${navbarClass} ${bgClass} ${
         screenMode ? 'hidden' : ''
       }`}
     >

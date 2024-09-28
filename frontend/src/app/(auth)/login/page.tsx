@@ -30,7 +30,7 @@ export default function Login() {
       setAlertMessage({ text: 'Please fill in all fields', type: 'error' });
       return;
     }
-  
+
     try {
       const response = await login(email, password);
       if (response.status === 'success') {
@@ -46,7 +46,10 @@ export default function Login() {
           setAlertMessage({ text: error.response.data.message || 'Login failed', type: 'error' });
         } else if (error.request) {
           // Request was made but no response was received
-          setAlertMessage({ text: 'Unable to reach the server. Please try again later.', type: 'error' });
+          setAlertMessage({
+            text: 'Unable to reach the server. Please try again later.',
+            type: 'error',
+          });
         } else {
           // Something happened in setting up the request
           setAlertMessage({ text: 'An unexpected error occurred', type: 'error' });

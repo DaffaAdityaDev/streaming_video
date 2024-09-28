@@ -1,6 +1,7 @@
 import prisma from "../config/database";
 import { Videos, Prisma } from "@prisma/client";
 import { createLogger } from "../utils/logger";
+import { Video } from "../models/videoModel";
 
 const logger = createLogger('videoRepository');
 
@@ -81,10 +82,10 @@ const incrementViews = async (slug: string): Promise<Videos | null> => {
   });
 };
 
-const findBySlugWithUser = async (slug: string): Promise<Videos | null> => {
-  return prisma.videos.findUnique({
-    where: { slug },
-    include: { user: true }
+const updateVideo = async (id: number, data: Partial<Omit<Video, 'id_video' | 'created_at'>>): Promise<Videos | null> => {
+  return prisma.videos.update({
+    where: { id_video: id },
+    data,
   });
 };
 
@@ -92,5 +93,5 @@ export default {
   findBySlug, create, update, findAll, 
   findByUserEmail, getThumbnailByVideoId, 
   deleteById, findById, deleteBySlug, updateVideoTitle, 
-  updateVideoStatus, incrementViews, findBySlugWithUser
+  updateVideoStatus, incrementViews, updateVideo
 };

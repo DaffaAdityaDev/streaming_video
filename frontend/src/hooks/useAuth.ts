@@ -55,7 +55,7 @@ export function useAuth() {
       throw err;
     }
   };
-  
+
   useEffect(() => {
     async function loadUser() {
       try {
@@ -118,7 +118,11 @@ export function useAuth() {
 
   const register = async (username: string, email: string, password: string) => {
     try {
-      const response = await postData(`${BASE_API_URL}/user/register`, { username, email, password });
+      const response = await postData(`${BASE_API_URL}/user/register`, {
+        username,
+        email,
+        password,
+      });
       setError(null);
       return response;
     } catch (err: unknown) {
@@ -137,9 +141,12 @@ export function useAuth() {
 
   const changeUsername = async (email: string, newUsername: string) => {
     try {
-      const response = await postData(`${BASE_API_URL}/user/change-username`, { email, newUsername });
+      const response = await postData(`${BASE_API_URL}/user/change-username`, {
+        email,
+        newUsername,
+      });
       if (response.status === 'success') {
-        setUser(prevUser => prevUser ? { ...prevUser, username: newUsername } : null);
+        setUser((prevUser) => (prevUser ? { ...prevUser, username: newUsername } : null));
         localStorage.setItem('username', newUsername);
         setError(null);
       }
@@ -172,7 +179,7 @@ export function useAuth() {
     try {
       const response = await postData(`${BASE_API_URL}/user/update-profile`, updateData);
       if (response.status === 'success') {
-        setUser(prevUser => prevUser ? { ...prevUser, ...updateData } : null);
+        setUser((prevUser) => (prevUser ? { ...prevUser, ...updateData } : null));
         if (updateData.username) localStorage.setItem('username', updateData.username);
         if (updateData.email) localStorage.setItem('email', updateData.email);
         if (updateData.image_url) localStorage.setItem('imageUrl', updateData.image_url);

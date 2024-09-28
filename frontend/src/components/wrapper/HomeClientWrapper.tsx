@@ -9,11 +9,7 @@ const CardVideo = dynamic(() => import('@/components/video/CardVideo'), {
   loading: () => <CardVideoSkeleton />,
 });
 
-export default function HomeClientWrapper({
-  initialData,
-}: {
-  initialData: VideoDataType[];
-}) {
+export default function HomeClientWrapper({ initialData }: { initialData: VideoDataType[] }) {
   const { search } = useContext(AppContext);
   const [filteredData, setFilteredData] = useState<VideoDataType[]>(initialData);
 
@@ -33,9 +29,7 @@ export default function HomeClientWrapper({
 
   return (
     <div className="col-span-12 grid grid-cols-[repeat(auto-fill,minmax(calc(400px),1fr))] gap-4">
-      {filteredData?.map((item) => (
-        <CardVideo key={item.id_video} {...item} />
-      ))}
+      {filteredData?.map((item) => <CardVideo key={item.id_video} {...item} />)}
     </div>
   );
 }

@@ -5,7 +5,7 @@ import dynamic from 'next/dynamic';
 import { VideoDataType } from '@/app/types';
 // import videoData from '@/data/videoData';
 import { useState, useEffect, useContext } from 'react';
-import useSWR from 'swr';
+import useSWR, { mutate } from 'swr';
 import { fetcher } from '@/utils/api';
 import { PlayerVideo } from '@/components/video/PlayerVideo';
 import axios from 'axios';
@@ -39,10 +39,10 @@ export default function VideoPlayer({
     fetcher,
   );
 
-  const { data: currentVideoData, error: currentVideoError } = useSWR<{ status: string; data: VideoDataType }>(
-    `${url}/video/${searchParams.video}`,
-    fetcher,
-  );
+  const { data: currentVideoData, error: currentVideoError } = useSWR<{
+    status: string;
+    data: VideoDataType;
+  }>(`${url}/video/${searchParams.video}`, fetcher);
 
   console.log('currentVideoData', currentVideoData);
 
@@ -54,16 +54,22 @@ export default function VideoPlayer({
   const incrementViewCount = async () => {
     if (!viewCounted) {
       try {
-        const videoSlug = Array.isArray(searchParams.video) ? searchParams.video[0] : searchParams.video;
+        const videoSlug = Array.isArray(searchParams.video)
+          ? searchParams.video[0]
+          : searchParams.video;
         if (videoSlug) {
           const urlViewIncrement = `${url}/video/${videoSlug}/view`;
-          console.log('Incrementing view count:', urlViewIncrement);
+          // console.log('Incrementing view count:', urlViewIncrement);
           const token = localStorage.getItem('token'); // Assuming you store the token in localStorage
-          await axios.post(urlViewIncrement, {}, {
-            headers: {
-              Authorization: `Bearer ${token}`
-            }
-          });
+          await axios.post(
+            urlViewIncrement,
+            {},
+            {
+              headers: {
+                Authorization: `Bearer ${token}`,
+              },
+            },
+          );
           setViewCounted(true);
         } else {
           console.error('Video slug is undefined');
@@ -110,9 +116,8 @@ export default function VideoPlayer({
               <div className="flex w-fit gap-4 text-white">
                 <div>
                   <p className="text-lg font-bold">{currentVideoData?.data.user?.username}</p>
-                  <p>{searchParams.quality}</p>
+                  <p>{currentVideoData?.data.views} views</p>
                 </div>
-        
               </div>
               <button className="btn">
                 <svg
@@ -128,12 +133,9 @@ export default function VideoPlayer({
                 Share
               </button>
             </div>
-
           </div>
-          <div className=''>
-            <p>
-              {currentVideoData?.data.description}
-            </p>
+          <div className="">
+            <p>{currentVideoData?.data.description}</p>
           </div>
         </div>
         <div className="mx-10 flex flex-col gap-2">
@@ -143,10 +145,7 @@ export default function VideoPlayer({
           />
           <CommentsList comments={comments} />
            */}
-          <CommentVideo
-            id_video={videoId}
-            setComments={() => {}} // This will be handled by SWR revalidation
-          />
+          <CommentVideo id_video={videoId} mutate={mutate} />
           <CommentsList comments={commentsData.data} />
         </div>
       </div>

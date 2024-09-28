@@ -14,7 +14,6 @@ import { checkDatabaseConnection } from './config/database';
 import { createLogger } from './utils/logger';
 
 const logger = createLogger('server');
-// console.log('Environment variables:', process.env);
 
 // Global error handlers
 process.on('uncaughtException', (error: Error) => {
@@ -77,7 +76,7 @@ APP.use(
     origin: '*',
     methods: ['GET', 'POST', 'PUT', 'DELETE'], // Specify the methods you want to allow
     allowedHeaders: ['Content-Type', 'Authorization'], // Specify any additional headers you want to allow
-  }),
+  }), 
 );
 
 // Swagger documentation
