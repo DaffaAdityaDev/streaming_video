@@ -90,6 +90,7 @@ const LatestUploads: React.FC<LatestUploadsProps> = ({ videos, refreshVideos }) 
   const [editedTitle, setEditedTitle] = useState('');
   const [editedDescription, setEditedDescription] = useState('');
   const [changedFields, setChangedFields] = useState<Set<string>>(new Set());
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
 
   console.log(videoList);
   console.log(editingVideo);
@@ -105,6 +106,15 @@ const LatestUploads: React.FC<LatestUploadsProps> = ({ videos, refreshVideos }) 
     setEditedDescription(video.description || '');
     setChangedFields(new Set());
     setIsEditing(true);
+  };
+
+  const handleCloseEdit = () => {
+    setIsEditing(false);
+    setImagePreview(null);
+    setChangedFields(new Set());
+    if (imagePreview) {
+      URL.revokeObjectURL(imagePreview);
+    }
   };
 
   const handleInputChange = (field: string, value: string) => {
@@ -130,11 +140,14 @@ const LatestUploads: React.FC<LatestUploadsProps> = ({ videos, refreshVideos }) 
     }
   };
 
-  const handleThumbnailChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleThumbnailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0 && editingVideo) {
       const file = e.target.files[0];
       setChangedFields(prev => new Set(prev).add('thumbnail'));
-      // We don't update the thumbnail immediately, it will be updated when Save is clicked
+      
+      // Create a preview URL for the selected image
+      const previewUrl = URL.createObjectURL(file);
+      setImagePreview(previewUrl);
     }
   };
 
@@ -215,6 +228,13 @@ const LatestUploads: React.FC<LatestUploadsProps> = ({ videos, refreshVideos }) 
 
       refreshVideos();
       setIsEditing(false);
+setImagePreview(null);
+setChangedFields(new Set());
+if (imagePreview) {
+  URL.revokeObjectURL(imagePreview);
+  setImagePreview(null);
+}
+      
       toast.success('Video details updated successfully');
     } catch (error) {
       console.error('Error updating video details:', error);
@@ -263,12 +283,12 @@ const LatestUploads: React.FC<LatestUploadsProps> = ({ videos, refreshVideos }) 
           {isEditing && editingVideo && (
             <div className="fixed left-0 top-0 z-50 flex h-full w-full items-center justify-center bg-black/50">
               <div className="relative flex h-full w-full items-center justify-center">
-                <button
-                  className="btn btn-circle btn-sm absolute right-0 top-0 m-4 bg-red-600 text-white"
-                  onClick={() => setIsEditing(false)}
-                >
-                  X
-                </button>
+              <button
+  className="btn btn-circle btn-sm absolute right-0 top-0 m-4 bg-red-600 text-white"
+  onClick={handleCloseEdit}
+>
+  X
+</button>
                 <div className="flex flex-col gap-4 rounded-lg bg-white p-4 text-black">
                   <p>Editing video Details</p>
                   <div className="relative h-fit w-full">
@@ -287,10 +307,10 @@ const LatestUploads: React.FC<LatestUploadsProps> = ({ videos, refreshVideos }) 
                         />
                       </div>
                       <img
-                        src={`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/v1/video/thumbnail/${editingVideo.thumbnail}`}
-                        alt={editingVideo.title_video}
-                        className="h-40 w-full object-contain"
-                      />
+  src={imagePreview || `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/v1/video/thumbnail/${editingVideo.thumbnail}`}
+  alt={editingVideo.title_video}
+  className="h-40 w-full object-contain"
+/>
                     </div>
                   </div>
                   <div>
@@ -351,7 +371,7 @@ const LatestUploads: React.FC<LatestUploadsProps> = ({ videos, refreshVideos }) 
                         className="input input-bordered input-sm"
                       />
                     ) : (
-                      <p className="break-words text-sm">{video.title_video}</p>
+                      <p className="break-words text-sm max-w-[20ch] truncate">{video.title_video}</p>
                     )}
                   </td>
                   <td>
