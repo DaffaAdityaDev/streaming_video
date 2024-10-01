@@ -1,11 +1,13 @@
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import userRepository from '../repository/userRepository';
-import { config } from '../config/enviroment';
+import { getConfig } from '../config/environment';
 import { AppError, errorTypes } from '../utils/AppError';
 import { Users } from '@prisma/client';
 import fs from 'fs/promises';
 import path from 'path';
+
+const CONFIG = getConfig();
 
 const registerUser = async (username: string, email: string, password: string) => {
   if (!username || !email || !password) {
@@ -40,7 +42,7 @@ const loginUser = async (email: string, password: string) => {
     throw new AppError('Invalid email or password', errorTypes.UNAUTHORIZED);
   }
 
-  const token = jwt.sign({ email }, config.jwtSecret, { expiresIn: '7d' });
+  const token = jwt.sign({ email }, CONFIG.jwtSecret, { expiresIn: '7d' });
   await userRepository.update(email, { token });
 
   return {

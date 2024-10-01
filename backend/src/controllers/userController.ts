@@ -3,12 +3,13 @@ import userService from '../services/userService';
 import { AppError, createErrorResponse, errorTypes } from '../utils/AppError';
 import prisma from '../config/database';
 import jwt from 'jsonwebtoken';
-import { config } from '../config/enviroment';
+import { getConfig } from '../config/environment';
 import { AuthenticatedRequest } from '../types';
 import userRepository from '../repository/userRepository';
 import { createLogger } from '../utils/logger';
 
 const logger = createLogger('userController');
+const CONFIG = getConfig();
 
 export const registerUser = async (req: Request, res: Response) => {
   try {
@@ -58,15 +59,15 @@ export const refreshToken = async (req: Request, res: Response) => {
       return res.status(400).json({ message: 'Invalid refresh token format' });
     }
 
-    const decoded = jwt.verify(refreshToken, config.refreshTokenSecret) as { email: string };
+    const decoded = jwt.verify(refreshToken, CONFIG.refreshTokenSecret) as { email: string };
     const user = await prisma.users.findUnique({ where: { email: decoded.email } });
 
     if (!user) {
       return res.status(401).json({ message: 'User not found' });
     }
 
-    const newAccessToken = jwt.sign({ email: user.email }, config.jwtSecret, { expiresIn: '15m' });
-    const newRefreshToken = jwt.sign({ email: user.email }, config.refreshTokenSecret, { expiresIn: '7d' });
+    const newAccessToken = jwt.sign({ email: user.email }, CONFIG.jwtSecret, { expiresIn: '15m' });
+    const newRefreshToken = jwt.sign({ email: user.email }, CONFIG.refreshTokenSecret, { expiresIn: '7d' });
 
     await prisma.users.update({
       where: { email: user.email },

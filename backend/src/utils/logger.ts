@@ -1,9 +1,9 @@
 import winston from 'winston';
 import dotenv from 'dotenv';
 import moment from 'moment-timezone';
-import { config } from '../config/enviroment';
+import { getConfig } from '../config/environment';
 
-dotenv.config();
+const CONFIG = getConfig();
 
 // Define custom log levels
 const customLevels = {
@@ -56,7 +56,7 @@ const createBaseLogger = () => {
         winston.format.colorize(),
         winston.format.timestamp({
           format: () => {
-            return moment().tz(config.timezone).format('YYYY-MM-DD HH:mm:ss.SSS Z');
+            return moment().tz(CONFIG.timezone).format('YYYY-MM-DD HH:mm:ss.SSS Z');
           }
         }),
         customFormat
@@ -84,7 +84,7 @@ const createBaseLogger = () => {
     format: winston.format.combine(
       winston.format.timestamp({
         format: () => {
-          return moment().tz(config.timezone).format('YYYY-MM-DD HH:mm:ss.SSS Z');
+          return moment().tz(CONFIG.timezone).format('YYYY-MM-DD HH:mm:ss.SSS Z');
         }
       }),
       winston.format.colorize(),
