@@ -467,7 +467,18 @@ const UploadNewVideo: React.FC<UploadNewVideoProps> = ({
   const [resolutionProgress, setResolutionProgress] = useState<Record<string, number>>({});
 
   useEffect(() => {
-    const socket = io(`${process.env.NEXT_PUBLIC_BACKEND_WS_URL}`);
+    const socket = io(process.env.NEXT_PUBLIC_BACKEND_WS_URL as string, {
+      transports: ['websocket'],
+      upgrade: false,
+    });
+  
+    socket.on('connect', () => {
+      console.log('WebSocket connected successfully');
+    });
+  
+    socket.on('connect_error', (error) => {
+      console.error('WebSocket connection error:', error);
+    });
 
     socket.on('conversionProgress', (data) => {
       if (data.step === 'progress') {

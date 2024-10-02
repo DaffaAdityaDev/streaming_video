@@ -54,18 +54,19 @@ export const fetcher = async (url: string) => {
   }
 };
 
-export const postData = async (endpoint: string, data: any, token: string) => {
+export const postData = async (endpoint: string, data: any, token?: string | null) => {
   const BASE_URL = process.env.NEXT_PUBLIC_BACKEND_URL;
-  const url = `${BASE_URL}${endpoint}`;
+  // const url = `${BASE_URL}${endpoint}`;
+  // console.log(url);
 
   try {
-    const response = await axios.post(url, data, {
+    const response = await axios.post(endpoint, data, {
       headers: {
         'Content-Type': 'application/json',
-        Authorization: `Bearer ${token}`,
+        ...(token && { Authorization: `Bearer ${token}` }),
       },
     });
-    return response;
+    return response.data;
   } catch (error) {
     console.error('API post request failed:', error);
     throw error;

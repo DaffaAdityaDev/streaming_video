@@ -33,6 +33,7 @@ const videoQueue: CustomQueue = async.queue((task: Task, callback) => {
     .videoBitrate(resolutionConfig.bitrate)
     .on('start', () => {
       console.log(`[${res}] Started converting video`);
+      console.log(`Emitting conversionProgress event for ${uniqueId}, resolution: ${res}`);
       io.emit('conversionProgress', { file: uniqueId, resolution: res, step: 'start', message: `Started ${res} conversion` });
     })
     .on('progress', (progress) => {
