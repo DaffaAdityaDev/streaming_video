@@ -39,7 +39,11 @@ export default function Page({ params }: { params: { userId: string } }) {
     setToken(localStorage.getItem('token'));
     setEmail(localStorage.getItem('email'));
 
-    const socket = io(`${process.env.NEXT_PUBLIC_BACKEND_WS_URL}`);
+    const socket = io(`${process.env.NEXT_PUBLIC_BACKEND_WS_URL}`, {
+      transports: ['websocket', 'polling'],
+      timeout: 60000,
+    });
+    
     console.log('Attempting to connect to WebSocket');
 
     socket.on('connect', () => {
