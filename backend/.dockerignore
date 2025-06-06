@@ -4,3 +4,7 @@ README.md
 .next
 docker
 .git
+*.log
+video
+thumbnails
+profileImages

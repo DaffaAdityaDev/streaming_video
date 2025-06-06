@@ -1,63 +1,98 @@
 'use client';
-import VideoList from '@/app/_components/dashboard/VideoList';
-import { UploadProgressItem } from '@/app/types';
+import dynamic from 'next/dynamic';
+import { UploadProgressItem, VideoResponse, CommentDataType, CommentResponse } from '@/app/types';
 import axios from 'axios';
 import { useEffect, useState } from 'react';
 import io from 'socket.io-client';
+import useSWR, { mutate } from 'swr';
+import { fetcher } from '@/utils/api';
+import { toast } from 'react-toastify';
+import { handleApiError } from '@/utils/errorHandler';
+
+const VideoDashboard = dynamic(() => import('@/components/dashboard/VideoDashboard'), {
+  loading: () => <p>Loading dashboard...</p>,
+});
 
 export default function Page({ params }: { params: { userId: string } }) {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [currTab, setCurrTab] = useState([
-    { name: 'Upload', isActive: true },
-    { name: 'My Video', isActive: false },
-    { name: 'Tab 3', isActive: false },
-  ]);
   const [uploadProgress, setUploadProgress] = useState<UploadProgressItem[]>([]);
-  const [Token, setToken] = useState<string | null>(null);
-  const [usernames, setUsernames] = useState<string | null>(null);
+  const [conversionProgress, setConversionProgress] = useState<number>(0);
+  const [conversionStep, setConversionStep] = useState<string | null>(null);
+  const [token, setToken] = useState<string | null>(null);
   const [email, setEmail] = useState<string | null>(null);
+
+  const { data: userVideos, error: userVideosError } = useSWR<VideoResponse>(
+    email ? `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/v1/video/user/${btoa(email)}` : null,
+    fetcher,
+  );
+
+  // console.log(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/v1/video/user/${btoa(email)}`);
+
+  const { data: latestComments, error: latestCommentsError } = useSWR<CommentResponse>(
+    email ? `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/v1/comment/latest/${btoa(email)}` : null,
+    fetcher,
+  );
+
+  // console.log(latestComments);
 
   useEffect(() => {
     setToken(localStorage.getItem('token'));
-    setUsernames(localStorage.getItem('username'));
     setEmail(localStorage.getItem('email'));
-  }, []);
 
-  // console.log('Token', Token)
-  // console.log('usernames', usernames)
-  // console.log('email', email)
+    const socket = io(`${process.env.NEXT_PUBLIC_BACKEND_WS_URL}`, {
+      transports: ['websocket', 'polling'],
+      timeout: 60000,
+    });
+    
+    console.log('Attempting to connect to WebSocket');
 
-  useEffect(() => {
-    const socket = io(`${process.env.NEXT_PUBLIC_BACKEND_WS_URL}`);
+    socket.on('connect', () => {
+      console.log('WebSocket connected successfully');
+    });
+
+    socket.on('connect_error', (error) => {
+      console.error('WebSocket connection error:', error);
+    });
+
+    socket.on('conversionProgress', (data) => {
+      setConversionStep(data.message);
+      if (data.step === 'progress') {
+        setConversionProgress(data.progress);
+      }
+    });
 
     socket.on('uploadProgress', (data) => {
-      // console.log("test", data.path);
-      // console.log(`Upload progress for ${data.file}: ${data.progress}% reso${data.resolution}`);
       setUploadProgress((prevProgress) => {
-        // Find the index of the existing progress object for this file and resolution
-        const index = prevProgress.findIndex(
-          (item) => item.file === data.file && item.reso === data.resolution,
-        );
-        // console.log(data);
-        if (index !== -1) {
-          // If the progress object for this file and resolution already exists, update it
-          const updatedProgress = [...prevProgress];
-          updatedProgress[index] = { ...updatedProgress[index], progress: data.progress };
-          return updatedProgress;
+        const existingIndex = prevProgress.findIndex((item) => item.reso === data.resolution);
+        if (existingIndex !== -1) {
+          return prevProgress.map((item, index) =>
+            index === existingIndex ? { ...item, progress: data.progress } : item,
+          );
         } else {
-          // If the progress object for this file and resolution does not exist, add a new one
-          return [
-            ...prevProgress,
-            {
-              file: data.file,
-              progress: data.progress,
-              reso: data.resolution,
-              path: `${process.env.NEXT_PUBLIC_BACKEND_URL}/video/${data.resolution}/${data.file}.mp4`,
-            },
-          ];
+          const newItem = {
+            file: data.file,
+            progress: data.progress,
+            reso: data.resolution,
+            path:
+              data.resolution === 'upload' || data.resolution === 'overall'
+                ? ''
+                : `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/v1/video/stream/${data.resolution}/${data.file}`,
+          };
+
+          // Insert new item in the correct order
+          const newProgress = [...prevProgress];
+          if (data.resolution === 'upload') {
+            newProgress.unshift(newItem);
+          } else if (data.resolution === 'overall') {
+            newProgress.splice(1, 0, newItem);
+          } else {
+            // For resolution-specific items, insert them after 'overall'
+            const overallIndex = newProgress.findIndex((item) => item.reso === 'overall');
+            newProgress.splice(overallIndex + 1, 0, newItem);
+          }
+          return newProgress;
         }
       });
-      // Update your UI with the progress data
     });
 
     return () => {
@@ -73,105 +108,83 @@ export default function Page({ params }: { params: { userId: string } }) {
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    if (!selectedFile) {
-      alert('Please select a file');
+    if (!selectedFile || !token) {
+      toast.error(
+        selectedFile ? 'You are not authenticated. Please log in.' : 'Please select a file',
+      );
       return;
     }
     const formData = new FormData();
     formData.append('video', selectedFile);
 
     try {
-      const response = await axios.post(`${process.env.NEXT_PUBLIC_BACKEND_URL}/upload`, formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-          Authorization: `Bearer ${Token}`,
+      setUploadProgress([
+        {
+          file: selectedFile.name,
+          progress: 0,
+          reso: 'upload',
+          path: '',
         },
-      });
-      alert(`Video uploaded successfully! ${response.data}`);
-      // console.log(response.data);
+      ]);
+
+      const response = await axios.post(
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/v1/video/upload`,
+        formData,
+        {
+          headers: {
+            'Content-Type': 'multipart/form-data',
+            Authorization: `Bearer ${token}`,
+          },
+          onUploadProgress: (progressEvent) => {
+            const percentCompleted = Math.round(
+              (progressEvent.loaded * 100) / progressEvent.total!,
+            );
+            setUploadProgress((prevProgress) => [
+              {
+                ...prevProgress[0],
+                progress: percentCompleted,
+              },
+            ]);
+          },
+        },
+      );
+
+      console.log('Upload response:', response.data);
+      toast.success('Video uploaded successfully!');
+      refreshVideos();
     } catch (error) {
-      alert(`Error uploading video. ${(error as Error).message}`);
-      // console.error(error);
+      handleApiError(error);
     }
   };
+
+  const refreshVideos = async () => {
+    if (email) {
+      try {
+        await mutate(
+          `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/v1/video/user/${btoa(email)}`,
+          undefined,
+          { revalidate: true },
+        );
+      } catch (error) {
+        console.error('Error refreshing videos:', error);
+        toast.error('Failed to refresh videos. Please try again.');
+      }
+    }
+  };
+
+  if (userVideosError) return <div>Failed to load videos</div>;
+  if (!userVideos) return <div>Loading...</div>;
+
   return (
-    <div className="flex h-full w-full flex-col items-center justify-center">
-      <div role="tablist" className="tabs tabs-bordered mb-20">
-        {currTab.map((tab, index) => (
-          <a
-            key={index}
-            className={`tab ${tab.isActive ? 'tab-active' : ''}`}
-            onClick={() => {
-              setCurrTab(currTab.map((t, i) => ({ ...t, isActive: i === index })));
-            }}
-          >
-            {tab.name}
-          </a>
-        ))}
-      </div>
-      {currTab[0].isActive && (
-        <div>
-          <form onSubmit={handleSubmit} className="flex flex-col items-center">
-            <input
-              className="file-input file-input-bordered file-input-info w-full max-w-xs"
-              accept=".mp4"
-              type="file"
-              name="video"
-              onChange={handleFileChange}
-            />
-            <button type="submit" className="btn btn-success mt-4">
-              Upload
-            </button>
-          </form>
-          {uploadProgress.length > 0 && (
-            <div className="overflow-x-auto">
-              <table className="table">
-                {/* head */}
-                <thead>
-                  <tr>
-                    <th>no</th>
-                    <th>slug</th>
-                    <th>File</th>
-                    <th>Progress</th>
-                    <th>Path</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {uploadProgress.map((progressItem, index) => (
-                    <tr key={index}>
-                      <th>{index + 1}</th>
-                      <td>{progressItem.file}</td>
-                      <td>{progressItem.reso}</td>
-                      <td>
-                        <progress
-                          className="progress progress-primary w-56"
-                          value={progressItem.progress}
-                          max="100"
-                        ></progress>
-                      </td>
-                      <td>
-                        <a href={progressItem.path} target="_blank" rel="noreferrer">
-                          View
-                        </a>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
-        </div>
-      )}
-      {currTab[1].isActive && (
-        <div>
-          <VideoList email={email} />
-        </div>
-      )}
-      {currTab[2].isActive && (
-        <div>
-          <h1>Tab 3</h1>
-        </div>
-      )}
-    </div>
+    <VideoDashboard
+      latestUploads={userVideos}
+      latestComments={latestComments ?? { data: [] }}
+      uploadProgress={uploadProgress}
+      conversionProgress={conversionProgress}
+      conversionStep={conversionStep}
+      onFileChange={handleFileChange}
+      onSubmit={handleSubmit}
+      refreshVideos={refreshVideos}
+    />
   );
 }

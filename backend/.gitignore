@@ -118,6 +118,10 @@ dist
 video/**/*.mp4
 thumbnails/*.png
 
+backend/video/**/*
+backend/thumbnails/**/*
+backend/profileImages/**/*
+
 .temp
 
 data.txt

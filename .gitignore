@@ -151,3 +151,12 @@ dist
 .yarn/build-state.yml
 .yarn/install-state.gz
 .pnp.*
+
+backend/video/**/*
+backend/thumbnails/**/*
+backend/profileImages/**/*
+
+.cursorrules
+onprogres.md
+postgres_data
+./postgres_data

@@ -1,24 +1,37 @@
-# Use an official Node.js runtime as the base image
 FROM node:lts
 
-# Set the working directory in the container
-WORKDIR /usr
+# # Install FFmpeg with necessary codecs
+# RUN apt-get update && \
+#     apt-get install -y ffmpeg libx264-dev && \
+#     apt-get clean && \
+#     rm -rf /var/lib/apt/lists/*
 
-# Copy package.json and package-lock.json to the working directory
+# Install FFmpeg with necessary codecs
+RUN apt-get update && \
+    apt-get install -y ffmpeg libx264-dev libavcodec-extra && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
+
+WORKDIR /usr/src/backend
+
 COPY package*.json ./
-COPY ./prisma prisma
-# Copy the rest of the application files to the working directory
+COPY ./prisma ./prisma
+
+# Install dependencies inside the container
+RUN npm ci
+
 COPY . .
 
-# Install application dependencies
-RUN npm install
 RUN npm run generate
-
-# Build the application
 RUN npm run build
 
-# Expose the port the app runs on
-EXPOSE 8000
+# Create the video directory structure
+RUN mkdir -p /usr/src/backend/video/defaultQuality /usr/src/backend/video/144p /usr/src/backend/video/240p /usr/src/backend/video/480p /usr/src/backend/video/720p /usr/src/backend/video/1080p /usr/src/backend/video/4k
+RUN mkdir -p /usr/src/backend/thumbnails
+RUN mkdir -p /usr/src/backend/profileImages
 
-# Define the command to start the application
-CMD ["npm", "run", "start"]
+EXPOSE 8000
+EXPOSE 8001
+
+CMD ["npm", "run", "start"] 
+

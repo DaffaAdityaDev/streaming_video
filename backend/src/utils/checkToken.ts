@@ -2,9 +2,9 @@ import { PrismaClient } from '@prisma/client';
 import jwt, { JwtPayload } from 'jsonwebtoken';
 import dotenv from 'dotenv';
 import { RequestWithUser } from '../types';
+import prisma from '../config/database';
 
 dotenv.config();
-const prisma = new PrismaClient();
 
 const checkToken = async (req: RequestWithUser, res: any, next: any) => {
   const authHeader = req.headers['authorization'];
@@ -38,7 +38,7 @@ const checkToken = async (req: RequestWithUser, res: any, next: any) => {
 
     if (user) {
       // Attach the user's email to the request object
-      req.user = { email: userEmail };
+      req.user = { email: userEmail, id_user: user.id_user, username: user.username };
       next();
       console.log('User found:', user);
     } else {

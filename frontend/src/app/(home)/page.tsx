@@ -1,54 +1,57 @@
 'use client';
-import { AppContext } from '@/app/_components/context/AppContext';
-import { useState, useEffect, useContext } from 'react';
-
 import { VideoDataType } from '@/app/types';
+import { fetcher } from '@/utils/api';
+import dynamic from 'next/dynamic';
+import CategorySkeleton from '@/components/skeletons/CategorySkeleton';
+import CardVideoSkeleton from '@/components/skeletons/CardVideoSkeleton';
+import useSWR from 'swr';
 
-// import videoData from '@/data/videoData';
-import CardVideo from '../_components/video/CardVideo';
+const CardVideo = dynamic(() => import('@/components/video/CardVideo'), {
+  loading: () => <CardVideoSkeleton />,
+});
 
-import axios from 'axios';
+const Category = dynamic(() => import('@/components/navigation/Category'), {
+  loading: () => <CategorySkeleton />,
+});
 
 export default function Home() {
-  // const [data, setData] = useState<VideoDataType[]>(videoData)
-  const [data, setData] = useState<VideoDataType[]>([]);
-  const [dataSearch, setDataSearch] = useState<VideoDataType[]>(data);
-  const { search, setSearch } = useContext(AppContext);
+  const url = `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/v1/video`;
+  const { data, error } = useSWR<{ status: string; data: VideoDataType[] }>(url, fetcher, {
+    revalidateOnFocus: false,
+    revalidateOnReconnect: false,
+    refreshInterval: 60000, // Revalidate every 60 seconds
+    errorRetryCount: 3,
+    onErrorRetry: (error, key, config, revalidate, { retryCount }) => {
+      // Only retry up to 3 times
+      if (retryCount >= 3) return;
 
-  function getDataFromAPI(path: string) {
-    return axios.get(path).then((response) => {
-      return response.data;
-    });
-  }
+      // Retry after 2 seconds
+      setTimeout(() => revalidate({ retryCount }), 2000);
+    },
+  });
 
-  useEffect(() => {
-    const fetchData = async () => {
-      const data = await getDataFromAPI(`${process.env.NEXT_PUBLIC_BACKEND_URL}/videos`);
-      setData(data);
-    };
-
-    fetchData();
-  }, []);
-
-  useEffect(() => {
-    if (search) {
-      setDataSearch(
-        data.filter((item) => item.title_video.toLowerCase().includes(search.toLowerCase())),
-      );
-    } else {
-      setDataSearch(data);
-    }
-  }, [data, search]);
-
-  // console.log(data);
+  if (error) return <div>Failed to load videos</div>;
+  if (!data)
+    return (
+      <div className="m-4">
+        <CategorySkeleton />
+        <div className="col-span-12 grid grid-cols-[repeat(auto-fill,minmax(calc(400px),1fr))] gap-4">
+          {[...Array(6)].map((_, i) => (
+            <CardVideoSkeleton key={i} />
+          ))}
+        </div>
+      </div>
+    );
 
   return (
-    <>
-      <div className="col-span-12 m-4 grid grid-cols-[repeat(auto-fill,minmax(calc(400px),1fr))] gap-4 ">
-        {dataSearch.map((item, index) => (
-          <CardVideo key={index} {...item} />
+    <div className="m-4">
+      <Category />
+      <div className="col-span-12 grid grid-cols-[repeat(auto-fill,minmax(calc(400px),1fr))] gap-4">
+        {data.data.map((item) => (
+          <CardVideo key={item.id_video} {...item} />
         ))}
       </div>
-    </>
+      {/* <HomeClientWrapper initialData={videos} /> */}
+    </div>
   );
 }

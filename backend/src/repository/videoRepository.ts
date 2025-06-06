@@ -1,0 +1,97 @@
+import prisma from "../config/database";
+import { Videos, Prisma } from "@prisma/client";
+import { createLogger } from "../utils/logger";
+import { Video } from "../models/videoModel";
+
+const logger = createLogger('videoRepository');
+
+const findBySlug = async (slug: string): Promise<Videos | null> => {
+  return prisma.videos.findUnique({ where: { slug } });
+};
+
+const create = async (videoData: Omit<Videos, 'id_video' | 'created_at'>, transaction?: Prisma.TransactionClient): Promise<Videos> => {
+  const { id_user, ...rest } = videoData;
+  const createData: any = { ...rest };
+
+  if (id_user !== undefined) {
+    createData.user = { connect: { id_user } };
+  } else {
+    throw new Error('User ID is required to create a video');
+  }
+
+  const client = transaction || prisma;
+  return client.videos.create({ data: createData });
+};
+
+const update = async (slug: string, data: Partial<Omit<Videos, 'id_video' | 'created_at'>>): Promise<Videos> => {
+  return prisma.videos.update({ where: { slug }, data });
+};
+
+const updateVideoTitle = async (id: number, title_video: string): Promise<Videos> => {
+  return prisma.videos.update({ where: { id_video: id }, data: { title_video } });
+};
+
+const findAll = async (options?: { orderBy?: { [key: string]: 'asc' | 'desc' } }): Promise<Videos[]> => {
+
+  return prisma.videos.findMany(options);
+};
+
+const findByUserEmail = async (email: string) => {
+  logger.info('Finding user with email:', email);
+  const user = await prisma.users.findUnique({ where: { email } });
+  if (!user) { 
+    logger.warn('User not found');
+    throw new Error('User not found');
+  }
+  logger.info('User found, fetching videos');
+  return prisma.videos.findMany({ 
+    where: { id_user: user.id_user },
+    orderBy: { created_at: 'desc' },
+    include: { user: true }
+  });
+};
+
+const getThumbnailByVideoId = async (videoId: string): Promise<string | null> => {
+  const video = await prisma.videos.findUnique({ where: { slug: videoId } });
+  return video ? video.thumbnail : null;
+};
+const deleteById = async (id: number): Promise<void> => {
+  await prisma.videos.delete({ where: { id_video: id } });
+};
+
+const deleteBySlug = async (slug: string): Promise<void> => {
+  await prisma.videos.delete({ where: { slug } });
+};
+
+
+const findById = async (id_video: number): Promise<Videos | null> => {
+  return prisma.videos.findUnique({ where: { id_video } });
+};
+
+const updateVideoStatus = async (slug: string, status: string): Promise<Videos | null> => {
+  return prisma.videos.update({
+    where: { slug },
+    data: { status },
+  });
+};
+
+const incrementViews = async (slug: string): Promise<Videos | null> => {
+  return prisma.videos.update({
+    where: { slug },
+    data: { views: { increment: 1 } },
+  });
+};
+
+const updateVideo = async (id: number, data: Partial<Omit<Video, 'id_video' | 'created_at'>>): Promise<Videos | null> => {
+  return prisma.videos.update({
+    where: { id_video: id },
+    data,
+  });
+};
+
+export default { 
+  findBySlug, create, update, findAll, 
+  findByUserEmail, getThumbnailByVideoId, 
+  deleteById, findById, deleteBySlug, updateVideoTitle, 
+  updateVideoStatus, incrementViews, updateVideo
+};

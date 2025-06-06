@@ -1,8 +1,13 @@
 import { Server } from 'socket.io';
 import { Request } from 'express';
+import { Users } from '@prisma/client';
 
 interface filePath {
   filePath: string;
+}
+
+export interface AuthenticatedRequest extends Request {
+  user?: Users;
 }
 
 export interface Task {
@@ -26,8 +31,12 @@ export interface ResolutionConfig {
   outputDir: string;
 }
 
+
 export interface RequestWithUser extends Request {
   user?: {
+    id_user: number;
     email: string;
+    username: string;
+    // Add any other properties that your user object has
   };
 }
